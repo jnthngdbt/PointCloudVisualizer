@@ -1,3 +1,0 @@
-# PointCloudPoke
-
-Some pokes around.
