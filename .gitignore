@@ -3,3 +3,5 @@ Contact/x64/Debug/
 Contact/x64/Release/
 Contact/Contact/x64/Debug/
 Contact/Contact/x64/Release/
+*/.vs/*
+Contact/bin/
