@@ -15,18 +15,18 @@
 class Visualizer
 {
 public:
-	Visualizer(const std::string& name, int nbRows = 1, int nbCols = 1);
+    Visualizer(const std::string& name, int nbRows = 1, int nbCols = 1);
 
-	using CloudName = std::string;
-	using FeatureName = std::string;
-	using FeatureData = std::vector<float>;
+    using CloudName = std::string;
+    using FeatureName = std::string;
+    using FeatureData = std::vector<float>;
     using ViewportIdx = int;
 
     static const std::string sFilePrefix;
 
-	class Cloud
-	{
-	public:
+    class Cloud
+    {
+    public:
         Cloud() = default;
 
         Cloud& addFeature(const FeatureData& data, const FeatureName& name, ViewportIdx viewport = -1);
@@ -37,9 +37,9 @@ public:
         void save(const std::string& filename) const;
 
         int mViewport{ 0 };
-	private:
-		std::unordered_map<FeatureName, FeatureData> mFeatures;
-	};
+    private:
+        std::unordered_map<FeatureName, FeatureData> mFeatures;
+    };
 
     template<typename T>
     Cloud& add(const pcl::PointCloud<T>& data, const CloudName& name, ViewportIdx viewport = -1);
@@ -53,8 +53,8 @@ private:
     void addFeature(const T& data, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport, F func);
 
     pcl::visualization::PCLVisualizer mViewer;
-	std::unordered_map<CloudName, Cloud> mClouds;
-	std::vector<int> mViewportIds;
+    std::unordered_map<CloudName, Cloud> mClouds;
+    std::vector<int> mViewportIds;
 };
 
 const std::string Visualizer::sFilePrefix = "visualizer.";
@@ -211,31 +211,31 @@ void Visualizer::render()
 }
 
 Visualizer::Visualizer(const std::string& name, int nbRows, int nbCols) :
-	mViewer(name)
+    mViewer(name)
 {
-	mViewportIds.resize(nbRows * nbCols);
-	const float sizeX = 1.0 / nbCols;
-	const float sizeY = 1.0 / nbRows;
-	int k = 0;
-	for (int i = 0; i < nbCols; ++i)
-		for (int j = 0; j < nbRows; ++j)
-			mViewer.createViewPort(i*sizeX, 1.0-(j+1)*sizeY, (i + 1)*sizeX, 1.0 - j*sizeY, mViewportIds[k++]);
+    mViewportIds.resize(nbRows * nbCols);
+    const float sizeX = 1.0 / nbCols;
+    const float sizeY = 1.0 / nbRows;
+    int k = 0;
+    for (int j = 0; j < nbRows; ++j)
+        for (int i = 0; i < nbCols; ++i)
+            mViewer.createViewPort(i*sizeX, 1.0-(j+1)*sizeY, (i + 1)*sizeX, 1.0 - j*sizeY, mViewportIds[k++]);
 }
 
 int main()
 {
-	using PointsType = pcl::PointCloud<pcl::PointXYZ>;
-	PointsType::Ptr cloud (new PointsType());
+    using PointsType = pcl::PointCloud<pcl::PointXYZ>;
+    PointsType::Ptr cloud (new PointsType());
 
     using NormalsType = pcl::PointCloud<pcl::PointNormal>;
     NormalsType::Ptr normals(new NormalsType());
 
-	for (float x = 0.0; x < 1.0; x += 0.01)
-	{
-		for (float y = 0.0; y < 1.0; y += 0.01)
-		{
-			const float z = rand() / 100000.f;
-			cloud->push_back({ x,y,z });
+    for (float x = 0.0; x < 1.0; x += 0.01)
+    {
+        for (float y = 0.0; y < 1.0; y += 0.01)
+        {
+            const float z = rand() / 100000.f;
+            cloud->push_back({ x,y,z });
 
             auto normal = Eigen::Vector3f(rand(), rand(), rand());
             normal.normalize();
@@ -249,8 +249,8 @@ int main()
             pn.normal_z = normal[2];
             pn.curvature = rand();
             normals->push_back(pn);
-		}
-	}
+        }
+    }
 
     std::vector<float> idx(cloud->size());
     std::vector<float> rnd(cloud->size());
@@ -260,22 +260,22 @@ int main()
         rnd[i] = rand();
     }
 
-	std::cout << *cloud << std::endl;
-	pcl::io::savePCDFile("cloud.pcd", *cloud);
+    std::cout << *cloud << std::endl;
+    pcl::io::savePCDFile("cloud.pcd", *cloud);
 
     const std::string cloudnames[] = { "random-cloud" };
 
-	Visualizer viewer("A cloud", 2, 3);
+    Visualizer viewer("A cloud", 2, 3);
 
-	viewer.add(*cloud, cloudnames[0]);
-	viewer.addFeature(idx, "index", cloudnames[0]);
+    viewer.add(*cloud, cloudnames[0]);
+    viewer.addFeature(idx, "index", cloudnames[0]);
 
     viewer.add(*cloud, "yoyo", 4).addFeature(rnd, "randv").addFeature(idx, "index");
 
     viewer.add(*cloud, "normaly", 2).addFeature(rnd, "randv");
     viewer.add(*normals, "normaly", 2);
 
-	viewer.render();
+    viewer.render();
 
     return 0;
 }
