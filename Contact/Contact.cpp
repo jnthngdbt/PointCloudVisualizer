@@ -2,7 +2,8 @@
 #include <stdlib.h>
 
 #include <algorithm>
-#include <map>
+#include <iostream>
+#include <unordered_map>
 #include <string>
 #include <vector>
 
@@ -16,30 +17,91 @@ class Visualizer : public pcl::visualization::PCLVisualizer
 public:
 	Visualizer(const std::string& name, int nbRows = 1, int nbCols = 1);
 
-	bool hasCloud(const std::string& name) { return mClouds.find(name) != std::end(mClouds); }
 
 	using CloudName = std::string;
 	using FeatureName = std::string;
 	using FeatureData = std::vector<float>;
 
+    static const std::string sFilePrefix;
+
 	class Cloud
 	{
 	public:
-		Cloud() = default;
+        Cloud() = default;
 
         void add(const FeatureData& data, const FeatureName& name);
+        int getNbPoints() const;
+        int getNbFeatures() const { return static_cast<int>(mFeatures.size()); };
+        void save(const CloudName& name) const;
 
 	private:
-		std::map<FeatureName, FeatureData> mFeatures;
+		std::unordered_map<FeatureName, FeatureData> mFeatures;
 	};
 
+	bool hasCloud(const std::string& name) { return mClouds.find(name) != std::end(mClouds); }
     Cloud& add(const pcl::PointCloud<pcl::PointXYZ>& data, const CloudName& name);
     Cloud& add(const FeatureData& data, const FeatureName& featName, const CloudName& cloudName);
+    Cloud& getCloud(const CloudName& name);
+    bool cloudExists(const CloudName& name) const { return mClouds.count(name) > 0; }
+    void save(const CloudName& name);
+
 
 private:
-	std::map<CloudName, Cloud> mClouds;
+	std::unordered_map<CloudName, Cloud> mClouds;
 	std::vector<int> mViewportIds;
 };
+
+const std::string Visualizer::sFilePrefix = "visualizer.";
+
+int Visualizer::Cloud::getNbPoints() const
+{
+    if (getNbFeatures() <= 0)
+        return 0;
+
+    return static_cast<int>(mFeatures.begin()->second.size());
+}
+
+void Visualizer::Cloud::save(const CloudName& name) const
+{
+    std::ofstream f;
+    f.open(sFilePrefix + name + ".pcd");
+
+    // header
+    f << "# .PCD v.7 - Point Cloud Data file format" << std::endl;
+    f << "VERSION .7" << std::endl;
+
+    f << "FIELDS";
+    for (const auto& feature : mFeatures)
+        f << " " << feature.first;
+    f << std::endl;
+
+    f << "SIZE";
+    for (int i = 0; i < getNbFeatures(); ++i)
+        f << " 4";
+    f << std::endl;
+
+    f << "TYPE";
+    for (int i = 0; i < getNbFeatures(); ++i)
+        f << " F";
+    f << std::endl;
+
+    f << "COUNT";
+    for (int i = 0; i < getNbFeatures(); ++i)
+        f << " 1";
+    f << std::endl;
+
+    f << "WIDTH" << getNbPoints() << std::endl;
+    f << "HEIGHT 1" << std::endl;
+    f << "VIEWPOINT 0 0 0 1 0 0 0" << std::endl;
+    f << "DATA ascii" << std::endl;
+
+    f.close();
+}
+
+void Visualizer::save(const CloudName& name)
+{
+    mClouds[name].save(name); // WARNING: creates map entry if it does not exist
+}
 
 void Visualizer::Cloud::add(const FeatureData& data, const FeatureName& name)
 {
@@ -70,6 +132,11 @@ Visualizer::Cloud& Visualizer::add(const FeatureData& data, const FeatureName& f
     auto& cloud = mClouds[cloudName];
     cloud.add(data, featName);
     return cloud;
+}
+
+Visualizer::Cloud& Visualizer::getCloud(const CloudName& name)
+{
+    return mClouds[name]; // WARNING: creates map entry if it does not exist
 }
 
 Visualizer::Visualizer(const std::string& name, int nbRows, int nbCols) :
@@ -105,9 +172,13 @@ int main()
 	std::cout << *cloud << std::endl;
 	pcl::io::savePCDFile("cloud.pcd", *cloud);
 
+    const std::string viewerCloudA = "random-cloud";
+
 	Visualizer viewer("A cloud");
-	viewer.add(*cloud, "random-cloud");
-	viewer.add(idx, "index", "random-cloud");
+	viewer.add(*cloud, viewerCloudA);
+	viewer.add(idx, "index", viewerCloudA);
+
+    viewer.save(viewerCloudA);
 
 	viewer.spin();
 
