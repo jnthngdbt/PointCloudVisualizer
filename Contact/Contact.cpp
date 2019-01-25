@@ -27,46 +27,50 @@ public:
 	public:
 		Cloud() = default;
 
-		void add(const FeatureData& data, const FeatureName& name)
-		{
-			// assert size if > 0
-			mFeatures[name] = data;
-		}
+        void add(const FeatureData& data, const FeatureName& name);
 
 	private:
 		std::map<FeatureName, FeatureData> mFeatures;
 	};
 
-	Cloud& add(const pcl::PointCloud<pcl::PointXYZ>& data, const CloudName& name)
-	{
-		const int nbPoints = data.size();
-		auto& cloud = mClouds[name];
-
-		// TODO: must generalize this code.
-		FeatureData values(nbPoints);
-		std::transform(std::begin(data), std::end(data), std::begin(values), [](const pcl::PointXYZ& p) { return p.x; });
-		cloud.add(values, "x");
-		std::transform(std::begin(data), std::end(data), std::begin(values), [](const pcl::PointXYZ& p) { return p.y; });
-		cloud.add(values, "y");
-		std::transform(std::begin(data), std::end(data), std::begin(values), [](const pcl::PointXYZ& p) { return p.z; });
-		cloud.add(values, "z");
-
-		return cloud;
-	}
-
-	Cloud& add(const FeatureData& data, const FeatureName& featName, const CloudName& cloudName)
-	{
-		const int nbPoints = data.size();
-		auto& cloud = mClouds[cloudName];
-		cloud.add(data, featName);
-		return cloud;
-	}
+    Cloud& add(const pcl::PointCloud<pcl::PointXYZ>& data, const CloudName& name);
+    Cloud& add(const FeatureData& data, const FeatureName& featName, const CloudName& cloudName);
 
 private:
 	std::map<CloudName, Cloud> mClouds;
-
 	std::vector<int> mViewportIds;
 };
+
+void Visualizer::Cloud::add(const FeatureData& data, const FeatureName& name)
+{
+    // assert size if > 0
+    mFeatures[name] = data;
+}
+
+Visualizer::Cloud& Visualizer::add(const pcl::PointCloud<pcl::PointXYZ>& data, const Visualizer::CloudName& name)
+{
+    const int nbPoints = data.size();
+    auto& cloud = mClouds[name];
+
+    // TODO: must generalize this code.
+    FeatureData values(nbPoints);
+    std::transform(std::begin(data), std::end(data), std::begin(values), [](const pcl::PointXYZ& p) { return p.x; });
+    cloud.add(values, "x");
+    std::transform(std::begin(data), std::end(data), std::begin(values), [](const pcl::PointXYZ& p) { return p.y; });
+    cloud.add(values, "y");
+    std::transform(std::begin(data), std::end(data), std::begin(values), [](const pcl::PointXYZ& p) { return p.z; });
+    cloud.add(values, "z");
+
+    return cloud;
+}
+
+Visualizer::Cloud& Visualizer::add(const FeatureData& data, const FeatureName& featName, const CloudName& cloudName)
+{
+    const int nbPoints = data.size();
+    auto& cloud = mClouds[cloudName];
+    cloud.add(data, featName);
+    return cloud;
+}
 
 Visualizer::Visualizer(const std::string& name, int nbRows, int nbCols) :
 	pcl::visualization::PCLVisualizer(name)
