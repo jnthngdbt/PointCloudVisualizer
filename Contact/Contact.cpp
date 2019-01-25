@@ -29,21 +29,22 @@ public:
 	public:
         Cloud() = default;
 
-        Cloud& addFeature(const FeatureData& data, const FeatureName& name, ViewportIdx viewport);
+        Cloud& addFeature(const FeatureData& data, const FeatureName& name, ViewportIdx viewport = -1);
         Cloud& setViewport(ViewportIdx viewport);
 
         int getNbPoints() const;
         int getNbFeatures() const { return static_cast<int>(mFeatures.size()); };
-        void save(const CloudName& name) const;
+        void save(const std::string& filename) const;
 
-        int mViewport;
+        int mViewport{ 0 };
 	private:
 		std::unordered_map<FeatureName, FeatureData> mFeatures;
 	};
 
     template<typename T>
-    Cloud& add(const pcl::PointCloud<T>& data, const CloudName& name, ViewportIdx viewport = 0);
-    Cloud& add(const FeatureData& data, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport = 0);
+    Cloud& add(const pcl::PointCloud<T>& data, const CloudName& name, ViewportIdx viewport = -1);
+    Cloud& add(const FeatureData& data, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport = -1);
+
     void save(const CloudName& name);
     void render();
     
@@ -66,10 +67,10 @@ int Visualizer::Cloud::getNbPoints() const
     return static_cast<int>(mFeatures.begin()->second.size());
 }
 
-void Visualizer::Cloud::save(const CloudName& name) const
+void Visualizer::Cloud::save(const std::string& filename) const
 {
     std::ofstream f;
-    f.open(sFilePrefix + name + ".pcd");
+    f.open(filename);
 
     // header
     f << "# .PCD v.7 - Point Cloud Data file format" << std::endl;
@@ -126,7 +127,10 @@ Visualizer::Cloud& Visualizer::Cloud::addFeature(const FeatureData& data, const 
 
 Visualizer::Cloud& Visualizer::Cloud::setViewport(ViewportIdx viewport)
 {
-    mViewport = viewport;
+    // Use already set viewport if -1.
+    if (viewport > 0)
+        mViewport = viewport;
+
     return *this;
 }
 
@@ -193,7 +197,13 @@ void Visualizer::render()
         for (const auto& field : pclCloudMsg->fields)
         {
             ColorHandler::ConstPtr color(new ColorHandler(pclCloudMsg, field.name));
-            mViewer.addPointCloud(pclCloudMsg, color, Eigen::Vector4f(0,0,0,0), Eigen::Quaternion<float>(0,0,0,0), name, cloud.mViewport);
+            mViewer.addPointCloud(
+                pclCloudMsg, 
+                color, 
+                Eigen::Vector4f(0,0,0,0),
+                Eigen::Quaternion<float>(0,0,0,0), 
+                name, 
+                mViewportIds[cloud.mViewport]);
         }
     }
 
@@ -204,12 +214,12 @@ Visualizer::Visualizer(const std::string& name, int nbRows, int nbCols) :
 	mViewer(name)
 {
 	mViewportIds.resize(nbRows * nbCols);
-	const float sizeX = 1 / nbCols;
-	const float sizeY = 1 / nbRows;
+	const float sizeX = 1.0 / nbCols;
+	const float sizeY = 1.0 / nbRows;
 	int k = 0;
 	for (int i = 0; i < nbCols; ++i)
 		for (int j = 0; j < nbRows; ++j)
-			mViewer.createViewPort(i*sizeX, j*sizeY, (i + 1)*sizeX, (j + 1)*sizeY, mViewportIds[k++]);
+			mViewer.createViewPort(i*sizeX, 1.0-(j+1)*sizeY, (i + 1)*sizeX, 1.0 - j*sizeY, mViewportIds[k++]);
 }
 
 int main()
@@ -226,20 +236,24 @@ int main()
 		}
 	}
 
-	std::vector<float> idx(cloud->size());
-	for (int i = 0; i < (int)cloud->size(); ++i)
-		idx[i] = (float)i;
+    std::vector<float> idx(cloud->size());
+    std::vector<float> rnd(cloud->size());
+    for (int i = 0; i < (int)cloud->size(); ++i)
+    {
+        idx[i] = (float)i;
+        rnd[i] = rand();
+    }
 
 	std::cout << *cloud << std::endl;
 	pcl::io::savePCDFile("cloud.pcd", *cloud);
 
     const std::string cloudnames[] = { "random-cloud" };
 
-	Visualizer viewer("A cloud");
+	Visualizer viewer("A cloud", 2, 3);
 	viewer.add(*cloud, cloudnames[0]);
 	viewer.add(idx, "index", cloudnames[0]);
 
-    viewer.save(cloudnames[0]);
+    viewer.add(*cloud, "yoyo", 4).addFeature(rnd, "randv").addFeature(idx, "index");
 
 	viewer.render();
 
