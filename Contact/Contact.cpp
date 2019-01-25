@@ -12,11 +12,10 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/visualization/pcl_visualizer.h>
 
-class Visualizer : public pcl::visualization::PCLVisualizer
+class Visualizer
 {
 public:
 	Visualizer(const std::string& name, int nbRows = 1, int nbCols = 1);
-
 
 	using CloudName = std::string;
 	using FeatureName = std::string;
@@ -30,7 +29,7 @@ public:
 	public:
         Cloud() = default;
 
-        Cloud& add(const FeatureData& data, const FeatureName& name, ViewportIdx viewport);
+        Cloud& addFeature(const FeatureData& data, const FeatureName& name, ViewportIdx viewport);
         Cloud& setViewport(ViewportIdx viewport);
 
         int getNbPoints() const;
@@ -42,22 +41,17 @@ public:
 		std::unordered_map<FeatureName, FeatureData> mFeatures;
 	};
 
-	bool hasCloud(const std::string& name) { return mClouds.find(name) != std::end(mClouds); }
-    //Cloud& add(const pcl::PointCloud<pcl::PointXYZ>& data, const CloudName& name, ViewportIdx viewport = 0);
-    //Cloud& add(const pcl::PointCloud<pcl::PointNormal>& data, const CloudName& name, ViewportIdx viewport = 0);
-
     template<typename T>
     Cloud& add(const pcl::PointCloud<T>& data, const CloudName& name, ViewportIdx viewport = 0);
-
     Cloud& add(const FeatureData& data, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport = 0);
-    Cloud& getCloud(const CloudName& name);
-    bool cloudExists(const CloudName& name) const { return mClouds.count(name) > 0; }
     void save(const CloudName& name);
+    void render();
     
+private:
     template<typename T, typename F>
     void addFeature(const T& data, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport, F func);
 
-private:
+    pcl::visualization::PCLVisualizer mViewer;
 	std::unordered_map<CloudName, Cloud> mClouds;
 	std::vector<int> mViewportIds;
 };
@@ -122,7 +116,7 @@ void Visualizer::save(const CloudName& name)
     mClouds[name].save(name); // WARNING: creates map entry if it does not exist
 }
 
-Visualizer::Cloud& Visualizer::Cloud::add(const FeatureData& data, const FeatureName& name, ViewportIdx viewport)
+Visualizer::Cloud& Visualizer::Cloud::addFeature(const FeatureData& data, const FeatureName& name, ViewportIdx viewport)
 {
     // assert size if > 0
     mFeatures[name] = data;
@@ -144,11 +138,11 @@ void Visualizer::addFeature(const T& data, const FeatureName& featName, const Cl
 
     FeatureData values(nbPoints);
     std::transform(std::begin(data), std::end(data), std::begin(values), func);
-    cloud.add(values, featName, viewport);
+    cloud.addFeature(values, featName, viewport);
 }
 
 template<>
-Visualizer::Cloud& Visualizer::add(const pcl::PointCloud<pcl::PointXYZ>& data, const Visualizer::CloudName& name, ViewportIdx viewport)
+Visualizer::Cloud& Visualizer::add(const pcl::PointCloud<pcl::PointXYZ>& data, const CloudName& name, ViewportIdx viewport)
 {
     using P = pcl::PointXYZ;
     addFeature(data, "x", name, viewport, [](const P& p) { return p.x; });
@@ -159,7 +153,7 @@ Visualizer::Cloud& Visualizer::add(const pcl::PointCloud<pcl::PointXYZ>& data, c
 }
 
 template<>
-Visualizer::Cloud& Visualizer::add(const pcl::PointCloud<pcl::PointNormal>& data, const Visualizer::CloudName& name, ViewportIdx viewport)
+Visualizer::Cloud& Visualizer::add(const pcl::PointCloud<pcl::PointNormal>& data, const CloudName& name, ViewportIdx viewport)
 {
     using P = pcl::PointNormal;
     addFeature(data, "x", name, viewport, [](const P& p) { return p.x; });
@@ -175,16 +169,39 @@ Visualizer::Cloud& Visualizer::add(const pcl::PointCloud<pcl::PointNormal>& data
 
 Visualizer::Cloud& Visualizer::add(const FeatureData& data, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport)
 {
-    return mClouds[cloudName].add(data, featName, viewport);
+    return mClouds[cloudName].addFeature(data, featName, viewport);
 }
 
-Visualizer::Cloud& Visualizer::getCloud(const CloudName& name)
+void Visualizer::render()
 {
-    return mClouds[name]; // WARNING: creates map entry if it does not exist
+    for (const auto& pair : mClouds)
+    {
+        const auto& name = pair.first;
+        const auto& cloud = pair.second;
+
+        // Some color and geometry handlers only work with PointCloud2 objects, 
+        // and the best way to create them is by reading a file. That is nice, because
+        // we want to save the file anyway.
+        const std::string fileName = sFilePrefix + name + ".pcd";
+        cloud.save(fileName);
+        pcl::PCLPointCloud2::Ptr pclCloudMsg(new pcl::PCLPointCloud2());
+        pcl::io::loadPCDFile(fileName, *pclCloudMsg);
+
+        //using GeoHandler = pcl::visualization::PointCloudGeometryHandlerXYZ<pcl::PCLPointCloud2>; // could add geo handlers in addPointCloud call.
+        //GeoHandler::ConstPtr geo(new GeoHandler(pclCloudMsg));
+        using ColorHandler = pcl::visualization::PointCloudColorHandlerGenericField<pcl::PCLPointCloud2>;
+        for (const auto& field : pclCloudMsg->fields)
+        {
+            ColorHandler::ConstPtr color(new ColorHandler(pclCloudMsg, field.name));
+            mViewer.addPointCloud(pclCloudMsg, color, Eigen::Vector4f(0,0,0,0), Eigen::Quaternion<float>(0,0,0,0), name, cloud.mViewport);
+        }
+    }
+
+    mViewer.spin();
 }
 
 Visualizer::Visualizer(const std::string& name, int nbRows, int nbCols) :
-	pcl::visualization::PCLVisualizer(name)
+	mViewer(name)
 {
 	mViewportIds.resize(nbRows * nbCols);
 	const float sizeX = 1 / nbCols;
@@ -192,7 +209,7 @@ Visualizer::Visualizer(const std::string& name, int nbRows, int nbCols) :
 	int k = 0;
 	for (int i = 0; i < nbCols; ++i)
 		for (int j = 0; j < nbRows; ++j)
-			createViewPort(i*sizeX, j*sizeY, (i + 1)*sizeX, (j + 1)*sizeY, mViewportIds[k++]);
+			mViewer.createViewPort(i*sizeX, j*sizeY, (i + 1)*sizeX, (j + 1)*sizeY, mViewportIds[k++]);
 }
 
 int main()
@@ -224,7 +241,7 @@ int main()
 
     viewer.save(cloudnames[0]);
 
-	viewer.spin();
+	viewer.render();
 
     return 0;
 }
