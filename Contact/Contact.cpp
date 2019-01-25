@@ -241,12 +241,8 @@ int main()
             normal.normalize();
 
             pcl::PointNormal pn;
-            pn.x = x;
-            pn.y = y;
-            pn.z = z;
-            pn.normal_x = normal[0];
-            pn.normal_y = normal[1];
-            pn.normal_z = normal[2];
+            pn.x = x; pn.y = y; pn.z = z;
+            pn.normal_x = normal[0]; pn.normal_y = normal[1]; pn.normal_z = normal[2];
             pn.curvature = rand();
             normals->push_back(pn);
         }
@@ -263,18 +259,21 @@ int main()
     std::cout << *cloud << std::endl;
     pcl::io::savePCDFile("cloud.pcd", *cloud);
 
-    const std::string cloudnames[] = { "random-cloud" };
-
+    //
     Visualizer viewer("A cloud", 2, 3);
 
-    viewer.add(*cloud, cloudnames[0]);
-    viewer.addFeature(idx, "index", cloudnames[0]);
+    //
+    viewer.add(*cloud, "random-cloud");
+    viewer.addFeature(idx, "index", "random-cloud");
 
+    //
     viewer.add(*cloud, "yoyo", 4).addFeature(rnd, "randv").addFeature(idx, "index");
 
+    //
     viewer.add(*cloud, "normaly", 2).addFeature(rnd, "randv");
     viewer.add(*normals, "normaly", 2);
 
+    //
     viewer.render();
 
     return 0;
