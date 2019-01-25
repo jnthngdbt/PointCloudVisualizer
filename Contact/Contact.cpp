@@ -12,6 +12,8 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/visualization/pcl_visualizer.h>
 
+#define VISUALIZER_CALL(x) x
+
 class Visualizer
 {
 public:
@@ -29,6 +31,8 @@ public:
     public:
         Cloud() = default;
 
+        //template<typename T> // TODO
+        //Cloud& add(const pcl::PointCloud<T>& data, ViewportIdx viewport = -1);
         Cloud& addFeature(const FeatureData& data, const FeatureName& name, ViewportIdx viewport = -1);
         Cloud& setViewport(ViewportIdx viewport);
 
@@ -45,7 +49,6 @@ public:
     Cloud& add(const pcl::PointCloud<T>& data, const CloudName& name, ViewportIdx viewport = -1);
     Cloud& addFeature(const FeatureData& data, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport = -1);
 
-    void save(const CloudName& name);
     void render();
     
 private:
@@ -110,11 +113,6 @@ void Visualizer::Cloud::save(const std::string& filename) const
     }
 
     f.close();
-}
-
-void Visualizer::save(const CloudName& name)
-{
-    mClouds[name].save(name); // WARNING: creates map entry if it does not exist
 }
 
 Visualizer::Cloud& Visualizer::Cloud::addFeature(const FeatureData& data, const FeatureName& name, ViewportIdx viewport)
@@ -260,21 +258,21 @@ int main()
     pcl::io::savePCDFile("cloud.pcd", *cloud);
 
     //
-    Visualizer viewer("A cloud", 2, 3);
+    VISUALIZER_CALL(Visualizer viewer("A cloud", 2, 3));
 
     //
-    viewer.add(*cloud, "random-cloud");
-    viewer.addFeature(idx, "index", "random-cloud");
+    VISUALIZER_CALL(viewer.add(*cloud, "random-cloud"));
+    VISUALIZER_CALL(viewer.addFeature(idx, "index", "random-cloud"));
 
     //
-    viewer.add(*cloud, "yoyo", 4).addFeature(rnd, "randv").addFeature(idx, "index");
+    VISUALIZER_CALL(viewer.add(*cloud, "yoyo", 4).addFeature(rnd, "randv").addFeature(idx, "index"));
 
     //
-    viewer.add(*cloud, "normaly", 2).addFeature(rnd, "randv");
-    viewer.add(*normals, "normaly", 2);
+    VISUALIZER_CALL(viewer.add(*cloud, "normaly", 2).addFeature(rnd, "randv"));
+    VISUALIZER_CALL(viewer.add(*normals, "normaly", 2));
 
     //
-    viewer.render();
+    VISUALIZER_CALL(viewer.render());
 
     return 0;
 }
