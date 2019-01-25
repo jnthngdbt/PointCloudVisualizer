@@ -1,9 +1,34 @@
 #include "stdafx.h"
 #include <stdlib.h>
+
+#include <string>
+#include <vector>
+
 #include <pcl/pcl_base.h>
 #include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/visualization/pcl_visualizer.h>
+
+class Visualizer : public pcl::visualization::PCLVisualizer
+{
+public:
+	Visualizer(const std::string& name, int nbRows = 1, int nbCols = 1);
+
+	class Cloud
+	{
+	public:
+		Cloud() = default;
+
+	private:
+
+	};
+};
+
+Visualizer::Visualizer(const std::string& name, int nbRows, int nbCols) :
+	pcl::visualization::PCLVisualizer(name)
+{
+
+}
 
 int main()
 {
@@ -22,7 +47,7 @@ int main()
 	std::cout << *cloud << std::endl;
 	pcl::io::savePCDFile("cloud.pcd", *cloud);
 
-	pcl::visualization::PCLVisualizer viewer("A cloud");
+	Visualizer viewer("A cloud");
 	viewer.addPointCloud(cloud, "random-cloud");
 
 	viewer.spin();
