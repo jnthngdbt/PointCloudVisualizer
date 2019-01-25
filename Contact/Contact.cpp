@@ -224,8 +224,11 @@ Visualizer::Visualizer(const std::string& name, int nbRows, int nbCols) :
 
 int main()
 {
-	using CloudType = pcl::PointCloud<pcl::PointXYZ>;
-	CloudType::Ptr cloud (new CloudType());
+	using PointsType = pcl::PointCloud<pcl::PointXYZ>;
+	PointsType::Ptr cloud (new PointsType());
+
+    using NormalsType = pcl::PointCloud<pcl::PointNormal>;
+    NormalsType::Ptr normals(new NormalsType());
 
 	for (float x = 0.0; x < 1.0; x += 0.01)
 	{
@@ -233,6 +236,19 @@ int main()
 		{
 			const float z = rand() / 100000.f;
 			cloud->push_back({ x,y,z });
+
+            auto normal = Eigen::Vector3f(rand(), rand(), rand());
+            normal.normalize();
+
+            pcl::PointNormal pn;
+            pn.x = x;
+            pn.y = y;
+            pn.z = z;
+            pn.normal_x = normal[0];
+            pn.normal_y = normal[1];
+            pn.normal_z = normal[2];
+            pn.curvature = rand();
+            normals->push_back(pn);
 		}
 	}
 
@@ -255,6 +271,9 @@ int main()
 	viewer.addFeature(idx, "index", cloudnames[0]);
 
     viewer.add(*cloud, "yoyo", 4).addFeature(rnd, "randv").addFeature(idx, "index");
+
+    viewer.add(*cloud, "normaly", 2).addFeature(rnd, "randv");
+    viewer.add(*normals, "normaly", 2);
 
 	viewer.render();
 
