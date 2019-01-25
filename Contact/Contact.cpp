@@ -90,10 +90,20 @@ void Visualizer::Cloud::save(const CloudName& name) const
         f << " 1";
     f << std::endl;
 
-    f << "WIDTH" << getNbPoints() << std::endl;
+    f << "WIDTH " << getNbPoints() << std::endl;
     f << "HEIGHT 1" << std::endl;
     f << "VIEWPOINT 0 0 0 1 0 0 0" << std::endl;
+    f << "POINTS " << getNbPoints() << std::endl;
     f << "DATA ascii" << std::endl;
+
+    for (int i = 0; i < getNbPoints(); ++i)
+    {
+        for (const auto& feature : mFeatures)
+        {
+            f << feature.second[i] << " "; // TODO should make sure that all features have same amount of points
+        }
+        f << std::endl;
+    }
 
     f.close();
 }
