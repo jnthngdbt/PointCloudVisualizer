@@ -43,7 +43,7 @@ public:
 
     template<typename T>
     Cloud& add(const pcl::PointCloud<T>& data, const CloudName& name, ViewportIdx viewport = -1);
-    Cloud& add(const FeatureData& data, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport = -1);
+    Cloud& addFeature(const FeatureData& data, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport = -1);
 
     void save(const CloudName& name);
     void render();
@@ -171,7 +171,7 @@ Visualizer::Cloud& Visualizer::add(const pcl::PointCloud<pcl::PointNormal>& data
     return mClouds[name].setViewport(viewport);
 }
 
-Visualizer::Cloud& Visualizer::add(const FeatureData& data, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport)
+Visualizer::Cloud& Visualizer::addFeature(const FeatureData& data, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport)
 {
     return mClouds[cloudName].addFeature(data, featName, viewport);
 }
@@ -250,8 +250,9 @@ int main()
     const std::string cloudnames[] = { "random-cloud" };
 
 	Visualizer viewer("A cloud", 2, 3);
+
 	viewer.add(*cloud, cloudnames[0]);
-	viewer.add(idx, "index", cloudnames[0]);
+	viewer.addFeature(idx, "index", cloudnames[0]);
 
     viewer.add(*cloud, "yoyo", 4).addFeature(rnd, "randv").addFeature(idx, "index");
 
