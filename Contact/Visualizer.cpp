@@ -100,6 +100,18 @@ Visualizer::Cloud& Visualizer::add(const pcl::PointCloud<pcl::PointXYZ>& data, c
 }
 
 template<>
+Visualizer::Cloud& Visualizer::add(const pcl::PointCloud<pcl::Normal>& data, const CloudName& name, ViewportIdx viewport)
+{
+	using P = pcl::Normal;
+	addFeature(data, "normal_x", name, viewport, [](const P& p) { return p.normal_x; });
+	addFeature(data, "normal_y", name, viewport, [](const P& p) { return p.normal_y; });
+	addFeature(data, "normal_z", name, viewport, [](const P& p) { return p.normal_z; });
+	addFeature(data, "curvature", name, viewport, [](const P& p) { return p.curvature; });
+
+	return mClouds[name].setViewport(viewport);
+}
+
+template<>
 Visualizer::Cloud& Visualizer::add(const pcl::PointCloud<pcl::PointNormal>& data, const CloudName& name, ViewportIdx viewport)
 {
 	using P = pcl::PointNormal;
