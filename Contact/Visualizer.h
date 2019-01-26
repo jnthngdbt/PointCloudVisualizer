@@ -2,7 +2,7 @@
 
 #include <stdlib.h>
 
-#include <unordered_map>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -42,7 +42,7 @@ public:
 
 		int mViewport{ 0 };
 	private:
-		std::unordered_map<FeatureName, FeatureData> mFeatures;
+		std::vector< std::pair<FeatureName, FeatureData> > mFeatures; // using vector instead of [unordered_]map to keep order of insertion
 	};
 
 	template<typename T>
@@ -53,7 +53,7 @@ public:
 
 private:
 	pcl::visualization::PCLVisualizer mViewer;
-	std::unordered_map<CloudName, Cloud> mClouds;
+	std::map<CloudName, Cloud> mClouds;
 	std::vector<int> mViewportIds;
 };
 

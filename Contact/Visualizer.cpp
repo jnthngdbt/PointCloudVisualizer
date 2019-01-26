@@ -72,7 +72,15 @@ Visualizer::Cloud& Visualizer::Cloud::setViewport(ViewportIdx viewport)
 Visualizer::Cloud& Visualizer::Cloud::addFeature(const FeatureData& data, const FeatureName& name, ViewportIdx viewport)
 {
 	// assert size if > 0
-	mFeatures[name] = data;
+
+	auto it = std::find_if(mFeatures.begin(), mFeatures.end(),
+		[&name](const std::pair<FeatureName, FeatureData>& p) { return p.first == name; });
+
+	if (it != mFeatures.end()) // has feature
+		it->second = data;
+	else
+		mFeatures.emplace_back(name, data);
+
 	return *this;
 }
 
