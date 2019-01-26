@@ -15,18 +15,17 @@
 
 using PointsType = pcl::PointCloud<pcl::PointXYZ>;
 
-PointsType::Ptr makeRadialScan()
+PointsType::Ptr makeCloud()
 {
 	PointsType::Ptr cloud(new PointsType());
 
-	for (float a = 0.0; a < M_PI/4; a += 0.02)
+	for (float x = 0.0; x < 1.0; x += 0.01)
 	{
-		for (float b = 0.0; b < M_PI/3; b += 0.02)
+		for (float y = 0.0; y < 1.0; y += 0.01)
 		{
-			const float x = std::sin(a) * std::cos(b);
-			const float y = std::sin(a) * std::sin(b);
-			const float z = std::cos(a);
-			cloud->push_back({ x,y,z });
+			// The offset is to make sure to have consistent normals directions.
+			const float z = 3.0 + 0.1 * std::sin(x*M_PI*5.0) * std::sin(y*M_PI*3.0);
+			cloud->push_back({ x, y, z });
 		}
 	}
 
@@ -35,7 +34,7 @@ PointsType::Ptr makeRadialScan()
 
 int main()
 {
-	PointsType::Ptr cloud = makeRadialScan();
+	PointsType::Ptr cloud = makeCloud();
 
     using NormalsType = pcl::PointCloud<pcl::Normal>;
     NormalsType::Ptr normals(new NormalsType());
