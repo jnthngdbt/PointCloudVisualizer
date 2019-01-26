@@ -60,14 +60,6 @@ void Visualizer::Cloud::save(const std::string& filename) const
 	f.close();
 }
 
-Visualizer::Cloud& Visualizer::Cloud::addFeature(const FeatureData& data, const FeatureName& name, ViewportIdx viewport)
-{
-	// assert size if > 0
-	mFeatures[name] = data;
-
-	return *this;
-}
-
 Visualizer::Cloud& Visualizer::Cloud::setViewport(ViewportIdx viewport)
 {
 	// Use already set viewport if -1.
@@ -77,24 +69,20 @@ Visualizer::Cloud& Visualizer::Cloud::setViewport(ViewportIdx viewport)
 	return *this;
 }
 
-template<typename T, typename F>
-void Visualizer::addFeature(const T& data, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport, F func)
+Visualizer::Cloud& Visualizer::Cloud::addFeature(const FeatureData& data, const FeatureName& name, ViewportIdx viewport)
 {
-	const int nbPoints = data.size();
-	auto& cloud = mClouds[cloudName];
-
-	FeatureData values(nbPoints);
-	std::transform(std::begin(data), std::end(data), std::begin(values), func);
-	cloud.addFeature(values, featName, viewport);
+	// assert size if > 0
+	mFeatures[name] = data;
+	return *this;
 }
 
 template<>
 Visualizer::Cloud& Visualizer::add(const pcl::PointCloud<pcl::PointXYZ>& data, const CloudName& name, ViewportIdx viewport)
 {
 	using P = pcl::PointXYZ;
-	addFeature(data, "x", name, viewport, [](const P& p) { return p.x; });
-	addFeature(data, "y", name, viewport, [](const P& p) { return p.y; });
-	addFeature(data, "z", name, viewport, [](const P& p) { return p.z; });
+	mClouds[name].addFeature(data, "x", [](const P& p) { return p.x; }, viewport);
+	mClouds[name].addFeature(data, "y", [](const P& p) { return p.y; }, viewport);
+	mClouds[name].addFeature(data, "z", [](const P& p) { return p.z; }, viewport);
 
 	return mClouds[name].setViewport(viewport);
 }
@@ -103,10 +91,10 @@ template<>
 Visualizer::Cloud& Visualizer::add(const pcl::PointCloud<pcl::Normal>& data, const CloudName& name, ViewportIdx viewport)
 {
 	using P = pcl::Normal;
-	addFeature(data, "normal_x", name, viewport, [](const P& p) { return p.normal_x; });
-	addFeature(data, "normal_y", name, viewport, [](const P& p) { return p.normal_y; });
-	addFeature(data, "normal_z", name, viewport, [](const P& p) { return p.normal_z; });
-	addFeature(data, "curvature", name, viewport, [](const P& p) { return p.curvature; });
+	mClouds[name].addFeature(data, "normal_x", [](const P& p) { return p.normal_x; }, viewport);
+	mClouds[name].addFeature(data, "normal_y", [](const P& p) { return p.normal_y; }, viewport);
+	mClouds[name].addFeature(data, "normal_z", [](const P& p) { return p.normal_z; }, viewport);
+	mClouds[name].addFeature(data, "curvature", [](const P& p) { return p.curvature; }, viewport);
 
 	return mClouds[name].setViewport(viewport);
 }
@@ -115,13 +103,13 @@ template<>
 Visualizer::Cloud& Visualizer::add(const pcl::PointCloud<pcl::PointNormal>& data, const CloudName& name, ViewportIdx viewport)
 {
 	using P = pcl::PointNormal;
-	addFeature(data, "x", name, viewport, [](const P& p) { return p.x; });
-	addFeature(data, "y", name, viewport, [](const P& p) { return p.y; });
-	addFeature(data, "z", name, viewport, [](const P& p) { return p.z; });
-	addFeature(data, "normal_x", name, viewport, [](const P& p) { return p.normal_x; });
-	addFeature(data, "normal_y", name, viewport, [](const P& p) { return p.normal_y; });
-	addFeature(data, "normal_z", name, viewport, [](const P& p) { return p.normal_z; });
-	addFeature(data, "curvature", name, viewport, [](const P& p) { return p.curvature; });
+	mClouds[name].addFeature(data, "x", [](const P& p) { return p.x; }, viewport);
+	mClouds[name].addFeature(data, "y", [](const P& p) { return p.y; }, viewport);
+	mClouds[name].addFeature(data, "z", [](const P& p) { return p.z; }, viewport);
+	mClouds[name].addFeature(data, "normal_x", [](const P& p) { return p.normal_x; }, viewport);
+	mClouds[name].addFeature(data, "normal_y", [](const P& p) { return p.normal_y; }, viewport);
+	mClouds[name].addFeature(data, "normal_z", [](const P& p) { return p.normal_z; }, viewport);
+	mClouds[name].addFeature(data, "curvature", [](const P& p) { return p.curvature; }, viewport);
 
 	return mClouds[name].setViewport(viewport);
 }

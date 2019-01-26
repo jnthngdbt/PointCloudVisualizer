@@ -69,6 +69,10 @@ int main()
     VISUALIZER_CALL(viewer.add(*cloud, "normaly", 2).addFeature(rnd, "randv"));
     VISUALIZER_CALL(viewer.add(*normals, "normaly", 2));
 
+	//
+	VISUALIZER_CALL(viewer.add(*cloud, "struct", 1)
+		.addFeature(normals->points, "c", [](const pcl::Normal& p) { return p.curvature; }));
+
     //
     VISUALIZER_CALL(viewer.render());
 

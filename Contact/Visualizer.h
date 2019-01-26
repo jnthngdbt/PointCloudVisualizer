@@ -31,6 +31,8 @@ public:
 
 		//template<typename T> // TODO
 		//Cloud& add(const pcl::PointCloud<T>& data, ViewportIdx viewport = -1);
+		template<typename T, typename F>
+		Cloud& addFeature(const T& data, const FeatureName& featName, F func, ViewportIdx viewport = -1);
 		Cloud& addFeature(const FeatureData& data, const FeatureName& name, ViewportIdx viewport = -1);
 		Cloud& setViewport(ViewportIdx viewport);
 
@@ -50,10 +52,15 @@ public:
 	void render();
 
 private:
-	template<typename T, typename F>
-	void addFeature(const T& data, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport, F func);
-
 	pcl::visualization::PCLVisualizer mViewer;
 	std::unordered_map<CloudName, Cloud> mClouds;
 	std::vector<int> mViewportIds;
 };
+
+template<typename T, typename F>
+Visualizer::Cloud& Visualizer::Cloud::addFeature(const T& data, const FeatureName& featName, F func, ViewportIdx viewport)
+{
+	FeatureData values(data.size());
+	std::transform(std::begin(data), std::end(data), std::begin(values), func);
+	return addFeature(values, featName, viewport);
+}
