@@ -1,4 +1,6 @@
 #include "stdafx.h"
+
+#include <math.h>
 #include <stdlib.h>
 
 #include <string>
@@ -6,42 +8,49 @@
 
 #include <pcl/pcl_base.h>
 #include <pcl/point_types.h>
+#include <pcl/features/normal_3d.h>
 #include <pcl/io/pcd_io.h>
 
 #include "Visualizer.h"
 
+using PointsType = pcl::PointCloud<pcl::PointXYZ>;
+
+PointsType::Ptr makeRadialScan()
+{
+	PointsType::Ptr cloud(new PointsType());
+
+	for (float a = 0.0; a < M_PI/4; a += 0.02)
+	{
+		for (float b = 0.0; b < M_PI/3; b += 0.02)
+		{
+			const float x = std::sin(a) * std::cos(b);
+			const float y = std::sin(a) * std::sin(b);
+			const float z = std::cos(a);
+			cloud->push_back({ x,y,z });
+		}
+	}
+
+	return cloud;
+}
+
 int main()
 {
-    using PointsType = pcl::PointCloud<pcl::PointXYZ>;
-    PointsType::Ptr cloud (new PointsType());
+	PointsType::Ptr cloud = makeRadialScan();
 
-    using NormalsType = pcl::PointCloud<pcl::PointNormal>;
+    using NormalsType = pcl::PointCloud<pcl::Normal>;
     NormalsType::Ptr normals(new NormalsType());
 
-    for (float x = 0.0; x < 1.0; x += 0.01)
-    {
-        for (float y = 0.0; y < 1.0; y += 0.01)
-        {
-            const float z = rand() / 100000.f;
-            cloud->push_back({ x,y,z });
-
-            auto normal = Eigen::Vector3f(rand(), rand(), rand());
-            normal.normalize();
-
-            pcl::PointNormal pn;
-            pn.x = x; pn.y = y; pn.z = z;
-            pn.normal_x = normal[0]; pn.normal_y = normal[1]; pn.normal_z = normal[2];
-            pn.curvature = rand();
-            normals->push_back(pn);
-        }
-    }
+	pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> ne;
+	ne.setInputCloud(cloud);
+	ne.setKSearch(30);
+	ne.compute(*normals);
 
     std::vector<float> idx(cloud->size());
     std::vector<float> rnd(cloud->size());
     for (int i = 0; i < (int)cloud->size(); ++i)
     {
         idx[i] = (float)i;
-        rnd[i] = rand();
+        rnd[i] = rand() / 100000.f;
     }
 
     std::cout << *cloud << std::endl;
