@@ -29,8 +29,8 @@ public:
 	public:
 		Cloud() = default;
 
-		//template<typename T> // TODO
-		//Cloud& add(const pcl::PointCloud<T>& data, ViewportIdx viewport = -1);
+		template<typename T>
+		Cloud& add(const pcl::PointCloud<T>& data, ViewportIdx viewport = -1);
 		template<typename T, typename F>
 		Cloud& addFeature(const T& data, const FeatureName& featName, F func, ViewportIdx viewport = -1);
 		Cloud& addFeature(const FeatureData& data, const FeatureName& name, ViewportIdx viewport = -1);
@@ -63,4 +63,10 @@ Visualizer::Cloud& Visualizer::Cloud::addFeature(const T& data, const FeatureNam
 	FeatureData values(data.size());
 	std::transform(std::begin(data), std::end(data), std::begin(values), func);
 	return addFeature(values, featName, viewport);
+}
+
+template<typename T>
+Visualizer::Cloud& Visualizer::add(const pcl::PointCloud<T>& data, const CloudName& name, ViewportIdx viewport)
+{
+	return mClouds[name].add(data, viewport);
 }

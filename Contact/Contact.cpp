@@ -63,14 +63,17 @@ int main()
     VISUALIZER_CALL(viewer.addFeature(idx, "index", "random-cloud"));
 
     //
-    VISUALIZER_CALL(viewer.add(*cloud, "yoyo", 4).addFeature(rnd, "randv").addFeature(idx, "index"));
+    VISUALIZER_CALL(viewer.add(*cloud, "yoyo", 1).addFeature(rnd, "randv").addFeature(idx, "index"));
 
     //
     VISUALIZER_CALL(viewer.add(*cloud, "normaly", 2).addFeature(rnd, "randv"));
     VISUALIZER_CALL(viewer.add(*normals, "normaly", 2));
 
 	//
-	VISUALIZER_CALL(viewer.add(*cloud, "struct", 1)
+	VISUALIZER_CALL(viewer.add(*cloud, "fullchain", 3).addFeature(rnd, "randv").add(*normals));
+
+	//
+	VISUALIZER_CALL(viewer.add(*cloud, "struct", 4)
 		.addFeature(normals->points, "c", [](const pcl::Normal& p) { return p.curvature; }));
 
     //

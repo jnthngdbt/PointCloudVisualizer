@@ -62,7 +62,7 @@ void Visualizer::Cloud::save(const std::string& filename) const
 
 Visualizer::Cloud& Visualizer::Cloud::setViewport(ViewportIdx viewport)
 {
-	// Use already set viewport if -1.
+	// Continue using already set viewport (do nothing) if -1.
 	if (viewport > 0)
 		mViewport = viewport;
 
@@ -85,41 +85,41 @@ Visualizer::Cloud& Visualizer::Cloud::addFeature(const FeatureData& data, const 
 }
 
 template<>
-Visualizer::Cloud& Visualizer::add(const pcl::PointCloud<pcl::PointXYZ>& data, const CloudName& name, ViewportIdx viewport)
+Visualizer::Cloud& Visualizer::Cloud::add(const pcl::PointCloud<pcl::PointXYZ>& data, ViewportIdx viewport)
 {
 	using P = pcl::PointXYZ;
-	mClouds[name].addFeature(data, "x", [](const P& p) { return p.x; }, viewport);
-	mClouds[name].addFeature(data, "y", [](const P& p) { return p.y; }, viewport);
-	mClouds[name].addFeature(data, "z", [](const P& p) { return p.z; }, viewport);
+	addFeature(data, "x", [](const P& p) { return p.x; }, viewport);
+	addFeature(data, "y", [](const P& p) { return p.y; }, viewport);
+	addFeature(data, "z", [](const P& p) { return p.z; }, viewport);
 
-	return mClouds[name].setViewport(viewport);
+	return setViewport(viewport);
 }
 
 template<>
-Visualizer::Cloud& Visualizer::add(const pcl::PointCloud<pcl::Normal>& data, const CloudName& name, ViewportIdx viewport)
+Visualizer::Cloud& Visualizer::Cloud::add(const pcl::PointCloud<pcl::Normal>& data, ViewportIdx viewport)
 {
 	using P = pcl::Normal;
-	mClouds[name].addFeature(data, "normal_x", [](const P& p) { return p.normal_x; }, viewport);
-	mClouds[name].addFeature(data, "normal_y", [](const P& p) { return p.normal_y; }, viewport);
-	mClouds[name].addFeature(data, "normal_z", [](const P& p) { return p.normal_z; }, viewport);
-	mClouds[name].addFeature(data, "curvature", [](const P& p) { return p.curvature; }, viewport);
+	addFeature(data, "normal_x", [](const P& p) { return p.normal_x; }, viewport);
+	addFeature(data, "normal_y", [](const P& p) { return p.normal_y; }, viewport);
+	addFeature(data, "normal_z", [](const P& p) { return p.normal_z; }, viewport);
+	addFeature(data, "curvature", [](const P& p) { return p.curvature; }, viewport);
 
-	return mClouds[name].setViewport(viewport);
+	return setViewport(viewport);
 }
 
 template<>
-Visualizer::Cloud& Visualizer::add(const pcl::PointCloud<pcl::PointNormal>& data, const CloudName& name, ViewportIdx viewport)
+Visualizer::Cloud& Visualizer::Cloud::add(const pcl::PointCloud<pcl::PointNormal>& data, ViewportIdx viewport)
 {
 	using P = pcl::PointNormal;
-	mClouds[name].addFeature(data, "x", [](const P& p) { return p.x; }, viewport);
-	mClouds[name].addFeature(data, "y", [](const P& p) { return p.y; }, viewport);
-	mClouds[name].addFeature(data, "z", [](const P& p) { return p.z; }, viewport);
-	mClouds[name].addFeature(data, "normal_x", [](const P& p) { return p.normal_x; }, viewport);
-	mClouds[name].addFeature(data, "normal_y", [](const P& p) { return p.normal_y; }, viewport);
-	mClouds[name].addFeature(data, "normal_z", [](const P& p) { return p.normal_z; }, viewport);
-	mClouds[name].addFeature(data, "curvature", [](const P& p) { return p.curvature; }, viewport);
+	addFeature(data, "x", [](const P& p) { return p.x; }, viewport);
+	addFeature(data, "y", [](const P& p) { return p.y; }, viewport);
+	addFeature(data, "z", [](const P& p) { return p.z; }, viewport);
+	addFeature(data, "normal_x", [](const P& p) { return p.normal_x; }, viewport);
+	addFeature(data, "normal_y", [](const P& p) { return p.normal_y; }, viewport);
+	addFeature(data, "normal_z", [](const P& p) { return p.normal_z; }, viewport);
+	addFeature(data, "curvature", [](const P& p) { return p.curvature; }, viewport);
 
-	return mClouds[name].setViewport(viewport);
+	return setViewport(viewport);
 }
 
 Visualizer::Cloud& Visualizer::addFeature(const FeatureData& data, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport)
