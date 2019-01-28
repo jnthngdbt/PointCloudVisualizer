@@ -81,6 +81,7 @@ Visualizer::Cloud& Visualizer::Cloud::addFeature(const FeatureData& data, const 
 	else
 		mFeatures.emplace_back(name, data);
 
+	setViewport(viewport);
 	return *this;
 }
 
@@ -91,8 +92,8 @@ Visualizer::Cloud& Visualizer::Cloud::add(const pcl::PointCloud<pcl::PointXYZ>& 
 	addFeature(data, "x", [](const P& p) { return p.x; }, viewport);
 	addFeature(data, "y", [](const P& p) { return p.y; }, viewport);
 	addFeature(data, "z", [](const P& p) { return p.z; }, viewport);
-
-	return setViewport(viewport);
+	setViewport(viewport);
+	return *this;
 }
 
 template<>
@@ -103,8 +104,8 @@ Visualizer::Cloud& Visualizer::Cloud::add(const pcl::PointCloud<pcl::Normal>& da
 	addFeature(data, "normal_y", [](const P& p) { return p.normal_y; }, viewport);
 	addFeature(data, "normal_z", [](const P& p) { return p.normal_z; }, viewport);
 	addFeature(data, "curvature", [](const P& p) { return p.curvature; }, viewport);
-
-	return setViewport(viewport);
+	setViewport(viewport);
+	return *this;
 }
 
 template<>
@@ -118,9 +119,9 @@ Visualizer::Cloud& Visualizer::Cloud::add(const pcl::PointCloud<pcl::PointNormal
 	addFeature(data, "normal_y", [](const P& p) { return p.normal_y; }, viewport);
 	addFeature(data, "normal_z", [](const P& p) { return p.normal_z; }, viewport);
 	addFeature(data, "curvature", [](const P& p) { return p.curvature; }, viewport);
-
-	return setViewport(viewport);
-}
+	setViewport(viewport);
+	return *this;
+	}
 
 Visualizer::Cloud& Visualizer::addFeature(const FeatureData& data, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport)
 {
@@ -129,10 +130,21 @@ Visualizer::Cloud& Visualizer::addFeature(const FeatureData& data, const Feature
 
 void Visualizer::render()
 {
-	for (const auto& pair : mClouds)
+	for (auto& pair : mClouds)
 	{
 		const auto& name = pair.first;
-		const auto& cloud = pair.second;
+		auto& cloud = pair.second;
+
+		const bool hasRGB = (cloud.mRGB.r >= 0.0);
+
+		if (hasRGB)
+		{
+			const auto r = static_cast<uint8_t>(cloud.mRGB.r * 255);
+			const auto g = static_cast<uint8_t>(cloud.mRGB.g * 255);
+			const auto b = static_cast<uint8_t>(cloud.mRGB.b * 255);
+			const auto rgb = static_cast<float>((r << 16) + (g << 8) + (b));
+			cloud.addFeature(std::vector<float>(cloud.getNbPoints(), rgb), "rgb", cloud.mViewport);
+		}
 
 		// Some color and geometry handlers only work with PointCloud2 objects, 
 		// and the best way to create them is by reading a file. That is nice, because
@@ -142,12 +154,40 @@ void Visualizer::render()
 		pcl::PCLPointCloud2::Ptr pclCloudMsg(new pcl::PCLPointCloud2());
 		pcl::io::loadPCDFile(fileName, *pclCloudMsg);
 
+		// First field is RGB if available, otherwise random.
+		if (hasRGB)
+		{
+			using ColorHandler = pcl::visualization::PointCloudColorHandlerRGBField<pcl::PCLPointCloud2>;
+			mViewer.addPointCloud(
+				pclCloudMsg,
+				ColorHandler::Ptr(new pcl::visualization::PointCloudColorHandlerRGBField<pcl::PCLPointCloud2>(pclCloudMsg)),
+				Eigen::Vector4f(0, 0, 0, 0),
+				Eigen::Quaternion<float>(0, 0, 0, 0),
+				name,
+				mViewportIds[cloud.mViewport]);
+		}
+		else
+		{
+			using ColorHandler = pcl::visualization::PointCloudColorHandlerRandom<pcl::PCLPointCloud2>;
+			mViewer.addPointCloud(
+				pclCloudMsg,
+				ColorHandler::Ptr(new pcl::visualization::PointCloudColorHandlerRandom<pcl::PCLPointCloud2>(pclCloudMsg)),
+				Eigen::Vector4f(0, 0, 0, 0),
+				Eigen::Quaternion<float>(0, 0, 0, 0),
+				name,
+				mViewportIds[cloud.mViewport]);
+		}
+
 		//using GeoHandler = pcl::visualization::PointCloudGeometryHandlerXYZ<pcl::PCLPointCloud2>; // could add geo handlers in addPointCloud call.
 		//GeoHandler::ConstPtr geo(new GeoHandler(pclCloudMsg));
 		using ColorHandler = pcl::visualization::PointCloudColorHandlerGenericField<pcl::PCLPointCloud2>;
 		for (const auto& field : pclCloudMsg->fields)
 		{
+			if (field.name == "rgb")
+				continue; // already dealt with
+
 			ColorHandler::ConstPtr color(new ColorHandler(pclCloudMsg, field.name));
+			color.reset(new ColorHandler(pclCloudMsg, field.name));
 			mViewer.addPointCloud(
 				pclCloudMsg,
 				color,
@@ -155,6 +195,9 @@ void Visualizer::render()
 				Eigen::Quaternion<float>(0, 0, 0, 0),
 				name,
 				mViewportIds[cloud.mViewport]);
+
+			mViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, cloud.mSize, name);
+			mViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, cloud.mOpacity, name);
 		}
 	}
 

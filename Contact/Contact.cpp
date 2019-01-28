@@ -8,12 +8,15 @@
 
 #include <pcl/pcl_base.h>
 #include <pcl/point_types.h>
+#include <pcl/common/transforms.h>
 #include <pcl/features/normal_3d.h>
 #include <pcl/io/pcd_io.h>
 
 #include "Visualizer.h"
 
 using PointsType = pcl::PointCloud<pcl::PointXYZ>;
+
+float randf() { return rand() / static_cast<float>(RAND_MAX); }
 
 PointsType::Ptr makeCloud()
 {
@@ -34,51 +37,82 @@ PointsType::Ptr makeCloud()
 
 int main()
 {
-	PointsType::Ptr cloud = makeCloud();
+	PointsType::Ptr cloudModel = makeCloud();
 
+	// Noisy cloud.
+	PointsType::Ptr cloudNoisy = makeCloud();
+	for (auto& p : cloudNoisy->points)
+		p.z += 0.05*randf();
+
+	// Transformed cloud.
+	PointsType::Ptr cloudMoved (new PointsType());
+	Eigen::Affine3f T = Eigen::Affine3f::Identity();
+	T.translate(Eigen::Vector3f(0.05, 0, 0));
+	pcl::transformPointCloud(*cloudModel, *cloudMoved, T);
+
+	// Normals.
     using NormalsType = pcl::PointCloud<pcl::Normal>;
     NormalsType::Ptr normals(new NormalsType());
-
 	pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> ne;
-	ne.setInputCloud(cloud);
+	ne.setInputCloud(cloudModel);
 	ne.setKSearch(30);
 	ne.compute(*normals);
 
-    std::vector<float> idx(cloud->size());
-    std::vector<float> rnd(cloud->size());
-    for (int i = 0; i < (int)cloud->size(); ++i)
+	// Some array features.
+    std::vector<float> idx(cloudModel->size());
+    std::vector<float> rnd(cloudModel->size());
+    for (int i = 0; i < (int)cloudModel->size(); ++i)
     {
         idx[i] = (float)i;
-        rnd[i] = rand() / 100000.f;
+        rnd[i] = randf();
     }
 
-    std::cout << *cloud << std::endl;
-    pcl::io::savePCDFile("cloud.pcd", *cloud);
+    std::cout << *cloudModel << std::endl;
+    pcl::io::savePCDFile("cloud.pcd", *cloudModel);
 
-    //
-    VISUALIZER_CALL(Visualizer viewer("A cloud", 2, 3));
+	auto multipleViewports = [&]()
+	{
+		VISUALIZER_CALL(Visualizer viewer("multiple-viewports", 2, 3));
 
-    //
-    VISUALIZER_CALL(viewer.add(*cloud, "random-cloud"));
-    VISUALIZER_CALL(viewer.addFeature(idx, "index", "random-cloud"));
+		std::string NAME;
+		int viewport = 0;
 
-    //
-    VISUALIZER_CALL(viewer.add(*cloud, "yoyo", 1).addFeature(rnd, "randv").addFeature(idx, "index"));
+		NAME = "add-feature-multiplecalls"; 
+		VISUALIZER_CALL(viewer.add(*cloudModel, NAME));
+		VISUALIZER_CALL(viewer.addFeature(idx, "index", NAME));
+		viewport++;
 
-    //
-    VISUALIZER_CALL(viewer.add(*cloud, "normaly", 2).addFeature(rnd, "randv"));
-    VISUALIZER_CALL(viewer.add(*normals, "normaly", 2));
+		NAME = "add-feature-chained";
+		VISUALIZER_CALL(viewer.add(*cloudModel, NAME, viewport).addFeature(rnd, "randv").addFeature(idx, "index"));
+		viewport++;
+
+		NAME = "add-feature-cloud-to-cloud-multiplecalls";
+		VISUALIZER_CALL(viewer.add(*cloudModel, NAME, viewport).addFeature(rnd, "randv"));
+		VISUALIZER_CALL(viewer.add(*normals, NAME, viewport));
+		viewport++;
+
+		NAME = "add-feature-lamdba-to-cloud-chained";
+		VISUALIZER_CALL(viewer.add(*cloudModel, NAME, viewport)
+			.addFeature(normals->points, "c", [](const pcl::Normal& p) { return p.curvature; }));
+		viewport++;
+
+		NAME = "add-feature-lamdba-to-cloud-multiplecalls";
+		VISUALIZER_CALL(viewer.addFeature(cloudModel->points, "x", NAME, [](const pcl::PointXYZ& p) { return p.x; }, viewport));
+		VISUALIZER_CALL(viewer.addFeature(cloudModel->points, "y", NAME, [](const pcl::PointXYZ& p) { return p.y; }, viewport));
+		VISUALIZER_CALL(viewer.addFeature(cloudModel->points, "z", NAME, [](const pcl::PointXYZ& p) { return p.z; }, viewport));
+		viewport++;
+
+		NAME = "multiple-clouds-properties-multiplecalls";
+		VISUALIZER_CALL(viewer.add(*cloudModel, NAME + "-0", viewport).addFeature(idx, "index").add(*normals).setColor(1.0, 0.0, 0.0).setOpacity(0.5).setSize(5));
+		VISUALIZER_CALL(viewer.add(*cloudNoisy, NAME + "-1", viewport));
+		viewport++;
+
+		VISUALIZER_CALL(viewer.render());
+	};
 
 	//
-	VISUALIZER_CALL(viewer.add(*cloud, "fullchain", 3).addFeature(rnd, "randv").add(*normals));
-
-	//
-	VISUALIZER_CALL(viewer.add(*cloud, "struct", 4)
-		.addFeature(normals->points, "c", [](const pcl::Normal& p) { return p.curvature; }));
-
-    //
-    VISUALIZER_CALL(viewer.render());
-
+	multipleViewports();
+ 
     return 0;
 }
 
