@@ -139,6 +139,7 @@ void Visualizer::render()
 
 		if (hasRGB)
 		{
+			// Create packed RGB value.
 			const auto r = static_cast<uint8_t>(cloud.mRGB.r * 255);
 			const auto g = static_cast<uint8_t>(cloud.mRGB.g * 255);
 			const auto b = static_cast<uint8_t>(cloud.mRGB.b * 255);
@@ -148,35 +149,27 @@ void Visualizer::render()
 
 		// Some color and geometry handlers only work with PointCloud2 objects, 
 		// and the best way to create them is by reading a file. That is nice, because
-		// we want to save the file anyway.
+		// we want to save the file anyway, because allows to save in a single cloud
+		// multiple custom features.
 		const std::string fileName = sFilePrefix + name + ".pcd";
 		cloud.save(fileName);
 		pcl::PCLPointCloud2::Ptr pclCloudMsg(new pcl::PCLPointCloud2());
 		pcl::io::loadPCDFile(fileName, *pclCloudMsg);
 
 		// First field is RGB if available, otherwise random.
+		pcl::visualization::PointCloudColorHandler<pcl::PCLPointCloud2>::Ptr firstColor;
 		if (hasRGB)
-		{
-			using ColorHandler = pcl::visualization::PointCloudColorHandlerRGBField<pcl::PCLPointCloud2>;
-			mViewer.addPointCloud(
-				pclCloudMsg,
-				ColorHandler::Ptr(new pcl::visualization::PointCloudColorHandlerRGBField<pcl::PCLPointCloud2>(pclCloudMsg)),
-				Eigen::Vector4f(0, 0, 0, 0),
-				Eigen::Quaternion<float>(0, 0, 0, 0),
-				name,
-				mViewportIds[cloud.mViewport]);
-		}
+			firstColor.reset(new pcl::visualization::PointCloudColorHandlerRGBField<pcl::PCLPointCloud2>(pclCloudMsg));
 		else
-		{
-			using ColorHandler = pcl::visualization::PointCloudColorHandlerRandom<pcl::PCLPointCloud2>;
-			mViewer.addPointCloud(
-				pclCloudMsg,
-				ColorHandler::Ptr(new pcl::visualization::PointCloudColorHandlerRandom<pcl::PCLPointCloud2>(pclCloudMsg)),
-				Eigen::Vector4f(0, 0, 0, 0),
-				Eigen::Quaternion<float>(0, 0, 0, 0),
-				name,
-				mViewportIds[cloud.mViewport]);
-		}
+			firstColor.reset(new pcl::visualization::PointCloudColorHandlerRandom<pcl::PCLPointCloud2>(pclCloudMsg));
+
+		mViewer.addPointCloud(
+			pclCloudMsg,
+			firstColor,
+			Eigen::Vector4f(0, 0, 0, 0),
+			Eigen::Quaternion<float>(0, 0, 0, 0),
+			name,
+			mViewportIds[cloud.mViewport]);
 
 		//using GeoHandler = pcl::visualization::PointCloudGeometryHandlerXYZ<pcl::PCLPointCloud2>; // could add geo handlers in addPointCloud call.
 		//GeoHandler::ConstPtr geo(new GeoHandler(pclCloudMsg));
