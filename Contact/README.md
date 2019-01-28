@@ -8,8 +8,7 @@ How to install:
 
 TODO
 
-- random color color handlers
-- generalize add templates
-- cloud color, opacity, size chainable methods
+- append/concatenate cloud, add single points to clouds (for visualizing temp stuff inside loop)
+- plot, bar, hist
 - add basis
 - custom geo handlers
