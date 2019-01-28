@@ -83,7 +83,7 @@ int main()
         viewport++;
 
         NAME = "add-feature-chained";
-        VISUALIZER_CALL(viewer.add(*cloudModel, NAME, viewport).addFeature(rnd, "randv").addFeature(idx, "index"));
+        VISUALIZER_CALL(viewer.add(*cloudNoisy, NAME, viewport).addFeature(rnd, "randv").addFeature(idx, "index"));
         viewport++;
 
         NAME = "add-feature-cloud-to-cloud-multiplecalls";
@@ -92,7 +92,7 @@ int main()
         viewport++;
 
         NAME = "add-feature-lamdba-to-cloud-chained";
-        VISUALIZER_CALL(viewer.add(*cloudModel, NAME, viewport)
+        VISUALIZER_CALL(viewer.add(*cloudNoisy, NAME, viewport)
             .addFeature(normals->points, "c", [](const pcl::Normal& p) { return p.curvature; }));
         viewport++;
 
