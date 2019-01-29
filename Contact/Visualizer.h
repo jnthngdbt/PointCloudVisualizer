@@ -65,6 +65,7 @@ public:
     Cloud& addFeature(const FeatureData& data, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport = -1);
 
     void render();
+    void keyboardEventOccurred(const pcl::visualization::KeyboardEvent& event, void*);
 
     pcl::visualization::PCLVisualizer& getViewer() { return mViewer; }
 
