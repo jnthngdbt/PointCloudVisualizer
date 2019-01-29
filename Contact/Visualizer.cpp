@@ -208,3 +208,140 @@ Visualizer::Visualizer(const std::string& name, int nbRows, int nbCols) :
         for (int i = 0; i < nbCols; ++i)
             mViewer.createViewPort(i*sizeX, 1.0 - (j + 1)*sizeY, (i + 1)*sizeX, 1.0 - j * sizeY, mViewportIds[k++]);
 }
+
+
+
+
+
+
+
+
+/////////////////////////////////////////
+// REFERENCE
+/////////////////////////////////////////
+
+
+//#ifdef VISUALIZE_ALIGNMENT
+//struct VisualizationData
+//{
+//    VisualizationData(pcl::visualization::PCLVisualizer::Ptr inViewer, AlignmentComputer& inIcp) :
+//        viewer(inViewer),
+//        icp(inIcp),
+//        correspondencesOpacity{ correspondencesOpacityMin },
+//        rejectorsOpacity{ correspondencesOpacityMin },
+//        nbRejectors{ (int)inIcp.getCorrespondenceRejectors().size() },
+//        currentRejectorIdx{ nbRejectors } {};
+//
+//    const std::string helpId = "help";
+//    const std::string targetId = "target";
+//    const std::string sourceId = "aligned source";
+//    const std::string correspondencesId = "correspondences";
+//    const double correspondencesOpacityMin{ 0.25 };
+//    const int nbRejectors;
+//
+//    pcl::visualization::PCLVisualizer::Ptr viewer;
+//    const AlignmentComputer& icp;
+//
+//    double correspondencesOpacity;
+//
+//    double rejectorsOpacity;
+//    int currentRejectorIdx;
+//    std::vector<std::string> rejectorIds;
+//};
+//
+//void keyboardEventOccurred(const pcl::visualization::KeyboardEvent& event, void* voidData)
+//{
+//    VisualizationData& data = *static_cast<VisualizationData*>(voidData);
+//
+//    auto setRejectorsOpacity = [&]()
+//    {
+//        for (int i = 0; i < data.nbRejectors; ++i)
+//        {
+//            const double opacity = (data.currentRejectorIdx == data.nbRejectors) || (data.currentRejectorIdx == i) ? data.rejectorsOpacity : 0.0;
+//            data.viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, opacity, data.rejectorIds[i]);
+//        }
+//    };
+//
+//    // Correspondences lines opacity.
+//    if (event.getKeySym() == "a" && event.keyDown())
+//    {
+//        data.correspondencesOpacity += data.correspondencesOpacityMin;
+//        data.correspondencesOpacity = std::fmod(data.correspondencesOpacity, 1.0);
+//        data.viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, data.correspondencesOpacity, data.correspondencesId);
+//    }
+//
+//    // Rejected correspondences lines opacity.
+//    else if (event.getKeySym() == "b" && event.keyDown())
+//    {
+//        data.rejectorsOpacity += data.correspondencesOpacityMin;
+//        data.rejectorsOpacity = std::fmod(data.rejectorsOpacity, 1.0);
+//        setRejectorsOpacity();
+//    }
+//
+//    // Rejected correspondences for specific rejector.
+//    else if (event.getKeySym() == "d" && event.keyDown())
+//    {
+//        data.currentRejectorIdx++;
+//        data.currentRejectorIdx = std::fmod(data.currentRejectorIdx, data.nbRejectors + 1);
+//        setRejectorsOpacity();
+//    }
+//}
+//
+//void AlignmentComputer::viewAlignment()
+//{
+//    pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisualizer("Correspondence Grouping"));
+//
+//    VisualizationData data(viewer, *this);
+//
+//    viewer->addPointCloud<pcl::PointNormal>(mSubTarget, data.targetId);
+//    viewer->addPointCloud<pcl::PointNormal>(mAlignedSource, data.sourceId);
+//    viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.4, 0.4, 0.8, data.targetId);
+//    viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.0, 0.6, 0.4, data.sourceId);
+//
+//    // Accepted correspondences.
+//    viewer->addCorrespondences<pcl::PointNormal>(mAlignedSource, mSubTarget, *correspondences_, data.correspondencesId);
+//    viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.6, 0.6, 0.6, data.correspondencesId);
+//    viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, data.correspondencesOpacityMin, data.correspondencesId);
+//
+//    // Rejected correspondences.
+//    // Note: since the align implementation does not keep input-output correspondences for the rejectors, 
+//    // we must redo the rejection loop here to determine what has been rejected from which...
+//    pcl::Correspondences remainingCorrespondences;
+//    correspondence_estimation_->determineCorrespondences(remainingCorrespondences); // initialize to all
+//    for (const auto rejector : correspondence_rejectors_)
+//    {
+//        const pcl::Correspondences inputCorrespondences = remainingCorrespondences;
+//        rejector->getRemainingCorrespondences(inputCorrespondences, remainingCorrespondences);
+//
+//        pcl::Correspondences rejectedCorrespondences;
+//        rejectedCorrespondences.resize(inputCorrespondences.size());
+//        const auto it = std::set_difference(inputCorrespondences.begin(), inputCorrespondences.end(), remainingCorrespondences.begin(), remainingCorrespondences.end(), rejectedCorrespondences.begin(),
+//            [](const pcl::Correspondence& a, const pcl::Correspondence& b) { return a.index_query < b.index_query; });
+//        rejectedCorrespondences.resize(it - rejectedCorrespondences.begin());
+//
+//        data.rejectorIds.push_back(rejector->getClassName());
+//        viewer->addCorrespondences<pcl::PointNormal>(mAlignedSource, mSubTarget, rejectedCorrespondences, data.rejectorIds.back());
+//        viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, 0.6, 0.0, 0.0, data.rejectorIds.back());
+//        viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, data.correspondencesOpacityMin, data.rejectorIds.back());
+//    }
+//
+//    viewer->registerKeyboardCallback(keyboardEventOccurred, (void*)&data);
+//
+//    viewer->addText("", 10, 10, data.helpId); // help
+//    viewer->setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_FONT_SIZE, 12, data.helpId);
+//
+//    viewer->setShowFPS(false);
+//
+//    while (!viewer->wasStopped())
+//    {
+//        const auto help =
+//            boost::str(boost::format("a: toggle correspondences opacity (%1%) \n") % data.correspondencesOpacity) +
+//            boost::str(boost::format("b: toggle rejected correspondences opacity (%1%) \n") % data.rejectorsOpacity) +
+//            boost::str(boost::format("d: changed displayed rejector (%1%) \n") % (data.currentRejectorIdx == data.nbRejectors ? "All" : data.rejectorIds[data.currentRejectorIdx])) +
+//            boost::str(boost::format("+/-: increase/decrease points size"));
+//        viewer->updateText(help, 10, 10, data.helpId);
+//
+//        viewer->spinOnce(100);
+//    }
+//}
+//#endif
