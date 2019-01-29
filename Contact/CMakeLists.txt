@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.6 FATAL_ERROR)
 project(Contact)
-find_package(PCL 1.9 REQUIRED COMPONENTS common features io visualization)
+find_package(PCL 1.9 REQUIRED COMPONENTS common features filters io visualization)
 include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
