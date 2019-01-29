@@ -69,6 +69,7 @@ public:
     pcl::visualization::PCLVisualizer& getViewer() { return mViewer; }
 
 private:
+	std::string mName;
     pcl::visualization::PCLVisualizer mViewer;
     std::map<CloudName, Cloud> mClouds;
     std::vector<int> mViewportIds;

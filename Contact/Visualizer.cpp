@@ -151,7 +151,7 @@ void Visualizer::render()
         // and the best way to create them is by reading a file. That is nice, because
         // we want to save the file anyway, because allows to save in a single cloud
         // multiple custom features.
-        const std::string fileName = sFilePrefix + name + ".pcd";
+        const std::string fileName = sFilePrefix + mName + "." + name + ".pcd";
         cloud.save(fileName);
         pcl::PCLPointCloud2::Ptr pclCloudMsg(new pcl::PCLPointCloud2());
         pcl::io::loadPCDFile(fileName, *pclCloudMsg);
@@ -198,7 +198,7 @@ void Visualizer::render()
 }
 
 Visualizer::Visualizer(const std::string& name, int nbRows, int nbCols) :
-    mViewer(name)
+    mName(name), mViewer(name)
 {
     mViewportIds.resize(nbRows * nbCols);
     const float sizeX = 1.0 / nbCols;
