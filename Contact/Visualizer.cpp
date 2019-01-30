@@ -130,10 +130,13 @@ void Visualizer::identifyClouds(bool enabled, bool back)
         const auto& name = pair.first;
         const auto& cloud = pair.second;
 
+        const bool isHighlighted = mState.mIdentifiedCloudIdx == i;
+        const bool isIdentificationDisabled = mState.mIdentifiedCloudIdx == -1;
+
         auto getOpacity = [&]()
         {
-            if (mState.mIdentifiedCloudIdx == -1) return cloud.mOpacity; // identification disabled
-            if (mState.mIdentifiedCloudIdx == i) return 1.0;
+            if (isIdentificationDisabled) return cloud.mOpacity;
+            if (isHighlighted) return 1.0;
             return 0.1;
         };
 
@@ -141,6 +144,7 @@ void Visualizer::identifyClouds(bool enabled, bool back)
             mViewer.addText(name, 0, 0, textId, mViewportIds[cloud.mViewport]);
 
         mViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getOpacity(), name);
+        mViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, isIdentificationDisabled ? cloud.mSize : 1, name);
         ++i;
     }
 }
