@@ -219,6 +219,9 @@ void Visualizer::identifyClouds(bool enabled, bool back)
 	else
 		mState.mIdentifiedCloudIdx = -1;
 
+	const std::string textId = "cloud-identification";
+	mViewer.removeShape(textId);
+
 	// Loop on clouds and set opacity.
 	int i = 0;
 	for (const auto& pair : mClouds)
@@ -232,6 +235,9 @@ void Visualizer::identifyClouds(bool enabled, bool back)
 			if (mState.mIdentifiedCloudIdx == i) return 1.0;
 			return 0.1;
 		};
+
+		if (mState.mIdentifiedCloudIdx == i) 
+			mViewer.addText(name, 0, 0, textId, mViewportIds[cloud.mViewport]);
 
 		mViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getOpacity(), name);
 		++i;
