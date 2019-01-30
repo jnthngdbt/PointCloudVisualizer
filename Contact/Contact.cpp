@@ -59,17 +59,17 @@ int main()
     ne.setKSearch(30);
     ne.compute(*normals);
 
-	// Patches.
-	pcl::PassThrough<pcl::PointXYZ> ptf;
-	PointsType::Ptr cloudPatch1(new PointsType());
-	ptf.setInputCloud(cloudModel);
-	ptf.setFilterFieldName("x");
-	ptf.setFilterLimits(0.2, 0.5);
-	ptf.filter(*cloudPatch1);
-	ptf.setInputCloud(cloudPatch1);
-	ptf.setFilterFieldName("y");
-	ptf.setFilterLimits(0.2, 0.5);
-	ptf.filter(*cloudPatch1);
+    // Patches.
+    pcl::PassThrough<pcl::PointXYZ> ptf;
+    PointsType::Ptr cloudPatch1(new PointsType());
+    ptf.setInputCloud(cloudModel);
+    ptf.setFilterFieldName("x");
+    ptf.setFilterLimits(0.2, 0.5);
+    ptf.filter(*cloudPatch1);
+    ptf.setInputCloud(cloudPatch1);
+    ptf.setFilterFieldName("y");
+    ptf.setFilterLimits(0.2, 0.5);
+    ptf.filter(*cloudPatch1);
 
     // Some array features.
     std::vector<float> idx(cloudModel->size());
@@ -123,19 +123,19 @@ int main()
         VISUALIZER_CALL(viewer.render());
     };
 
-	auto singleViewport = [&]()
-	{
-		VISUALIZER_CALL(Visualizer viewer("single-viewport"));
+    auto singleViewport = [&]()
+    {
+        VISUALIZER_CALL(Visualizer viewer("single-viewport"));
 
-		VISUALIZER_CALL(viewer.add(*cloudNoisy, "scan").setOpacity(0.4));
-		VISUALIZER_CALL(viewer.add(*cloudModel, "model").add(*normals).setOpacity(0.7));
-		VISUALIZER_CALL(viewer.add(*cloudPatch1, "patch").setColor(1, 0, 0).setSize(3));
+        VISUALIZER_CALL(viewer.add(*cloudNoisy, "scan").setOpacity(0.4));
+        VISUALIZER_CALL(viewer.add(*cloudModel, "model").add(*normals).setOpacity(0.7));
+        VISUALIZER_CALL(viewer.add(*cloudPatch1, "patch").setColor(1, 0, 0).setSize(3));
 
-		VISUALIZER_CALL(viewer.render());
-	};
+        VISUALIZER_CALL(viewer.render());
+    };
 
     //
-	singleViewport();
+    singleViewport();
     multipleViewports();
  
     return 0;
