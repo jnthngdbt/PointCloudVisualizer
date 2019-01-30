@@ -64,16 +64,27 @@ public:
     Cloud& addFeature(const T& data, const FeatureName& featName, const CloudName& name, F func, ViewportIdx viewport = -1);
     Cloud& addFeature(const FeatureData& data, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport = -1);
 
+	int getNbClouds() const { return static_cast<int>(mClouds.size()); };
+
     void render();
-    void keyboardEventOccurred(const pcl::visualization::KeyboardEvent& event, void*);
 
     pcl::visualization::PCLVisualizer& getViewer() { return mViewer; }
 
 private:
+	struct State
+	{
+		int mIdentifiedCloudIdx{ -1 };
+	};
+
+	// Interactivity
+    void keyboardEventOccurred(const pcl::visualization::KeyboardEvent& event, void*);
+	void identifyClouds(bool enabled, bool back);
+
 	std::string mName;
     pcl::visualization::PCLVisualizer mViewer;
     std::map<CloudName, Cloud> mClouds;
     std::vector<int> mViewportIds;
+	State mState;
 };
 
 template<typename T, typename F>

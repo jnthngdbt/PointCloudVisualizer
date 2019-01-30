@@ -201,24 +201,41 @@ void Visualizer::render()
 
 void Visualizer::keyboardEventOccurred(const pcl::visualization::KeyboardEvent& event, void*)
 {
-    if (event.getKeySym() == "i" && event.keyDown())
+    if ((event.getKeySym() == "i" || event.getKeySym() == "I") && event.keyDown())
     {
-        for (const auto& pair : mClouds)
-        {
-            if (pair.first == mClouds.begin()->first)
-                mViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, 0.9, pair.first);
-            else
-                mViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, 0.1, pair.first);
-        }
-
-        if (event.isCtrlPressed())
-        {
-            for (const auto& pair : mClouds)
-            {
-                mViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, pair.second.mOpacity, pair.first);
-            }
-        }
+		identifyClouds(!event.isCtrlPressed(), event.isShiftPressed());
     }
+}
+
+void Visualizer::identifyClouds(bool enabled, bool back)
+{
+	if (!enabled && mState.mIdentifiedCloudIdx < 0) return; // early exit, nothing to do, already disabled
+
+	// Determine next cloud to highlight.
+	if (enabled)
+		mState.mIdentifiedCloudIdx = back ? 
+			std::fmod(std::max(0, mState.mIdentifiedCloudIdx) - 1 + getNbClouds(), getNbClouds()) : // supports case starting at -1
+			mState.mIdentifiedCloudIdx = std::fmod(mState.mIdentifiedCloudIdx + 1, getNbClouds()); // supports case starting at -1
+	else
+		mState.mIdentifiedCloudIdx = -1;
+
+	// Loop on clouds and set opacity.
+	int i = 0;
+	for (const auto& pair : mClouds)
+	{
+		const auto& name = pair.first;
+		const auto& cloud = pair.second;
+
+		auto getOpacity = [&]()
+		{
+			if (mState.mIdentifiedCloudIdx == -1) return cloud.mOpacity; // identification disabled
+			if (mState.mIdentifiedCloudIdx == i) return 1.0;
+			return 0.1;
+		};
+
+		mViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getOpacity(), name);
+		++i;
+	}
 }
 
 Visualizer::Visualizer(const std::string& name, int nbRows, int nbCols) :
