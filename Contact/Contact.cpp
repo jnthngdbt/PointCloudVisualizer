@@ -127,8 +127,8 @@ int main()
 	{
 		VISUALIZER_CALL(Visualizer viewer("single-viewport"));
 
-		VISUALIZER_CALL(viewer.add(*cloudNoisy, "model").setOpacity(0.4));
-		VISUALIZER_CALL(viewer.add(*cloudModel, "smooth").add(*normals).setOpacity(0.7));
+		VISUALIZER_CALL(viewer.add(*cloudNoisy, "scan").setOpacity(0.4));
+		VISUALIZER_CALL(viewer.add(*cloudModel, "model").add(*normals).setOpacity(0.7));
 		VISUALIZER_CALL(viewer.add(*cloudPatch1, "patch").setColor(1, 0, 0).setSize(3));
 
 		VISUALIZER_CALL(viewer.render());
