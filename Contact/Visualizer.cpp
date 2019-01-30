@@ -7,121 +7,17 @@
 
 const std::string Visualizer::sFilePrefix = "visualizer.";
 
-int Visualizer::Cloud::getNbPoints() const
+Visualizer::Visualizer(const std::string& name, int nbRows, int nbCols) :
+    mName(name), mViewer(name)
 {
-    if (getNbFeatures() <= 0)
-        return 0;
-
-    return static_cast<int>(mFeatures.begin()->second.size());
+    mViewportIds.resize(nbRows * nbCols);
+    const float sizeX = 1.0 / nbCols;
+    const float sizeY = 1.0 / nbRows;
+    int k = 0;
+    for (int j = 0; j < nbRows; ++j)
+        for (int i = 0; i < nbCols; ++i)
+            mViewer.createViewPort(i*sizeX, 1.0 - (j + 1)*sizeY, (i + 1)*sizeX, 1.0 - j * sizeY, mViewportIds[k++]);
 }
-
-void Visualizer::Cloud::save(const std::string& filename) const
-{
-    std::ofstream f;
-    f.open(filename);
-
-    // header
-    f << "# .PCD v.7 - Point Cloud Data file format" << std::endl;
-    f << "VERSION .7" << std::endl;
-
-    f << "FIELDS";
-    for (const auto& feature : mFeatures)
-        f << " " << feature.first;
-    f << std::endl;
-
-    f << "SIZE";
-    for (int i = 0; i < getNbFeatures(); ++i)
-        f << " 4";
-    f << std::endl;
-
-    f << "TYPE";
-    for (int i = 0; i < getNbFeatures(); ++i)
-        f << " F";
-    f << std::endl;
-
-    f << "COUNT";
-    for (int i = 0; i < getNbFeatures(); ++i)
-        f << " 1";
-    f << std::endl;
-
-    f << "WIDTH " << getNbPoints() << std::endl;
-    f << "HEIGHT 1" << std::endl;
-    f << "VIEWPOINT 0 0 0 1 0 0 0" << std::endl;
-    f << "POINTS " << getNbPoints() << std::endl;
-    f << "DATA ascii" << std::endl;
-
-    for (int i = 0; i < getNbPoints(); ++i)
-    {
-        for (const auto& feature : mFeatures)
-            f << feature.second[i] << " "; // TODO should make sure that all features have same amount of points
-        f << std::endl;
-    }
-
-    f.close();
-}
-
-Visualizer::Cloud& Visualizer::Cloud::setViewport(ViewportIdx viewport)
-{
-    // Continue using already set viewport (do nothing) if -1.
-    if (viewport > 0)
-        mViewport = viewport;
-
-    return *this;
-}
-
-Visualizer::Cloud& Visualizer::Cloud::addFeature(const FeatureData& data, const FeatureName& name, ViewportIdx viewport)
-{
-    // assert size if > 0
-
-    auto it = std::find_if(mFeatures.begin(), mFeatures.end(),
-        [&name](const std::pair<FeatureName, FeatureData>& p) { return p.first == name; });
-
-    if (it != mFeatures.end()) // has feature
-        it->second = data;
-    else
-        mFeatures.emplace_back(name, data);
-
-    setViewport(viewport);
-    return *this;
-}
-
-template<>
-Visualizer::Cloud& Visualizer::Cloud::add(const pcl::PointCloud<pcl::PointXYZ>& data, ViewportIdx viewport)
-{
-    using P = pcl::PointXYZ;
-    addFeature(data, "x", [](const P& p) { return p.x; }, viewport);
-    addFeature(data, "y", [](const P& p) { return p.y; }, viewport);
-    addFeature(data, "z", [](const P& p) { return p.z; }, viewport);
-    setViewport(viewport);
-    return *this;
-}
-
-template<>
-Visualizer::Cloud& Visualizer::Cloud::add(const pcl::PointCloud<pcl::Normal>& data, ViewportIdx viewport)
-{
-    using P = pcl::Normal;
-    addFeature(data, "normal_x", [](const P& p) { return p.normal_x; }, viewport);
-    addFeature(data, "normal_y", [](const P& p) { return p.normal_y; }, viewport);
-    addFeature(data, "normal_z", [](const P& p) { return p.normal_z; }, viewport);
-    addFeature(data, "curvature", [](const P& p) { return p.curvature; }, viewport);
-    setViewport(viewport);
-    return *this;
-}
-
-template<>
-Visualizer::Cloud& Visualizer::Cloud::add(const pcl::PointCloud<pcl::PointNormal>& data, ViewportIdx viewport)
-{
-    using P = pcl::PointNormal;
-    addFeature(data, "x", [](const P& p) { return p.x; }, viewport);
-    addFeature(data, "y", [](const P& p) { return p.y; }, viewport);
-    addFeature(data, "z", [](const P& p) { return p.z; }, viewport);
-    addFeature(data, "normal_x", [](const P& p) { return p.normal_x; }, viewport);
-    addFeature(data, "normal_y", [](const P& p) { return p.normal_y; }, viewport);
-    addFeature(data, "normal_z", [](const P& p) { return p.normal_z; }, viewport);
-    addFeature(data, "curvature", [](const P& p) { return p.curvature; }, viewport);
-    setViewport(viewport);
-    return *this;
-    }
 
 Visualizer::Cloud& Visualizer::addFeature(const FeatureData& data, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport)
 {
@@ -265,15 +161,122 @@ void Visualizer::printHelp() const
 	);
 }
 
-Visualizer::Visualizer(const std::string& name, int nbRows, int nbCols) :
-    mName(name), mViewer(name)
+///////////////////////////////////////////////////////////////////////////////////
+// VISUALIZER::CLOUD
+
+int Visualizer::Cloud::getNbPoints() const
 {
-    mViewportIds.resize(nbRows * nbCols);
-    const float sizeX = 1.0 / nbCols;
-    const float sizeY = 1.0 / nbRows;
-    int k = 0;
-    for (int j = 0; j < nbRows; ++j)
-        for (int i = 0; i < nbCols; ++i)
-            mViewer.createViewPort(i*sizeX, 1.0 - (j + 1)*sizeY, (i + 1)*sizeX, 1.0 - j * sizeY, mViewportIds[k++]);
+	if (getNbFeatures() <= 0)
+		return 0;
+
+	return static_cast<int>(mFeatures.begin()->second.size());
+}
+
+Visualizer::Cloud& Visualizer::Cloud::setViewport(ViewportIdx viewport)
+{
+	// Continue using already set viewport (do nothing) if -1.
+	if (viewport > 0)
+		mViewport = viewport;
+
+	return *this;
+}
+
+Visualizer::Cloud& Visualizer::Cloud::addFeature(const FeatureData& data, const FeatureName& name, ViewportIdx viewport)
+{
+	// assert size if > 0
+
+	auto it = std::find_if(mFeatures.begin(), mFeatures.end(),
+		[&name](const std::pair<FeatureName, FeatureData>& p) { return p.first == name; });
+
+	if (it != mFeatures.end()) // has feature
+		it->second = data;
+	else
+		mFeatures.emplace_back(name, data);
+
+	setViewport(viewport);
+	return *this;
+}
+
+template<>
+Visualizer::Cloud& Visualizer::Cloud::add(const pcl::PointCloud<pcl::PointXYZ>& data, ViewportIdx viewport)
+{
+	using P = pcl::PointXYZ;
+	addFeature(data, "x", [](const P& p) { return p.x; }, viewport);
+	addFeature(data, "y", [](const P& p) { return p.y; }, viewport);
+	addFeature(data, "z", [](const P& p) { return p.z; }, viewport);
+	setViewport(viewport);
+	return *this;
+}
+
+template<>
+Visualizer::Cloud& Visualizer::Cloud::add(const pcl::PointCloud<pcl::Normal>& data, ViewportIdx viewport)
+{
+	using P = pcl::Normal;
+	addFeature(data, "normal_x", [](const P& p) { return p.normal_x; }, viewport);
+	addFeature(data, "normal_y", [](const P& p) { return p.normal_y; }, viewport);
+	addFeature(data, "normal_z", [](const P& p) { return p.normal_z; }, viewport);
+	addFeature(data, "curvature", [](const P& p) { return p.curvature; }, viewport);
+	setViewport(viewport);
+	return *this;
+}
+
+template<>
+Visualizer::Cloud& Visualizer::Cloud::add(const pcl::PointCloud<pcl::PointNormal>& data, ViewportIdx viewport)
+{
+	using P = pcl::PointNormal;
+	addFeature(data, "x", [](const P& p) { return p.x; }, viewport);
+	addFeature(data, "y", [](const P& p) { return p.y; }, viewport);
+	addFeature(data, "z", [](const P& p) { return p.z; }, viewport);
+	addFeature(data, "normal_x", [](const P& p) { return p.normal_x; }, viewport);
+	addFeature(data, "normal_y", [](const P& p) { return p.normal_y; }, viewport);
+	addFeature(data, "normal_z", [](const P& p) { return p.normal_z; }, viewport);
+	addFeature(data, "curvature", [](const P& p) { return p.curvature; }, viewport);
+	setViewport(viewport);
+	return *this;
+}
+
+void Visualizer::Cloud::save(const std::string& filename) const
+{
+	std::ofstream f;
+	f.open(filename);
+
+	// header
+	f << "# .PCD v.7 - Point Cloud Data file format" << std::endl;
+	f << "VERSION .7" << std::endl;
+
+	f << "FIELDS";
+	for (const auto& feature : mFeatures)
+		f << " " << feature.first;
+	f << std::endl;
+
+	f << "SIZE";
+	for (int i = 0; i < getNbFeatures(); ++i)
+		f << " 4";
+	f << std::endl;
+
+	f << "TYPE";
+	for (int i = 0; i < getNbFeatures(); ++i)
+		f << " F";
+	f << std::endl;
+
+	f << "COUNT";
+	for (int i = 0; i < getNbFeatures(); ++i)
+		f << " 1";
+	f << std::endl;
+
+	f << "WIDTH " << getNbPoints() << std::endl;
+	f << "HEIGHT 1" << std::endl;
+	f << "VIEWPOINT 0 0 0 1 0 0 0" << std::endl;
+	f << "POINTS " << getNbPoints() << std::endl;
+	f << "DATA ascii" << std::endl;
+
+	for (int i = 0; i < getNbPoints(); ++i)
+	{
+		for (const auto& feature : mFeatures)
+			f << feature.second[i] << " "; // TODO should make sure that all features have same amount of points
+		f << std::endl;
+	}
+
+	f.close();
 }
 
