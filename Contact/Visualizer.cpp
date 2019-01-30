@@ -88,6 +88,17 @@ void Visualizer::render()
             mViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, cloud.mSize, name);
             mViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, cloud.mOpacity, name);
         }
+
+        // GEO
+        using GeoHandler = pcl::visualization::PointCloudGeometryHandlerCustom<pcl::PCLPointCloud2>;
+        GeoHandler::ConstPtr geo(new GeoHandler(pclCloudMsg, "x", "normal_y", "z"));
+        mViewer.addPointCloud(
+            pclCloudMsg,
+            geo,
+            Eigen::Vector4f(0, 0, 0, 0),
+            Eigen::Quaternion<float>(0, 0, 0, 0),
+            name,
+            mViewportIds[cloud.mViewport]);
     }
 
     mViewer.registerKeyboardCallback(&Visualizer::keyboardEventOccurred, *this);
