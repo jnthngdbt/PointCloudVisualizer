@@ -79,6 +79,7 @@ private:
 	// Interactivity
     void keyboardEventOccurred(const pcl::visualization::KeyboardEvent& event, void*);
 	void identifyClouds(bool enabled, bool back);
+	void printHelp() const;
 
 	std::string mName;
     pcl::visualization::PCLVisualizer mViewer;

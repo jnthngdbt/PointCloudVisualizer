@@ -205,6 +205,11 @@ void Visualizer::keyboardEventOccurred(const pcl::visualization::KeyboardEvent& 
     {
 		identifyClouds(!event.isCtrlPressed(), event.isShiftPressed());
     }
+	else if ((event.getKeySym() == "h" || event.getKeySym() == "H") && event.keyDown())
+	{
+		// (built-in help will be printed)
+		printHelp(); // add custom help
+	}
 }
 
 void Visualizer::identifyClouds(bool enabled, bool back)
@@ -242,6 +247,22 @@ void Visualizer::identifyClouds(bool enabled, bool back)
 		mViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getOpacity(), name);
 		++i;
 	}
+}
+
+void Visualizer::printHelp() const
+{
+	// (built-in help has been printed already)
+
+	// Add custom help.
+	pcl::console::print_info(
+		"\n"
+		" ---------------------------------------------------------\n"
+		"\n"
+		"          i, I   : loop through clouds identification\n"
+		"  SHIFT + i, I   : go back in clouds identification loop\n"
+		"   CTRL + i, I   : exit clouds identification loop\n"
+		"\n"
+	);
 }
 
 Visualizer::Visualizer(const std::string& name, int nbRows, int nbCols) :
