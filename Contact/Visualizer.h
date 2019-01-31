@@ -19,6 +19,9 @@ namespace vu
     using FeatureData = std::vector<float>;
     using ViewportIdx = int;
 
+    using GeometryHandlerConstPtr = pcl::visualization::PointCloudGeometryHandler<pcl::PCLPointCloud2>::ConstPtr;
+    using ColorHandlerConstPtr = pcl::visualization::PointCloudColorHandler<pcl::PCLPointCloud2>::ConstPtr;
+
     struct ColorRGB
     {
         // Note: PCL supports RGBA, but it does not seem to be fully supported everywhere (e.g. the PCL viewer).
@@ -94,6 +97,9 @@ namespace vu
         {
             int mIdentifiedCloudIdx{ -1 };
         };
+
+        std::vector<ColorHandlerConstPtr> generateColorHandlers(const pcl::PCLPointCloud2::Ptr pclCloudMsg, const Cloud& cloud, bool hasRgb) const;
+        std::vector<GeometryHandlerConstPtr> generateGeometryHandlers(const pcl::PCLPointCloud2::Ptr pclCloudMsg, const Cloud& cloud) const;
 
         // Interactivity
         void keyboardEventOccurred(const pcl::visualization::KeyboardEvent& event, void*);

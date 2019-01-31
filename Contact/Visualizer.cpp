@@ -33,8 +33,6 @@ Cloud& Visualizer::addFeature(const FeatureData& data, const FeatureName& featNa
 
 void Visualizer::render()
 {
-    // TODO cleanup this function. Create generateColorHandlers and generateGeoHandlers methods.
-
     for (auto& pair : mClouds)
     {
         const auto& name = pair.first;
@@ -68,39 +66,21 @@ void Visualizer::render()
         pcl::PCLPointCloud2::Ptr pclCloudMsg(new pcl::PCLPointCloud2());
         pcl::io::loadPCDFile(fileName, *pclCloudMsg);
 
-        // First field is RGB if available, otherwise random.
-        pcl::visualization::PointCloudColorHandler<pcl::PCLPointCloud2>::Ptr firstColor;
-        if (hasRGB)
-            firstColor.reset(new pcl::visualization::PointCloudColorHandlerRGBField<pcl::PCLPointCloud2>(pclCloudMsg));
-        else
-            firstColor.reset(new pcl::visualization::PointCloudColorHandlerRandom<pcl::PCLPointCloud2>(pclCloudMsg));
+        const auto colorHandlers = generateColorHandlers(pclCloudMsg, cloud, hasRGB);
+        const auto geometryHandlers = generateGeometryHandlers(pclCloudMsg, cloud);
 
-        using ColorHandler = pcl::visualization::PointCloudColorHandlerGenericField<pcl::PCLPointCloud2>;
-        using GeoHandler = pcl::visualization::PointCloudGeometryHandlerCustom<pcl::PCLPointCloud2>;
-
-        const auto& defaultSpace = cloud.mSpaces.front();
-        GeoHandler::ConstPtr defaultGeo(new GeoHandler(pclCloudMsg, defaultSpace.u1, defaultSpace.u2, defaultSpace.u3));
-
-        mViewer.addPointCloud(
-            pclCloudMsg,
-            defaultGeo,
-            firstColor,
-            Eigen::Vector4f(0, 0, 0, 0),
-            Eigen::Quaternion<float>(0, 0, 0, 0),
-            name,
-            mViewportIds[cloud.mViewport]);
-
-        for (const auto& field : pclCloudMsg->fields)
+        if (colorHandlers.size() == 0 || geometryHandlers.size() == 0)
         {
+            logError("[render] Something went wrong. No color or geometry handler. Won't add cloud [" + name + "].");
+            continue;
+        }
 
-            if (field.name == "rgb")
-                continue; // already dealt with
-
-            ColorHandler::ConstPtr color(new ColorHandler(pclCloudMsg, field.name));
-            color.reset(new ColorHandler(pclCloudMsg, field.name));
+        // Add color handlers.
+        for (const auto& color : colorHandlers)
+        {
             mViewer.addPointCloud(
                 pclCloudMsg,
-                defaultGeo,
+                geometryHandlers[0], // will be duplicate
                 color,
                 Eigen::Vector4f(0, 0, 0, 0),
                 Eigen::Quaternion<float>(0, 0, 0, 0),
@@ -111,13 +91,12 @@ void Visualizer::render()
             mViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, cloud.mOpacity, name);
         }
 
-        // Geometry handlers (spaces).
-        for (const auto& space : cloud.mSpaces)
+        // Add geometry handlers (spaces).
+        for (const auto& geometry : geometryHandlers)
         {
-            GeoHandler::ConstPtr geo(new GeoHandler(pclCloudMsg, space.u1, space.u2, space.u3));
             mViewer.addPointCloud(
                 pclCloudMsg,
-                geo,
+                geometry,
                 Eigen::Vector4f(0, 0, 0, 0),
                 Eigen::Quaternion<float>(0, 0, 0, 0),
                 name,
@@ -130,6 +109,38 @@ void Visualizer::render()
     mViewer.registerKeyboardCallback(&Visualizer::keyboardEventOccurred, *this);
 
     mViewer.spin();
+}
+
+std::vector<ColorHandlerConstPtr> Visualizer::generateColorHandlers(const pcl::PCLPointCloud2::Ptr pclCloudMsg, const Cloud& cloud, bool hasRGB) const
+{
+    std::vector<ColorHandlerConstPtr> handlers;
+
+    // First field is RGB if available, otherwise random.
+    pcl::visualization::PointCloudColorHandler<pcl::PCLPointCloud2>::Ptr firstColor;
+    if (hasRGB)
+        handlers.emplace_back(new pcl::visualization::PointCloudColorHandlerRGBField<pcl::PCLPointCloud2>(pclCloudMsg));
+    else
+        handlers.emplace_back(new pcl::visualization::PointCloudColorHandlerRandom<pcl::PCLPointCloud2>(pclCloudMsg));
+
+    using ColorHandler = pcl::visualization::PointCloudColorHandlerGenericField<pcl::PCLPointCloud2>;
+    for (const auto& field : pclCloudMsg->fields)
+    {
+        if (field.name == "rgb") continue; // already dealt with
+        handlers.emplace_back(new ColorHandler(pclCloudMsg, field.name));
+    }
+
+    return std::move(handlers);
+}
+
+std::vector<GeometryHandlerConstPtr> Visualizer::generateGeometryHandlers(const pcl::PCLPointCloud2::Ptr pclCloudMsg, const Cloud& cloud) const
+{
+    std::vector<GeometryHandlerConstPtr> handlers;
+
+    using GeoHandler = pcl::visualization::PointCloudGeometryHandlerCustom<pcl::PCLPointCloud2>;
+    for (const auto& space : cloud.mSpaces)
+        handlers.emplace_back(new GeoHandler(pclCloudMsg, space.u1, space.u2, space.u3));
+
+    return std::move(handlers);
 }
 
 void PclVisualizer::filterHandlers(const std::string &id)
