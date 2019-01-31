@@ -72,12 +72,17 @@ int main()
     ptf.filter(*cloudPatch1);
 
     // Some array features.
-    std::vector<float> idx(cloudModel->size());
-    std::vector<float> rnd(cloudModel->size());
-    for (int i = 0; i < (int)cloudModel->size(); ++i)
+    const int N = cloudModel->size();
+    std::vector<float> idx(N);
+    std::vector<float> idxn(N);
+    std::vector<float> rnd(N);
+    std::vector<float> rnd2(N);
+    for (int i = 0; i < N; ++i)
     {
         idx[i] = (float)i;
+        idxn[i] = idx[i] / (float)N;
         rnd[i] = randf();
+        rnd2[i] = randf();
     }
 
     std::cout << *cloudModel << std::endl;
@@ -138,8 +143,12 @@ int main()
     {
         VISUALIZER_CALL(Visualizer viewer("single-viewport-representations"));
 
-        VISUALIZER_CALL(viewer.add(*cloudNoisy, "scan").add(*normals).setOpacity(0.4));
-        //VISUALIZER_CALL(viewer.add(*cloudModel, "model").add(*normals).setOpacity(0.7));
+        // TODO add method  viewer.addSpace(name, "u1", "u2", "u3").
+
+        std::string name = "space";
+        VISUALIZER_CALL(viewer.addFeature(idxn, "u1", name));
+        VISUALIZER_CALL(viewer.addFeature(rnd, "u2", name));
+        VISUALIZER_CALL(viewer.addFeature(rnd2, "u3", name).addSpace("u1", "u2", "u3").add(*normals));
 
         VISUALIZER_CALL(viewer.render());
     };
