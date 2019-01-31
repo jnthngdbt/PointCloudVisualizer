@@ -31,11 +31,14 @@ Visualizer::Cloud& Visualizer::addFeature(const FeatureData& data, const Feature
 
 void Visualizer::render()
 {
+    // TODO cleanup this function. Create generateColorHandlers and generateGeoHandlers methods.
+
     for (auto& pair : mClouds)
     {
         const auto& name = pair.first;
         auto& cloud = pair.second;
 
+        // TODO make generateAllPossibleGeoHandlers if no space defined
         if (cloud.mSpaces.size() == 0)
         {
             logError("[render] No space set for [" + name + "]. Must call addSpace().");
