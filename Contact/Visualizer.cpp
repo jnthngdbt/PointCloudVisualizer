@@ -132,6 +132,26 @@ void Visualizer::render()
     mViewer.spin();
 }
 
+bool PclVisualizer::addPointCloudColor(
+    const pcl::PCLPointCloud2::Ptr &cloud,
+    const ColorHandlerConstPtr &colorHandler,
+    const GeometryHandlerConstPtr &defaultGeoHandler,
+    const std::string &id, int viewport)
+{
+    // Check to see if this entry already exists (has it been already added to the visualizer?)
+    auto cloudActorMap = getCloudActorMap();
+    auto it = cloudActorMap->find(id);
+    if (it != cloudActorMap->end())
+    {
+        // Here we're just pushing the handlers onto the queue. If needed, something fancier could
+        // be done such as checking if a specific handler already exists, etc.
+        it->second.color_handlers.push_back(colorHandler);
+        return (true);
+    }
+
+    return (fromHandlersToScreen(defaultGeoHandler, colorHandler, id, viewport, cloud->sensor_origin_, cloud->sensor_orientation_));
+}
+
 void Visualizer::keyboardEventOccurred(const pcl::visualization::KeyboardEvent& event, void*)
 {
     if ((event.getKeySym() == "i" || event.getKeySym() == "I") && event.keyDown())
