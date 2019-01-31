@@ -12,6 +12,12 @@
 
 #define VISUALIZER_CALL(x) x
 
+class PclVisualizer : public pcl::visualization::PCLVisualizer
+{
+public:
+    PclVisualizer(const std::string& name) : pcl::visualization::PCLVisualizer(name) {}
+};
+
 class Visualizer
 {
 public:
@@ -78,7 +84,7 @@ public:
 
     void render();
 
-    pcl::visualization::PCLVisualizer& getViewer() { return mViewer; }
+    PclVisualizer& getViewer() { return mViewer; }
 
 private:
     struct State
@@ -92,11 +98,13 @@ private:
     void printHelp() const;
 
     std::string mName;
-    pcl::visualization::PCLVisualizer mViewer;
+    PclVisualizer mViewer;
     std::map<CloudName, Cloud> mClouds;
     std::vector<int> mViewportIds;
     State mState;
 };
+
+// EXPLICIT INSTANTIATIONS
 
 template<typename T, typename F>
 Visualizer::Cloud& Visualizer::addFeature(const T& data, const FeatureName& featName, const CloudName& name, F func, ViewportIdx viewport)
