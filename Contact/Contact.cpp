@@ -15,6 +15,8 @@
 
 #include "Visualizer.h"
 
+using namespace vu;
+
 using PointsType = pcl::PointCloud<pcl::PointXYZ>;
 
 float randf() { return rand() / static_cast<float>(RAND_MAX); }

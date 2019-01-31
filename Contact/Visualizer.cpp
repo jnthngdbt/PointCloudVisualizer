@@ -5,6 +5,8 @@
 
 #include <pcl/io/pcd_io.h>
 
+using namespace vu;
+
 const std::string Visualizer::sFilePrefix = "visualizer.";
 
 void logError(const std::string& msg)
@@ -24,7 +26,7 @@ Visualizer::Visualizer(const std::string& name, int nbRows, int nbCols) :
             mViewer.createViewPort(i*sizeX, 1.0 - (j + 1)*sizeY, (i + 1)*sizeX, 1.0 - j * sizeY, mViewportIds[k++]);
 }
 
-Visualizer::Cloud& Visualizer::addFeature(const FeatureData& data, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport)
+Cloud& Visualizer::addFeature(const FeatureData& data, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport)
 {
     return mClouds[cloudName].addFeature(data, featName, viewport);
 }
@@ -217,9 +219,9 @@ void Visualizer::printHelp() const
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
-// VISUALIZER::CLOUD
+// CLOUD
 
-int Visualizer::Cloud::getNbPoints() const
+int Cloud::getNbPoints() const
 {
     if (getNbFeatures() <= 0)
         return 0;
@@ -227,7 +229,7 @@ int Visualizer::Cloud::getNbPoints() const
     return static_cast<int>(mFeatures.begin()->second.size());
 }
 
-Visualizer::Cloud& Visualizer::Cloud::setViewport(ViewportIdx viewport)
+Cloud& Cloud::setViewport(ViewportIdx viewport)
 {
     // Continue using already set viewport (do nothing) if -1.
     if (viewport > 0)
@@ -236,7 +238,7 @@ Visualizer::Cloud& Visualizer::Cloud::setViewport(ViewportIdx viewport)
     return *this;
 }
 
-Visualizer::Cloud& Visualizer::Cloud::addFeature(const FeatureData& data, const FeatureName& name, ViewportIdx viewport)
+Cloud& Cloud::addFeature(const FeatureData& data, const FeatureName& name, ViewportIdx viewport)
 {
     // assert size if > 0
 
@@ -253,7 +255,7 @@ Visualizer::Cloud& Visualizer::Cloud::addFeature(const FeatureData& data, const 
 }
 
 template<>
-Visualizer::Cloud& Visualizer::Cloud::add(const pcl::PointCloud<pcl::PointXYZ>& data, ViewportIdx viewport)
+Cloud& Cloud::add(const pcl::PointCloud<pcl::PointXYZ>& data, ViewportIdx viewport)
 {
     using P = pcl::PointXYZ;
     addFeature(data, "x", [](const P& p) { return p.x; }, viewport);
@@ -265,7 +267,7 @@ Visualizer::Cloud& Visualizer::Cloud::add(const pcl::PointCloud<pcl::PointXYZ>& 
 }
 
 template<>
-Visualizer::Cloud& Visualizer::Cloud::add(const pcl::PointCloud<pcl::Normal>& data, ViewportIdx viewport)
+Cloud& Cloud::add(const pcl::PointCloud<pcl::Normal>& data, ViewportIdx viewport)
 {
     using P = pcl::Normal;
     addFeature(data, "normal_x", [](const P& p) { return p.normal_x; }, viewport);
@@ -278,7 +280,7 @@ Visualizer::Cloud& Visualizer::Cloud::add(const pcl::PointCloud<pcl::Normal>& da
 }
 
 template<>
-Visualizer::Cloud& Visualizer::Cloud::add(const pcl::PointCloud<pcl::PointNormal>& data, ViewportIdx viewport)
+Cloud& Cloud::add(const pcl::PointCloud<pcl::PointNormal>& data, ViewportIdx viewport)
 {
     using P = pcl::PointNormal;
     addFeature(data, "x", [](const P& p) { return p.x; }, viewport);
@@ -294,7 +296,7 @@ Visualizer::Cloud& Visualizer::Cloud::add(const pcl::PointCloud<pcl::PointNormal
     return *this;
 }
 
-Visualizer::Cloud& Visualizer::Cloud::addSpace(const FeatureName& a, const FeatureName& b, const FeatureName& c)
+Cloud& Cloud::addSpace(const FeatureName& a, const FeatureName& b, const FeatureName& c)
 {
     if (!hasFeature(a))      logError("[addSpace] following feature does not exit: " + a);
     else if (!hasFeature(b)) logError("[addSpace] following feature does not exit: " + b);
@@ -303,7 +305,7 @@ Visualizer::Cloud& Visualizer::Cloud::addSpace(const FeatureName& a, const Featu
     return *this;
 }
 
-bool Visualizer::Cloud::hasFeature(const FeatureName& name) const
+bool Cloud::hasFeature(const FeatureName& name) const
 {
     using Feature = std::pair<FeatureName, FeatureData>;
     auto it = std::find_if(mFeatures.begin(), mFeatures.end(),
@@ -311,7 +313,7 @@ bool Visualizer::Cloud::hasFeature(const FeatureName& name) const
     return it != mFeatures.end();
 }
 
-void Visualizer::Cloud::save(const std::string& filename) const
+void Cloud::save(const std::string& filename) const
 {
     std::ofstream f;
     f.open(filename);

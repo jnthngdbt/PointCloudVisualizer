@@ -12,26 +12,14 @@
 
 #define VISUALIZER_CALL(x) x
 
-class PclVisualizer : public pcl::visualization::PCLVisualizer
+namespace vu
 {
-public:
-    PclVisualizer(const std::string& name) : pcl::visualization::PCLVisualizer(name) {}
-    void filterHandlers(const std::string &id);
-};
-
-class Visualizer
-{
-public:
-    Visualizer(const std::string& name, int nbRows = 1, int nbCols = 1);
-
     using CloudName = std::string;
     using FeatureName = std::string;
     using FeatureData = std::vector<float>;
     using ViewportIdx = int;
 
-    static const std::string sFilePrefix;
-
-    struct ColorRGB 
+    struct ColorRGB
     {
         // Note: PCL supports RGBA, but it does not seem to be fully supported everywhere (e.g. the PCL viewer).
         ColorRGB(float ri, float gi, float bi) : r(ri), g(gi), b(bi) {}
@@ -59,7 +47,7 @@ public:
         Cloud& setViewport(ViewportIdx viewport);
         Cloud& setSize(int size) { mSize = size; return *this; };
         Cloud& setOpacity(double opacity) { mOpacity = opacity; return *this; };
-        Cloud& setColor(float r, float g, float b) { mRGB = ColorRGB({r,g,b}); return *this; };
+        Cloud& setColor(float r, float g, float b) { mRGB = ColorRGB({ r,g,b }); return *this; };
 
         int getNbPoints() const;
         int getNbFeatures() const { return static_cast<int>(mFeatures.size()); };
@@ -75,54 +63,69 @@ public:
         std::vector< std::pair<FeatureName, FeatureData> > mFeatures; // using vector instead of [unordered_]map to keep order of insertion
     };
 
-    template<typename T>
-    Cloud& add(const pcl::PointCloud<T>& data, const CloudName& name, ViewportIdx viewport = -1);
-    template<typename T, typename F>
-    Cloud& addFeature(const T& data, const FeatureName& featName, const CloudName& name, F func, ViewportIdx viewport = -1);
-    Cloud& addFeature(const FeatureData& data, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport = -1);
-
-    int getNbClouds() const { return static_cast<int>(mClouds.size()); };
-
-    void render();
-
-    PclVisualizer& getViewer() { return mViewer; }
-
-private:
-    struct State
+    class PclVisualizer : public pcl::visualization::PCLVisualizer
     {
-        int mIdentifiedCloudIdx{ -1 };
+    public:
+        PclVisualizer(const std::string& name) : pcl::visualization::PCLVisualizer(name) {}
+        void filterHandlers(const std::string &id);
     };
 
-    // Interactivity
-    void keyboardEventOccurred(const pcl::visualization::KeyboardEvent& event, void*);
-    void identifyClouds(bool enabled, bool back);
-    void printHelp() const;
+    class Visualizer
+    {
+    public:
+        Visualizer(const std::string& name, int nbRows = 1, int nbCols = 1);
 
-    std::string mName;
-    PclVisualizer mViewer;
-    std::map<CloudName, Cloud> mClouds;
-    std::vector<int> mViewportIds;
-    State mState;
-};
+        static const std::string sFilePrefix;
 
-// EXPLICIT INSTANTIATIONS
+        template<typename T>
+        Cloud& add(const pcl::PointCloud<T>& data, const CloudName& name, ViewportIdx viewport = -1);
+        template<typename T, typename F>
+        Cloud& addFeature(const T& data, const FeatureName& featName, const CloudName& name, F func, ViewportIdx viewport = -1);
+        Cloud& addFeature(const FeatureData& data, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport = -1);
 
-template<typename T, typename F>
-Visualizer::Cloud& Visualizer::addFeature(const T& data, const FeatureName& featName, const CloudName& name, F func, ViewportIdx viewport)
-{
-    return mClouds[name].addFeature(data, featName, func, viewport);
-}
+        int getNbClouds() const { return static_cast<int>(mClouds.size()); };
 
-template<typename T, typename F>
-Visualizer::Cloud& Visualizer::Cloud::addFeature(const T& data, const FeatureName& featName, F func, ViewportIdx viewport)
-{
-    FeatureData values(data.size());
-    std::transform(std::begin(data), std::end(data), std::begin(values), func);
-    return addFeature(values, featName, viewport);
-}
+        void render();
 
-template<typename T>
-Visualizer::Cloud& Visualizer::add(const pcl::PointCloud<T>& data, const CloudName& name, ViewportIdx viewport)
-{
-    return mClouds[name].add(data, viewport);
+        PclVisualizer& getViewer() { return mViewer; }
+
+    private:
+        struct State
+        {
+            int mIdentifiedCloudIdx{ -1 };
+        };
+
+        // Interactivity
+        void keyboardEventOccurred(const pcl::visualization::KeyboardEvent& event, void*);
+        void identifyClouds(bool enabled, bool back);
+        void printHelp() const;
+
+        std::string mName;
+        PclVisualizer mViewer;
+        std::map<CloudName, Cloud> mClouds;
+        std::vector<int> mViewportIds;
+        State mState;
+    };
+
+    // EXPLICIT INSTANTIATIONS
+
+    template<typename T, typename F>
+    Cloud& Visualizer::addFeature(const T& data, const FeatureName& featName, const CloudName& name, F func, ViewportIdx viewport)
+    {
+        return mClouds[name].addFeature(data, featName, func, viewport);
+    }
+
+    template<typename T, typename F>
+    Cloud& Cloud::addFeature(const T& data, const FeatureName& featName, F func, ViewportIdx viewport)
+    {
+        FeatureData values(data.size());
+        std::transform(std::begin(data), std::end(data), std::begin(values), func);
+        return addFeature(values, featName, viewport);
+    }
+
+    template<typename T>
+    Cloud& Visualizer::add(const pcl::PointCloud<T>& data, const CloudName& name, ViewportIdx viewport)
+    {
+        return mClouds[name].add(data, viewport);
+    }
 }
