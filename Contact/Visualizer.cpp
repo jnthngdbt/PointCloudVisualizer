@@ -7,6 +7,11 @@
 
 const std::string Visualizer::sFilePrefix = "visualizer.";
 
+void logError(const std::string& msg)
+{
+    std::cout << "[VISUALIZER][ERROR]" << msg << std::endl;
+}
+
 Visualizer::Visualizer(const std::string& name, int nbRows, int nbCols) :
     mName(name), mViewer(name)
 {
@@ -30,6 +35,12 @@ void Visualizer::render()
     {
         const auto& name = pair.first;
         auto& cloud = pair.second;
+
+        if (cloud.mSpaces.size() == 0)
+        {
+            logError("[render] No space set for [" + name + "]. Must call addSpace().");
+            continue;
+        }
 
         const bool hasRGB = (cloud.mRGB.r >= 0.0);
 
@@ -59,26 +70,37 @@ void Visualizer::render()
         else
             firstColor.reset(new pcl::visualization::PointCloudColorHandlerRandom<pcl::PCLPointCloud2>(pclCloudMsg));
 
+        using ColorHandler = pcl::visualization::PointCloudColorHandlerGenericField<pcl::PCLPointCloud2>;
+        using GeoHandler = pcl::visualization::PointCloudGeometryHandlerCustom<pcl::PCLPointCloud2>;
+
+        int iSpace = 0;
+        auto space = cloud.mSpaces[iSpace++];
+
         mViewer.addPointCloud(
             pclCloudMsg,
+            GeoHandler::ConstPtr (new GeoHandler(pclCloudMsg, space.u1, space.u2, space.u3)),
             firstColor,
             Eigen::Vector4f(0, 0, 0, 0),
             Eigen::Quaternion<float>(0, 0, 0, 0),
             name,
             mViewportIds[cloud.mViewport]);
 
-        //using GeoHandler = pcl::visualization::PointCloudGeometryHandlerXYZ<pcl::PCLPointCloud2>; // could add geo handlers in addPointCloud call.
-        //GeoHandler::ConstPtr geo(new GeoHandler(pclCloudMsg));
-        using ColorHandler = pcl::visualization::PointCloudColorHandlerGenericField<pcl::PCLPointCloud2>;
+        const int nbFields = pclCloudMsg->fields.size();
+        const int nbSpaces = cloud.mSpaces.size();
+
         for (const auto& field : pclCloudMsg->fields)
         {
+            space = cloud.mSpaces[std::fmod(iSpace++, nbSpaces)];
+
             if (field.name == "rgb")
                 continue; // already dealt with
 
+            GeoHandler::ConstPtr geo(new GeoHandler(pclCloudMsg, space.u1, space.u2, space.u3));
             ColorHandler::ConstPtr color(new ColorHandler(pclCloudMsg, field.name));
             color.reset(new ColorHandler(pclCloudMsg, field.name));
             mViewer.addPointCloud(
                 pclCloudMsg,
+                geo,
                 color,
                 Eigen::Vector4f(0, 0, 0, 0),
                 Eigen::Quaternion<float>(0, 0, 0, 0),
@@ -89,16 +111,20 @@ void Visualizer::render()
             mViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, cloud.mOpacity, name);
         }
 
-        // GEO
-        using GeoHandler = pcl::visualization::PointCloudGeometryHandlerCustom<pcl::PCLPointCloud2>;
-        GeoHandler::ConstPtr geo(new GeoHandler(pclCloudMsg, "x", "normal_y", "z"));
-        mViewer.addPointCloud(
-            pclCloudMsg,
-            geo,
-            Eigen::Vector4f(0, 0, 0, 0),
-            Eigen::Quaternion<float>(0, 0, 0, 0),
-            name,
-            mViewportIds[cloud.mViewport]);
+        // Add remaining (if any) geometry handlers (spaces).
+        for (; iSpace < nbSpaces; ++iSpace)
+        {
+            space = cloud.mSpaces[iSpace];
+
+            GeoHandler::ConstPtr geo(new GeoHandler(pclCloudMsg, space.u1, space.u2, space.u3));
+            mViewer.addPointCloud(
+                pclCloudMsg,
+                geo,
+                Eigen::Vector4f(0, 0, 0, 0),
+                Eigen::Quaternion<float>(0, 0, 0, 0),
+                name,
+                mViewportIds[cloud.mViewport]);
+        }
     }
 
     mViewer.registerKeyboardCallback(&Visualizer::keyboardEventOccurred, *this);
@@ -219,6 +245,7 @@ Visualizer::Cloud& Visualizer::Cloud::add(const pcl::PointCloud<pcl::PointXYZ>& 
     addFeature(data, "x", [](const P& p) { return p.x; }, viewport);
     addFeature(data, "y", [](const P& p) { return p.y; }, viewport);
     addFeature(data, "z", [](const P& p) { return p.z; }, viewport);
+    addSpace("x", "y", "z");
     setViewport(viewport);
     return *this;
 }
@@ -231,6 +258,7 @@ Visualizer::Cloud& Visualizer::Cloud::add(const pcl::PointCloud<pcl::Normal>& da
     addFeature(data, "normal_y", [](const P& p) { return p.normal_y; }, viewport);
     addFeature(data, "normal_z", [](const P& p) { return p.normal_z; }, viewport);
     addFeature(data, "curvature", [](const P& p) { return p.curvature; }, viewport);
+    addSpace("normal_x", "normal_y", "normal_z");
     setViewport(viewport);
     return *this;
 }
@@ -246,8 +274,27 @@ Visualizer::Cloud& Visualizer::Cloud::add(const pcl::PointCloud<pcl::PointNormal
     addFeature(data, "normal_y", [](const P& p) { return p.normal_y; }, viewport);
     addFeature(data, "normal_z", [](const P& p) { return p.normal_z; }, viewport);
     addFeature(data, "curvature", [](const P& p) { return p.curvature; }, viewport);
+    addSpace("x", "y", "z");
+    addSpace("normal_x", "normal_y", "normal_");
     setViewport(viewport);
     return *this;
+}
+
+Visualizer::Cloud& Visualizer::Cloud::addSpace(const FeatureName& a, const FeatureName& b, const FeatureName& c)
+{
+    if (!hasFeature(a))      logError("[addSpace] following feature does not exit: " + a);
+    else if (!hasFeature(b)) logError("[addSpace] following feature does not exit: " + b);
+    else if (!hasFeature(c)) logError("[addSpace] following feature does not exit: " + c);
+    else mSpaces.emplace_back(a, b, c);
+    return *this;
+}
+
+bool Visualizer::Cloud::hasFeature(const FeatureName& name) const
+{
+    using Feature = std::pair<FeatureName, FeatureData>;
+    auto it = std::find_if(mFeatures.begin(), mFeatures.end(),
+        [&name](const Feature& f) {return f.first == name; });
+    return it != mFeatures.end();
 }
 
 void Visualizer::Cloud::save(const std::string& filename) const

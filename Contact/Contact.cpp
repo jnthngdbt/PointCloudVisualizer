@@ -134,19 +134,19 @@ int main()
         VISUALIZER_CALL(viewer.render());
     };
 
-    auto singleViewportGeo = [&]()
+    auto singleViewportRepresentations = [&]()
     {
-        VISUALIZER_CALL(Visualizer viewer("single-viewport"));
+        VISUALIZER_CALL(Visualizer viewer("single-viewport-representations"));
 
         VISUALIZER_CALL(viewer.add(*cloudNoisy, "scan").add(*normals).setOpacity(0.4));
-        VISUALIZER_CALL(viewer.add(*cloudModel, "model").add(*normals).setOpacity(0.7));
+        //VISUALIZER_CALL(viewer.add(*cloudModel, "model").add(*normals).setOpacity(0.7));
 
         VISUALIZER_CALL(viewer.render());
     };
 
     //
     //singleViewport();
-    singleViewportGeo();
+    singleViewportRepresentations();
     ////multipleViewports();
 
 

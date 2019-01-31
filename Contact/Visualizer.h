@@ -31,6 +31,12 @@ public:
         float r, g, b;
     };
 
+    struct Space
+    {
+        Space(const FeatureName& a, const FeatureName& b, const FeatureName& c) : u1(a), u2(b), u3(c) {}
+        FeatureName u1, u2, u3;
+    };
+
     class Cloud
     {
     public:
@@ -41,6 +47,8 @@ public:
         template<typename T, typename F>
         Cloud& addFeature(const T& data, const FeatureName& featName, F func, ViewportIdx viewport = -1);
         Cloud& addFeature(const FeatureData& data, const FeatureName& name, ViewportIdx viewport = -1);
+        Cloud& addSpace(const FeatureName& a, const FeatureName& b, const FeatureName& c);
+
         Cloud& setViewport(ViewportIdx viewport);
         Cloud& setSize(int size) { mSize = size; return *this; };
         Cloud& setOpacity(double opacity) { mOpacity = opacity; return *this; };
@@ -48,12 +56,14 @@ public:
 
         int getNbPoints() const;
         int getNbFeatures() const { return static_cast<int>(mFeatures.size()); };
+        bool hasFeature(const FeatureName& name) const;
         void save(const std::string& filename) const;
 
         int mViewport{ 0 };
         int mSize{ 1 };
         double mOpacity{ 1.0 };
         ColorRGB mRGB{ -1.0, -1.0, -1.0 };
+        std::vector<Space> mSpaces; // using vector instead of [unordered_]map to keep order of insertion
     private:
         std::vector< std::pair<FeatureName, FeatureData> > mFeatures; // using vector instead of [unordered_]map to keep order of insertion
     };
