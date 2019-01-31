@@ -73,34 +73,29 @@ void Visualizer::render()
         using ColorHandler = pcl::visualization::PointCloudColorHandlerGenericField<pcl::PCLPointCloud2>;
         using GeoHandler = pcl::visualization::PointCloudGeometryHandlerCustom<pcl::PCLPointCloud2>;
 
-        int iSpace = 0;
-        auto space = cloud.mSpaces[iSpace++];
+        const auto& defaultSpace = cloud.mSpaces.front();
+        GeoHandler::ConstPtr defaultGeo(new GeoHandler(pclCloudMsg, defaultSpace.u1, defaultSpace.u2, defaultSpace.u3));
 
         mViewer.addPointCloud(
             pclCloudMsg,
-            GeoHandler::ConstPtr (new GeoHandler(pclCloudMsg, space.u1, space.u2, space.u3)),
+            defaultGeo,
             firstColor,
             Eigen::Vector4f(0, 0, 0, 0),
             Eigen::Quaternion<float>(0, 0, 0, 0),
             name,
             mViewportIds[cloud.mViewport]);
 
-        const int nbFields = pclCloudMsg->fields.size();
-        const int nbSpaces = cloud.mSpaces.size();
-
         for (const auto& field : pclCloudMsg->fields)
         {
-            space = cloud.mSpaces[std::fmod(iSpace++, nbSpaces)];
 
             if (field.name == "rgb")
                 continue; // already dealt with
 
-            GeoHandler::ConstPtr geo(new GeoHandler(pclCloudMsg, space.u1, space.u2, space.u3));
             ColorHandler::ConstPtr color(new ColorHandler(pclCloudMsg, field.name));
             color.reset(new ColorHandler(pclCloudMsg, field.name));
             mViewer.addPointCloud(
                 pclCloudMsg,
-                geo,
+                defaultGeo,
                 color,
                 Eigen::Vector4f(0, 0, 0, 0),
                 Eigen::Quaternion<float>(0, 0, 0, 0),
@@ -111,11 +106,9 @@ void Visualizer::render()
             mViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, cloud.mOpacity, name);
         }
 
-        // Add remaining (if any) geometry handlers (spaces).
-        for (; iSpace < nbSpaces; ++iSpace)
+        // Geometry handlers (spaces).
+        for (const auto& space : cloud.mSpaces)
         {
-            space = cloud.mSpaces[iSpace];
-
             GeoHandler::ConstPtr geo(new GeoHandler(pclCloudMsg, space.u1, space.u2, space.u3));
             mViewer.addPointCloud(
                 pclCloudMsg,
@@ -125,6 +118,8 @@ void Visualizer::render()
                 name,
                 mViewportIds[cloud.mViewport]);
         }
+
+        mViewer.filterHandlers(name);
     }
 
     mViewer.registerKeyboardCallback(&Visualizer::keyboardEventOccurred, *this);
@@ -132,24 +127,20 @@ void Visualizer::render()
     mViewer.spin();
 }
 
-bool PclVisualizer::addPointCloudColor(
-    const pcl::PCLPointCloud2::Ptr &cloud,
-    const ColorHandlerConstPtr &colorHandler,
-    const GeometryHandlerConstPtr &defaultGeoHandler,
-    const std::string &id, int viewport)
+void PclVisualizer::filterHandlers(const std::string &id)
 {
-    // Check to see if this entry already exists (has it been already added to the visualizer?)
+    auto compare = [](GeometryHandlerConstPtr lhs, GeometryHandlerConstPtr rhs) { return lhs->getFieldName() == rhs->getFieldName(); };
+
     auto cloudActorMap = getCloudActorMap();
     auto it = cloudActorMap->find(id);
     if (it != cloudActorMap->end())
     {
-        // Here we're just pushing the handlers onto the queue. If needed, something fancier could
-        // be done such as checking if a specific handler already exists, etc.
-        it->second.color_handlers.push_back(colorHandler);
-        return (true);
-    }
+        auto& h = it->second.geometry_handlers;
 
-    return (fromHandlersToScreen(defaultGeoHandler, colorHandler, id, viewport, cloud->sensor_origin_, cloud->sensor_orientation_));
+        // We do not sort, to not reorder the handlers. Anyway, equal handlers
+        // should be grouped together.
+        h.erase(std::unique(h.begin(), h.end(), compare), h.end());
+    }
 }
 
 void Visualizer::keyboardEventOccurred(const pcl::visualization::KeyboardEvent& event, void*)

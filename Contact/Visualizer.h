@@ -16,13 +16,7 @@ class PclVisualizer : public pcl::visualization::PCLVisualizer
 {
 public:
     PclVisualizer(const std::string& name) : pcl::visualization::PCLVisualizer(name) {}
-
-    bool addPointCloudColor(
-        const pcl::PCLPointCloud2::Ptr &cloud,
-        const ColorHandlerConstPtr &color,
-        const GeometryHandlerConstPtr &defaultGeo,
-        const std::string &id, int viewport);
-
+    void filterHandlers(const std::string &id);
 };
 
 class Visualizer
