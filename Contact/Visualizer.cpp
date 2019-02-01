@@ -5,7 +5,14 @@
 
 #include <pcl/io/pcd_io.h>
 
+using namespace vu;
+
 const std::string Visualizer::sFilePrefix = "visualizer.";
+
+void logError(const std::string& msg)
+{
+    std::cout << "[VISUALIZER][ERROR]" << msg << std::endl;
+}
 
 Visualizer::Visualizer(const std::string& name, int nbRows, int nbCols) :
     mName(name), mViewer(name)
@@ -19,7 +26,7 @@ Visualizer::Visualizer(const std::string& name, int nbRows, int nbCols) :
             mViewer.createViewPort(i*sizeX, 1.0 - (j + 1)*sizeY, (i + 1)*sizeX, 1.0 - j * sizeY, mViewportIds[k++]);
 }
 
-Visualizer::Cloud& Visualizer::addFeature(const FeatureData& data, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport)
+Cloud& Visualizer::addFeature(const FeatureData& data, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport)
 {
     return mClouds[cloudName].addFeature(data, featName, viewport);
 }
@@ -30,6 +37,13 @@ void Visualizer::render()
     {
         const auto& name = pair.first;
         auto& cloud = pair.second;
+
+        // TODO make generateAllPossibleGeoHandlers if no space defined
+        if (cloud.mSpaces.size() == 0)
+        {
+            logError("[render] No space set for [" + name + "]. Must call addSpace().");
+            continue;
+        }
 
         const bool hasRGB = (cloud.mRGB.r >= 0.0);
 
@@ -52,33 +66,21 @@ void Visualizer::render()
         pcl::PCLPointCloud2::Ptr pclCloudMsg(new pcl::PCLPointCloud2());
         pcl::io::loadPCDFile(fileName, *pclCloudMsg);
 
-        // First field is RGB if available, otherwise random.
-        pcl::visualization::PointCloudColorHandler<pcl::PCLPointCloud2>::Ptr firstColor;
-        if (hasRGB)
-            firstColor.reset(new pcl::visualization::PointCloudColorHandlerRGBField<pcl::PCLPointCloud2>(pclCloudMsg));
-        else
-            firstColor.reset(new pcl::visualization::PointCloudColorHandlerRandom<pcl::PCLPointCloud2>(pclCloudMsg));
+        const auto colorHandlers = generateColorHandlers(pclCloudMsg, cloud, hasRGB);
+        const auto geometryHandlers = generateGeometryHandlers(pclCloudMsg, cloud);
 
-        mViewer.addPointCloud(
-            pclCloudMsg,
-            firstColor,
-            Eigen::Vector4f(0, 0, 0, 0),
-            Eigen::Quaternion<float>(0, 0, 0, 0),
-            name,
-            mViewportIds[cloud.mViewport]);
-
-        //using GeoHandler = pcl::visualization::PointCloudGeometryHandlerXYZ<pcl::PCLPointCloud2>; // could add geo handlers in addPointCloud call.
-        //GeoHandler::ConstPtr geo(new GeoHandler(pclCloudMsg));
-        using ColorHandler = pcl::visualization::PointCloudColorHandlerGenericField<pcl::PCLPointCloud2>;
-        for (const auto& field : pclCloudMsg->fields)
+        if (colorHandlers.size() == 0 || geometryHandlers.size() == 0)
         {
-            if (field.name == "rgb")
-                continue; // already dealt with
+            logError("[render] Something went wrong. No color or geometry handler. Won't add cloud [" + name + "].");
+            continue;
+        }
 
-            ColorHandler::ConstPtr color(new ColorHandler(pclCloudMsg, field.name));
-            color.reset(new ColorHandler(pclCloudMsg, field.name));
+        // Add color handlers.
+        for (const auto& color : colorHandlers)
+        {
             mViewer.addPointCloud(
                 pclCloudMsg,
+                geometryHandlers[0], // will be duplicate
                 color,
                 Eigen::Vector4f(0, 0, 0, 0),
                 Eigen::Quaternion<float>(0, 0, 0, 0),
@@ -88,11 +90,73 @@ void Visualizer::render()
             mViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, cloud.mSize, name);
             mViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, cloud.mOpacity, name);
         }
+
+        // Add geometry handlers (spaces).
+        for (const auto& geometry : geometryHandlers)
+        {
+            mViewer.addPointCloud(
+                pclCloudMsg,
+                geometry,
+                Eigen::Vector4f(0, 0, 0, 0),
+                Eigen::Quaternion<float>(0, 0, 0, 0),
+                name,
+                mViewportIds[cloud.mViewport]);
+        }
+
+        mViewer.filterHandlers(name);
     }
 
     mViewer.registerKeyboardCallback(&Visualizer::keyboardEventOccurred, *this);
 
     mViewer.spin();
+}
+
+std::vector<ColorHandlerConstPtr> Visualizer::generateColorHandlers(const pcl::PCLPointCloud2::Ptr pclCloudMsg, const Cloud& cloud, bool hasRGB) const
+{
+    std::vector<ColorHandlerConstPtr> handlers;
+
+    // First field is RGB if available, otherwise random.
+    pcl::visualization::PointCloudColorHandler<pcl::PCLPointCloud2>::Ptr firstColor;
+    if (hasRGB)
+        handlers.emplace_back(new pcl::visualization::PointCloudColorHandlerRGBField<pcl::PCLPointCloud2>(pclCloudMsg));
+    else
+        handlers.emplace_back(new pcl::visualization::PointCloudColorHandlerRandom<pcl::PCLPointCloud2>(pclCloudMsg));
+
+    using ColorHandler = pcl::visualization::PointCloudColorHandlerGenericField<pcl::PCLPointCloud2>;
+    for (const auto& field : pclCloudMsg->fields)
+    {
+        if (field.name == "rgb") continue; // already dealt with
+        handlers.emplace_back(new ColorHandler(pclCloudMsg, field.name));
+    }
+
+    return std::move(handlers);
+}
+
+std::vector<GeometryHandlerConstPtr> Visualizer::generateGeometryHandlers(const pcl::PCLPointCloud2::Ptr pclCloudMsg, const Cloud& cloud) const
+{
+    std::vector<GeometryHandlerConstPtr> handlers;
+
+    using GeoHandler = pcl::visualization::PointCloudGeometryHandlerCustom<pcl::PCLPointCloud2>;
+    for (const auto& space : cloud.mSpaces)
+        handlers.emplace_back(new GeoHandler(pclCloudMsg, space.u1, space.u2, space.u3));
+
+    return std::move(handlers);
+}
+
+void PclVisualizer::filterHandlers(const std::string &id)
+{
+    auto compare = [](GeometryHandlerConstPtr lhs, GeometryHandlerConstPtr rhs) { return lhs->getFieldName() == rhs->getFieldName(); };
+
+    auto cloudActorMap = getCloudActorMap();
+    auto it = cloudActorMap->find(id);
+    if (it != cloudActorMap->end())
+    {
+        auto& h = it->second.geometry_handlers;
+
+        // We do not sort, to not reorder the handlers. Anyway, equal handlers
+        // should be grouped together.
+        h.erase(std::unique(h.begin(), h.end(), compare), h.end());
+    }
 }
 
 void Visualizer::keyboardEventOccurred(const pcl::visualization::KeyboardEvent& event, void*)
@@ -166,9 +230,9 @@ void Visualizer::printHelp() const
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
-// VISUALIZER::CLOUD
+// CLOUD
 
-int Visualizer::Cloud::getNbPoints() const
+int Cloud::getNbPoints() const
 {
     if (getNbFeatures() <= 0)
         return 0;
@@ -176,7 +240,7 @@ int Visualizer::Cloud::getNbPoints() const
     return static_cast<int>(mFeatures.begin()->second.size());
 }
 
-Visualizer::Cloud& Visualizer::Cloud::setViewport(ViewportIdx viewport)
+Cloud& Cloud::setViewport(ViewportIdx viewport)
 {
     // Continue using already set viewport (do nothing) if -1.
     if (viewport > 0)
@@ -185,7 +249,7 @@ Visualizer::Cloud& Visualizer::Cloud::setViewport(ViewportIdx viewport)
     return *this;
 }
 
-Visualizer::Cloud& Visualizer::Cloud::addFeature(const FeatureData& data, const FeatureName& name, ViewportIdx viewport)
+Cloud& Cloud::addFeature(const FeatureData& data, const FeatureName& name, ViewportIdx viewport)
 {
     // assert size if > 0
 
@@ -202,30 +266,32 @@ Visualizer::Cloud& Visualizer::Cloud::addFeature(const FeatureData& data, const 
 }
 
 template<>
-Visualizer::Cloud& Visualizer::Cloud::add(const pcl::PointCloud<pcl::PointXYZ>& data, ViewportIdx viewport)
+Cloud& Cloud::add(const pcl::PointCloud<pcl::PointXYZ>& data, ViewportIdx viewport)
 {
     using P = pcl::PointXYZ;
     addFeature(data, "x", [](const P& p) { return p.x; }, viewport);
     addFeature(data, "y", [](const P& p) { return p.y; }, viewport);
     addFeature(data, "z", [](const P& p) { return p.z; }, viewport);
+    addSpace("x", "y", "z");
     setViewport(viewport);
     return *this;
 }
 
 template<>
-Visualizer::Cloud& Visualizer::Cloud::add(const pcl::PointCloud<pcl::Normal>& data, ViewportIdx viewport)
+Cloud& Cloud::add(const pcl::PointCloud<pcl::Normal>& data, ViewportIdx viewport)
 {
     using P = pcl::Normal;
     addFeature(data, "normal_x", [](const P& p) { return p.normal_x; }, viewport);
     addFeature(data, "normal_y", [](const P& p) { return p.normal_y; }, viewport);
     addFeature(data, "normal_z", [](const P& p) { return p.normal_z; }, viewport);
     addFeature(data, "curvature", [](const P& p) { return p.curvature; }, viewport);
+    addSpace("normal_x", "normal_y", "normal_z");
     setViewport(viewport);
     return *this;
 }
 
 template<>
-Visualizer::Cloud& Visualizer::Cloud::add(const pcl::PointCloud<pcl::PointNormal>& data, ViewportIdx viewport)
+Cloud& Cloud::add(const pcl::PointCloud<pcl::PointNormal>& data, ViewportIdx viewport)
 {
     using P = pcl::PointNormal;
     addFeature(data, "x", [](const P& p) { return p.x; }, viewport);
@@ -235,11 +301,30 @@ Visualizer::Cloud& Visualizer::Cloud::add(const pcl::PointCloud<pcl::PointNormal
     addFeature(data, "normal_y", [](const P& p) { return p.normal_y; }, viewport);
     addFeature(data, "normal_z", [](const P& p) { return p.normal_z; }, viewport);
     addFeature(data, "curvature", [](const P& p) { return p.curvature; }, viewport);
+    addSpace("x", "y", "z");
+    addSpace("normal_x", "normal_y", "normal_");
     setViewport(viewport);
     return *this;
 }
 
-void Visualizer::Cloud::save(const std::string& filename) const
+Cloud& Cloud::addSpace(const FeatureName& a, const FeatureName& b, const FeatureName& c)
+{
+    if (!hasFeature(a))      logError("[addSpace] following feature does not exit: " + a);
+    else if (!hasFeature(b)) logError("[addSpace] following feature does not exit: " + b);
+    else if (!hasFeature(c)) logError("[addSpace] following feature does not exit: " + c);
+    else mSpaces.emplace_back(a, b, c);
+    return *this;
+}
+
+bool Cloud::hasFeature(const FeatureName& name) const
+{
+    using Feature = std::pair<FeatureName, FeatureData>;
+    auto it = std::find_if(mFeatures.begin(), mFeatures.end(),
+        [&name](const Feature& f) {return f.first == name; });
+    return it != mFeatures.end();
+}
+
+void Cloud::save(const std::string& filename) const
 {
     std::ofstream f;
     f.open(filename);

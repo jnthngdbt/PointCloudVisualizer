@@ -15,6 +15,8 @@
 
 #include "Visualizer.h"
 
+using namespace vu;
+
 using PointsType = pcl::PointCloud<pcl::PointXYZ>;
 
 float randf() { return rand() / static_cast<float>(RAND_MAX); }
@@ -72,12 +74,17 @@ int main()
     ptf.filter(*cloudPatch1);
 
     // Some array features.
-    std::vector<float> idx(cloudModel->size());
-    std::vector<float> rnd(cloudModel->size());
-    for (int i = 0; i < (int)cloudModel->size(); ++i)
+    const int N = cloudModel->size();
+    std::vector<float> idx(N);
+    std::vector<float> idxn(N);
+    std::vector<float> rnd(N);
+    std::vector<float> rnd2(N);
+    for (int i = 0; i < N; ++i)
     {
         idx[i] = (float)i;
+        idxn[i] = idx[i] / (float)N;
         rnd[i] = randf();
+        rnd2[i] = randf();
     }
 
     std::cout << *cloudModel << std::endl;
@@ -134,10 +141,24 @@ int main()
         VISUALIZER_CALL(viewer.render());
     };
 
-    //
-    singleViewport();
-    multipleViewports();
- 
+    auto singleViewportGeometryHandlers = [&]()
+    {
+        VISUALIZER_CALL(Visualizer viewer("single-viewport-geometry-handlers"));
+
+        // TODO add method  viewer.addSpace("u1", "u2", "u3", name).
+
+        std::string name = "space";
+        VISUALIZER_CALL(viewer.addFeature(idxn, "u1", name));
+        VISUALIZER_CALL(viewer.addFeature(rnd, "u2", name));
+        VISUALIZER_CALL(viewer.addFeature(rnd2, "u3", name).addSpace("u1", "u2", "u3").add(*normals));
+
+        VISUALIZER_CALL(viewer.render());
+    };
+
+    //singleViewport();
+    singleViewportGeometryHandlers();
+    ////multipleViewports();
+
     return 0;
 }
 
