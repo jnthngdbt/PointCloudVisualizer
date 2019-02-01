@@ -141,11 +141,11 @@ int main()
         VISUALIZER_CALL(viewer.render());
     };
 
-    auto singleViewportRepresentations = [&]()
+    auto singleViewportGeometryHandlers = [&]()
     {
-        VISUALIZER_CALL(Visualizer viewer("single-viewport-representations"));
+        VISUALIZER_CALL(Visualizer viewer("single-viewport-geometry-handlers"));
 
-        // TODO add method  viewer.addSpace(name, "u1", "u2", "u3").
+        // TODO add method  viewer.addSpace("u1", "u2", "u3", name).
 
         std::string name = "space";
         VISUALIZER_CALL(viewer.addFeature(idxn, "u1", name));
@@ -155,13 +155,10 @@ int main()
         VISUALIZER_CALL(viewer.render());
     };
 
-    //
     //singleViewport();
-    singleViewportRepresentations();
+    singleViewportGeometryHandlers();
     ////multipleViewports();
 
-
- 
     return 0;
 }
 
