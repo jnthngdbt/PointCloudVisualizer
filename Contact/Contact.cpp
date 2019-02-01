@@ -174,17 +174,19 @@ int main()
             tree->nearestKSearch(p, 10, pi, FeatureData());
 
             PointsType::Ptr neigh(new PointsType(*cloudPatch1, pi));
-            VISUALIZER_CALL(viewer.addCloud(*neigh, "neighborhood-" + std::to_string(i++)).setColor(1,0,0).setSize(4));
+            VISUALIZER_CALL(viewer.addCloudIndexed(*neigh, "patch", i++, "neighborhood", 1));
         }
+
+        // TODO render indexed cloud, probably make render(const CloudMap& clouds)
 
         VISUALIZER_CALL(viewer.render());
     };
 
     // TODO delete files at render
 
-    singleViewport();
-    multipleViewports();
-    singleViewportGeometryHandlers();
+    //singleViewport();
+    //multipleViewports();
+    //singleViewportGeometryHandlers();
     storeCloudsInClouds();
 
     return 0;

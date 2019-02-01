@@ -12,9 +12,14 @@
 
 #define VISUALIZER_CALL(x) x
 
+void logError(const std::string& msg);
+
 namespace vu
 {
+    class Cloud;
+
     using CloudName = std::string;
+    using CloudsMap = std::map<CloudName, Cloud>;
     using FeatureName = std::string;
     using FeatureData = std::vector<float>;
     using ViewportIdx = int;
@@ -42,6 +47,8 @@ namespace vu
 
         template<typename T>
         Cloud& addCloud(const pcl::PointCloud<T>& data, ViewportIdx viewport = -1);
+        template<typename T>
+        Cloud& addCloudIndexed(const pcl::PointCloud<T>& data, int i, const CloudName& name, ViewportIdx viewport = -1);
         template<typename T, typename F>
         Cloud& addFeature(const T& data, const FeatureName& featName, F func, ViewportIdx viewport = -1);
         Cloud& addFeature(const FeatureData& data, const FeatureName& name, ViewportIdx viewport = -1);
@@ -64,6 +71,7 @@ namespace vu
         std::vector<Space> mSpaces; // using vector instead of [unordered_]map to keep order of insertion
     private:
         std::vector< std::pair<FeatureName, FeatureData> > mFeatures; // using vector instead of [unordered_]map to keep order of insertion
+        std::map<int, CloudsMap> mIndexedClouds;
     };
 
     class PclVisualizer : public pcl::visualization::PCLVisualizer
@@ -82,6 +90,8 @@ namespace vu
 
         template<typename T>
         Cloud& addCloud(const pcl::PointCloud<T>& data, const CloudName& name, ViewportIdx viewport = -1);
+        template<typename T>
+        Cloud& addCloudIndexed(const pcl::PointCloud<T>& data, const CloudName& parentCloudName, int i, const CloudName& indexedCloudName, ViewportIdx viewport = -1);
         template<typename T, typename F>
         Cloud& addFeature(const T& data, const FeatureName& featName, const CloudName& name, F func, ViewportIdx viewport = -1);
         Cloud& addFeature(const FeatureData& data, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport = -1);
@@ -108,7 +118,7 @@ namespace vu
 
         std::string mName;
         PclVisualizer mViewer;
-        std::map<CloudName, Cloud> mClouds;
+        CloudsMap mClouds;
         std::vector<int> mViewportIds;
         State mState;
     };
@@ -133,5 +143,25 @@ namespace vu
     Cloud& Visualizer::addCloud(const pcl::PointCloud<T>& data, const CloudName& name, ViewportIdx viewport)
     {
         return mClouds[name].addCloud(data, viewport);
+    }
+
+    template<typename T>
+    Cloud& Cloud::addCloudIndexed(const pcl::PointCloud<T>& data, int i, const CloudName& name, ViewportIdx viewport)
+    {
+        return mIndexedClouds[i][name].addCloud(data, viewport);
+    }
+
+    template<typename T>
+    Cloud& Visualizer::addCloudIndexed(
+        const pcl::PointCloud<T>& data,
+        const CloudName& parentCloudName,
+        int i,
+        const CloudName& indexedCloudName,
+        ViewportIdx viewport)
+    {
+        if (mClouds.count(parentCloudName) == 0)
+            logError("[Visualizer::addCloudIndexed] must add an indexed cloud in an existing cloud. [" + parentCloudName + "] does not exist.");
+
+        return mClouds[parentCloudName].addCloudIndexed(data, i, indexedCloudName, viewport);
     }
 }
