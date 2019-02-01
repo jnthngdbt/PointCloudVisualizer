@@ -208,7 +208,7 @@ void Visualizer::identifyClouds(bool enabled, bool back)
             mViewer.addText(name, 0, 0, textId, mViewportIds[cloud.mViewport]);
 
         mViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getOpacity(), name);
-        mViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, isIdentificationDisabled ? cloud.mSize : 1, name);
+        mViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, isIdentificationDisabled || isHighlighted ? cloud.mSize : 1, name);
         ++i;
     }
 }
@@ -266,7 +266,7 @@ Cloud& Cloud::addFeature(const FeatureData& data, const FeatureName& name, Viewp
 }
 
 template<>
-Cloud& Cloud::add(const pcl::PointCloud<pcl::PointXYZ>& data, ViewportIdx viewport)
+Cloud& Cloud::addCloud(const pcl::PointCloud<pcl::PointXYZ>& data, ViewportIdx viewport)
 {
     using P = pcl::PointXYZ;
     addFeature(data, "x", [](const P& p) { return p.x; }, viewport);
@@ -278,7 +278,7 @@ Cloud& Cloud::add(const pcl::PointCloud<pcl::PointXYZ>& data, ViewportIdx viewpo
 }
 
 template<>
-Cloud& Cloud::add(const pcl::PointCloud<pcl::Normal>& data, ViewportIdx viewport)
+Cloud& Cloud::addCloud(const pcl::PointCloud<pcl::Normal>& data, ViewportIdx viewport)
 {
     using P = pcl::Normal;
     addFeature(data, "normal_x", [](const P& p) { return p.normal_x; }, viewport);
@@ -291,7 +291,7 @@ Cloud& Cloud::add(const pcl::PointCloud<pcl::Normal>& data, ViewportIdx viewport
 }
 
 template<>
-Cloud& Cloud::add(const pcl::PointCloud<pcl::PointNormal>& data, ViewportIdx viewport)
+Cloud& Cloud::addCloud(const pcl::PointCloud<pcl::PointNormal>& data, ViewportIdx viewport)
 {
     using P = pcl::PointNormal;
     addFeature(data, "x", [](const P& p) { return p.x; }, viewport);

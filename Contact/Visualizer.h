@@ -41,7 +41,7 @@ namespace vu
         Cloud() = default;
 
         template<typename T>
-        Cloud& add(const pcl::PointCloud<T>& data, ViewportIdx viewport = -1);
+        Cloud& addCloud(const pcl::PointCloud<T>& data, ViewportIdx viewport = -1);
         template<typename T, typename F>
         Cloud& addFeature(const T& data, const FeatureName& featName, F func, ViewportIdx viewport = -1);
         Cloud& addFeature(const FeatureData& data, const FeatureName& name, ViewportIdx viewport = -1);
@@ -81,7 +81,7 @@ namespace vu
         static const std::string sFilePrefix;
 
         template<typename T>
-        Cloud& add(const pcl::PointCloud<T>& data, const CloudName& name, ViewportIdx viewport = -1);
+        Cloud& addCloud(const pcl::PointCloud<T>& data, const CloudName& name, ViewportIdx viewport = -1);
         template<typename T, typename F>
         Cloud& addFeature(const T& data, const FeatureName& featName, const CloudName& name, F func, ViewportIdx viewport = -1);
         Cloud& addFeature(const FeatureData& data, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport = -1);
@@ -130,8 +130,8 @@ namespace vu
     }
 
     template<typename T>
-    Cloud& Visualizer::add(const pcl::PointCloud<T>& data, const CloudName& name, ViewportIdx viewport)
+    Cloud& Visualizer::addCloud(const pcl::PointCloud<T>& data, const CloudName& name, ViewportIdx viewport)
     {
-        return mClouds[name].add(data, viewport);
+        return mClouds[name].addCloud(data, viewport);
     }
 }
