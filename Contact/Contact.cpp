@@ -174,7 +174,7 @@ int main()
             tree->nearestKSearch(p, 10, pi, FeatureData());
 
             PointsType::Ptr neigh(new PointsType(*cloudPatch1, pi));
-            VISUALIZER_CALL(viewer.addCloudIndexed(*neigh, "patch", i++, "neighborhood", 1));
+            VISUALIZER_CALL(viewer.addCloudIndexed(*neigh, "patch", i++, "neighborhood", 1).setSize(5));
         }
 
         // TODO render indexed cloud, probably make render(const CloudMap& clouds)

@@ -33,7 +33,28 @@ Cloud& Visualizer::addFeature(const FeatureData& data, const FeatureName& featNa
 
 void Visualizer::render()
 {
+    render(mClouds);
+
+    // Indexed clouds.
     for (auto& pair : mClouds)
+    {
+        // Show the first indexed cloud if any.
+        auto& idxClouds = pair.second.mIndexedClouds;
+        if (idxClouds.size() > 0)
+        {
+            auto& firstIdxCloudMap = idxClouds.begin()->second;
+            render(firstIdxCloudMap);
+        }
+    }
+
+    mViewer.registerKeyboardCallback(&Visualizer::keyboardEventOccurred, *this);
+
+    mViewer.spin();
+}
+
+void Visualizer::render(CloudsMap& clouds)
+{
+    for (auto& pair : clouds)
     {
         const auto& name = pair.first;
         auto& cloud = pair.second;
@@ -103,12 +124,12 @@ void Visualizer::render()
                 mViewportIds[cloud.mViewport]);
         }
 
+        // TODO: only keep common handlers across all clouds, if none, do nothing, error
+        // Maybe not color, but at least geo, or at least per viewport.
+        // Or, maybe think about implications on indexed clouds.
+
         mViewer.filterHandlers(name);
     }
-
-    mViewer.registerKeyboardCallback(&Visualizer::keyboardEventOccurred, *this);
-
-    mViewer.spin();
 }
 
 std::vector<ColorHandlerConstPtr> Visualizer::generateColorHandlers(const pcl::PCLPointCloud2::Ptr pclCloudMsg, const Cloud& cloud, bool hasRGB) const
