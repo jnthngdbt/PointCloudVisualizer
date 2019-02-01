@@ -149,7 +149,7 @@ namespace vu
     Cloud& Cloud::addCloudIndexed(const pcl::PointCloud<T>& data, int i, const CloudName& name, ViewportIdx viewport)
     {
         if (i < 0 || i >= getNbPoints())
-            logError("[addCloudIndexed] Index out of range. Adding the cloud anyway, but it will never be rendered.")
+            logError("[addCloudIndexed] Index out of range. Adding the cloud anyway, but it will never be rendered.");
 
         return mIndexedClouds[i][name].addCloud(data, viewport);
     }
