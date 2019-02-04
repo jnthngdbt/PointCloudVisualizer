@@ -106,6 +106,7 @@ namespace vu
         struct State
         {
             int mIdentifiedCloudIdx{ -1 };
+            int mSelectedIdx{ -1 };
         };
 
         std::vector<ColorHandlerConstPtr> generateColorHandlers(const pcl::PCLPointCloud2::Ptr pclCloudMsg, const Cloud& cloud, bool hasRgb) const;
@@ -114,7 +115,8 @@ namespace vu
         void render(CloudsMap& clouds);
 
         // Interactivity
-        void keyboardEventOccurred(const pcl::visualization::KeyboardEvent& event, void*);
+        void keyboardEventCallback(const pcl::visualization::KeyboardEvent& event, void*);
+        void pointPickingEventCallback(const pcl::visualization::PointPickingEvent& event, void*);
         void identifyClouds(bool enabled, bool back);
         void printHelp() const;
 

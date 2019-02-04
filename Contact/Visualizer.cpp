@@ -45,9 +45,13 @@ void Visualizer::render()
             auto& firstIdxCloudMap = idxClouds.begin()->second;
             render(firstIdxCloudMap);
         }
+
+        //// TODO only if some indexed clouds
+        //mViewer.registerPointPickingCallback(&Cloud::pointPickingEventCallback, pair.second);
     }
 
-    mViewer.registerKeyboardCallback(&Visualizer::keyboardEventOccurred, *this);
+    mViewer.registerPointPickingCallback(&Visualizer::pointPickingEventCallback, *this);
+    mViewer.registerKeyboardCallback(&Visualizer::keyboardEventCallback, *this);
 
     mViewer.spin();
 }
@@ -180,7 +184,7 @@ void PclVisualizer::filterHandlers(const std::string &id)
     }
 }
 
-void Visualizer::keyboardEventOccurred(const pcl::visualization::KeyboardEvent& event, void*)
+void Visualizer::keyboardEventCallback(const pcl::visualization::KeyboardEvent& event, void*)
 {
     if ((event.getKeySym() == "i" || event.getKeySym() == "I") && event.keyDown())
     {
@@ -268,6 +272,16 @@ Cloud& Cloud::setViewport(ViewportIdx viewport)
         mViewport = viewport;
 
     return *this;
+}
+
+void Visualizer::pointPickingEventCallback(const pcl::visualization::PointPickingEvent& event, void*)
+{
+    mState.mSelectedIdx = event.getPointIndex();
+    float x, y, z;
+    event.getPoint(x, y, z);
+
+    std::cout << "SELECTED POINT: " << mState.mSelectedIdx << std::endl;
+    std::cout << "              : " << x << ", " << y << ", " << z << std::endl;
 }
 
 Cloud& Cloud::addFeature(const FeatureData& data, const FeatureName& name, ViewportIdx viewport)
