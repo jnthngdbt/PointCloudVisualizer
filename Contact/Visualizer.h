@@ -10,6 +10,8 @@
 #include <pcl/point_types.h>
 #include <pcl/visualization/pcl_visualizer.h>
 
+#include <flann/flann.h>
+
 #define VISUALIZER_CALL(x) x
 
 void logError(const std::string& msg);
@@ -22,10 +24,15 @@ namespace vu
     using CloudsMap = std::map<CloudName, Cloud>;
     using FeatureName = std::string;
     using FeatureData = std::vector<float>;
+    using Feature = std::pair<FeatureName, FeatureData>;
+    using FeatureIt = std::vector<Feature>::iterator;
+    using FeatureConstIt = std::vector<Feature>::const_iterator;
+    using SearchTree = flann::Index<flann::L2<float> >;
     using ViewportIdx = int;
 
     using GeometryHandlerConstPtr = pcl::visualization::PointCloudGeometryHandler<pcl::PCLPointCloud2>::ConstPtr;
     using ColorHandlerConstPtr = pcl::visualization::PointCloudColorHandler<pcl::PCLPointCloud2>::ConstPtr;
+
 
     struct ColorRGB
     {
@@ -36,8 +43,10 @@ namespace vu
 
     struct Space
     {
-        Space(const FeatureName& a, const FeatureName& b, const FeatureName& c) : u1(a), u2(b), u3(c) {}
+        Space(const Feature& a, const Feature& b, const Feature& c);
+
         FeatureName u1, u2, u3;
+        SearchTree mSearchTree;
     };
 
     class Cloud
@@ -62,6 +71,11 @@ namespace vu
         int getNbPoints() const;
         int getNbFeatures() const { return static_cast<int>(mFeatures.size()); };
         bool hasFeature(const FeatureName& name) const;
+        FeatureIt getFeature(const FeatureName& name);
+        FeatureConstIt getFeature(const FeatureName& name) const;
+        const FeatureData& getFeatureData(const FeatureName& name) const;
+        FeatureData& getFeatureData(const FeatureName& name);
+
         void save(const std::string& filename) const;
 
         int mViewport{ 0 };
@@ -71,7 +85,7 @@ namespace vu
         std::vector<Space> mSpaces; // using vector instead of [unordered_]map to keep order of insertion
         std::map<int, CloudsMap> mIndexedClouds;
     private:
-        std::vector< std::pair<FeatureName, FeatureData> > mFeatures; // using vector instead of [unordered_]map to keep order of insertion
+        std::vector<Feature> mFeatures; // using vector instead of [unordered_]map to keep order of insertion
     };
 
     class PclVisualizer : public pcl::visualization::PCLVisualizer

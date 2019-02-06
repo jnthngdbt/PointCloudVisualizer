@@ -14,6 +14,11 @@ void logError(const std::string& msg)
     std::cout << "[VISUALIZER][ERROR]" << msg << std::endl;
 }
 
+void logWarning(const std::string& msg)
+{
+    std::cout << "[VISUALIZER][WARNING]" << msg << std::endl;
+}
+
 Visualizer::Visualizer(const std::string& name, int nbRows, int nbCols) :
     mName(name), mViewer(name)
 {
@@ -288,11 +293,8 @@ Cloud& Cloud::addFeature(const FeatureData& data, const FeatureName& name, Viewp
 {
     // assert size if > 0
 
-    auto it = std::find_if(mFeatures.begin(), mFeatures.end(),
-        [&name](const std::pair<FeatureName, FeatureData>& p) { return p.first == name; });
-
-    if (it != mFeatures.end()) // has feature
-        it->second = data;
+    if (hasFeature(name))
+        getFeatureData(name) = data; // overwrite
     else
         mFeatures.emplace_back(name, data);
 
@@ -347,16 +349,37 @@ Cloud& Cloud::addSpace(const FeatureName& a, const FeatureName& b, const Feature
     if (!hasFeature(a))      logError("[addSpace] following feature does not exit: " + a);
     else if (!hasFeature(b)) logError("[addSpace] following feature does not exit: " + b);
     else if (!hasFeature(c)) logError("[addSpace] following feature does not exit: " + c);
-    else mSpaces.emplace_back(a, b, c);
+    else mSpaces.emplace_back(*getFeature(a), *getFeature(b), *getFeature(c));
     return *this;
+}
+
+FeatureIt Cloud::getFeature(const FeatureName& name)
+{
+    return std::find_if(mFeatures.begin(), mFeatures.end(),
+        [&name](const Feature& f) {return f.first == name; });
+}
+
+FeatureConstIt Cloud::getFeature(const FeatureName& name) const
+{
+    return std::find_if(mFeatures.cbegin(), mFeatures.cend(),
+        [&name](const Feature& f) {return f.first == name; });
+}
+
+FeatureData& Cloud::getFeatureData(const FeatureName& name)
+{
+    if (!hasFeature(name)) logError("Cannot get feature data vector if the feature does not exist.");
+    return getFeature(name)->second;
+}
+
+const FeatureData& Cloud::getFeatureData(const FeatureName& name) const
+{
+    if (!hasFeature(name)) logError("Cannot get feature data vector if the feature does not exist.");
+    return getFeature(name)->second;
 }
 
 bool Cloud::hasFeature(const FeatureName& name) const
 {
-    using Feature = std::pair<FeatureName, FeatureData>;
-    auto it = std::find_if(mFeatures.begin(), mFeatures.end(),
-        [&name](const Feature& f) {return f.first == name; });
-    return it != mFeatures.end();
+    return getFeature(name) != mFeatures.end();
 }
 
 void Cloud::save(const std::string& filename) const
@@ -402,5 +425,29 @@ void Cloud::save(const std::string& filename) const
     }
 
     f.close();
+}
+
+Space::Space(const Feature& a, const Feature& b, const Feature& c) : 
+    u1(a.first), u2(b.first), u3(c.first),
+    mSearchTree(flann::KDTreeIndexParams(4))
+{
+    const FeatureData& va = a.second;
+    const FeatureData& vb = b.second;
+    const FeatureData& vc = c.second;
+
+    const int N = va.size();
+    if (va.size() != N || vb.size() != N || vc.size() != N)
+        logError("All features must have the same size. Will crash.");
+
+    FeatureData data;
+    data.reserve(N*3);
+    for (int i = 0; i < N; ++i)
+    {
+        data.push_back(va[i]);
+        data.push_back(vb[i]);
+        data.push_back(vc[i]);
+    }
+
+    mSearchTree.buildIndex(flann::Matrix<float>(data.data(), N, 3));
 }
 
