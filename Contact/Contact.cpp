@@ -180,11 +180,33 @@ int main()
         // TODO render indexed cloud, probably make render(const CloudMap& clouds)
 
         VISUALIZER_CALL(viewer.render());
-    };
+
+        /////////////////////////////////////////////////////////////
+        // TEMP KDTREE TEST CODE
+
+        const int nbQueries = 1;
+        const int nbDims = 3;
+
+        // one point on each row of the matrix
+        flann::Matrix<float> dataset(cloudModel->getMatrixXfMap().data(), cloudModel->size(), 3);
+
+        std::vector<float> queryData({ 0.5, 0.5, 0.5 });
+        std::vector<int> indicesData(nbQueries, 0);
+        std::vector<float> distsData(nbQueries, 0);
+
+        flann::Matrix<float> query(queryData.data(), nbQueries, nbDims);
+        flann::Matrix<int> indices(indicesData.data(), nbQueries, 1);
+        flann::Matrix<float> dists(distsData.data(), nbQueries, 1);
+        // construct an randomized kd-tree index using 4 kd-trees
+        flann::Index<flann::L2<float> > index(dataset, flann::KDTreeIndexParams(4));
+        index.buildIndex();
+        // do a knn search, using 128 checks
+        index.knnSearch(query, indices, dists, nbQueries, flann::SearchParams(128));        /////////////////////////////////////////////////////////////
+    };
 
     // TODO delete files at render
 
-    //singleViewport();
+    singleViewport();
     //multipleViewports();
     //singleViewportGeometryHandlers();
     storeCloudsInClouds();
