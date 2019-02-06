@@ -105,6 +105,8 @@ void Visualizer::render(CloudsMap& clouds)
             continue;
         }
 
+        mViewer.removePointCloud(name, mViewportIds[cloud.mViewport]);
+
         // Add color handlers.
         for (const auto& color : colorHandlers)
         {
@@ -187,6 +189,17 @@ void PclVisualizer::filterHandlers(const std::string &id)
         // should be grouped together.
         h.erase(std::unique(h.begin(), h.end(), compare), h.end());
     }
+}
+
+// Overriding to get index from the correct cloud actor map. Obscur why.
+int PclVisualizer::getGeometryHandlerIndex(const std::string &id)
+{
+    auto cloudActorMap = getCloudActorMap(); // instead of style_->getCloudActorMap() in base class, where our id never exists...
+    auto it = cloudActorMap->find(id);
+    if (it == cloudActorMap->end())
+        return (-1);
+
+    return (it->second.geometry_handler_index_);
 }
 
 void Visualizer::keyboardEventCallback(const pcl::visualization::KeyboardEvent& event, void*)
@@ -281,12 +294,31 @@ Cloud& Cloud::setViewport(ViewportIdx viewport)
 
 void Visualizer::pointPickingEventCallback(const pcl::visualization::PointPickingEvent& event, void*)
 {
-    mState.mSelectedIdx = event.getPointIndex();
+    const int pickedIdx = event.getPointIndex();
     float x, y, z;
     event.getPoint(x, y, z);
 
-    std::cout << "SELECTED POINT: " << mState.mSelectedIdx << std::endl;
-    std::cout << "              : " << x << ", " << y << ", " << z << std::endl;
+    std::cout << "Picked point #" << pickedIdx << ": (" << x << ", " << y << ", " << z << ")" << std::endl;
+
+    // Find corresponding point in clouds that have indexed clouds.
+    for (auto& pair : mClouds)
+    {
+        auto& name = pair.first;
+        auto& cloud = pair.second;
+        if (cloud.mIndexedClouds.size() > 0) // has indexed clouds
+        {
+            // Find the point in the current space (geometry handler).
+            const int iGeo = mViewer.getGeometryHandlerIndex(name);
+            const auto& space = cloud.mSpaces[iGeo];
+            const int foundIdx = space.findPickedPointIndex(x, y, z);
+
+            if (foundIdx >= 0)
+            {
+                std::cout << "Found point #" << foundIdx << std::endl;
+                render(cloud.mIndexedClouds[foundIdx]);
+            }
+        }
+    }
 }
 
 Cloud& Cloud::addFeature(const FeatureData& data, const FeatureName& name, ViewportIdx viewport)
@@ -429,7 +461,7 @@ void Cloud::save(const std::string& filename) const
 
 Space::Space(const Feature& a, const Feature& b, const Feature& c) : 
     u1(a.first), u2(b.first), u3(c.first),
-    mSearchTree(flann::KDTreeIndexParams(4))
+    mSearchTree(flann::KDTreeSingleIndexParams()) // optimized for 3D, gives exact result
 {
     const FeatureData& va = a.second;
     const FeatureData& vb = b.second;
@@ -449,5 +481,25 @@ Space::Space(const Feature& a, const Feature& b, const Feature& c) :
     }
 
     mSearchTree.buildIndex(flann::Matrix<float>(data.data(), N, 3));
+}
+
+int Space::findPickedPointIndex(float a, float b, float c) const
+{
+    const int nbQueries = 1;
+    const int nbDims = 3;
+
+    std::vector<float> queryData({ a, b, c });
+    std::vector<int> indicesData(nbQueries, 0);
+    std::vector<float> distsData(nbQueries, 0);
+
+    flann::Matrix<float> query(queryData.data(), nbQueries, nbDims);
+    flann::Matrix<int> indices(indicesData.data(), nbQueries, 1);
+    flann::Matrix<float> dists(distsData.data(), nbQueries, 1);
+
+    mSearchTree.knnSearch(query, indices, dists, nbQueries, flann::SearchParams());
+
+    // Must be a perfect pick, to avoid confusion between clouds in same viewport.
+    const float eps = 1e-10;
+    return (*dists[0] < eps) ? *indices[0] : -1;
 }
 

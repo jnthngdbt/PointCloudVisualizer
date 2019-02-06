@@ -45,6 +45,8 @@ namespace vu
     {
         Space(const Feature& a, const Feature& b, const Feature& c);
 
+        int findPickedPointIndex(float a, float b, float c) const;
+
         FeatureName u1, u2, u3;
         SearchTree mSearchTree;
     };
@@ -93,6 +95,7 @@ namespace vu
     public:
         PclVisualizer(const std::string& name) : pcl::visualization::PCLVisualizer(name) {}
         void filterHandlers(const std::string &id);
+        int getGeometryHandlerIndex(const std::string &id);
     };
 
     class Visualizer
@@ -120,7 +123,6 @@ namespace vu
         struct State
         {
             int mIdentifiedCloudIdx{ -1 };
-            int mSelectedIdx{ -1 };
         };
 
         std::vector<ColorHandlerConstPtr> generateColorHandlers(const pcl::PCLPointCloud2::Ptr pclCloudMsg, const Cloud& cloud, bool hasRgb) const;

@@ -160,57 +160,31 @@ int main()
     {
         VISUALIZER_CALL(Visualizer viewer("store-clouds-in-clouds", 1, 2));
 
-        VISUALIZER_CALL(viewer.addCloud(*cloudPatch1, "patch").setSize(2));
+        VISUALIZER_CALL(viewer.addCloud(*cloudModel, "model").addCloud(*normals).setOpacity(0.7));
 
         using KdTree = pcl::search::KdTree<pcl::PointXYZ>;
         KdTree::Ptr tree(new KdTree());
-        tree->setInputCloud(cloudPatch1);
+        tree->setInputCloud(cloudModel);
 
         int i = 0;
 
-        for (const auto& p : *cloudPatch1)
+        for (const auto& p : *cloudModel)
         {
             std::vector<int> pi;
             tree->nearestKSearch(p, 10, pi, FeatureData());
 
-            PointsType::Ptr neigh(new PointsType(*cloudPatch1, pi));
-            VISUALIZER_CALL(viewer.addCloudIndexed(*neigh, "patch", i++, "neighborhood", 1).setSize(5));
+            PointsType::Ptr neigh(new PointsType(*cloudModel, pi));
+            VISUALIZER_CALL(viewer.addCloudIndexed(*neigh, "model", i++, "neighborhood", 1).setSize(5));
         }
 
-        // TODO render indexed cloud, probably make render(const CloudMap& clouds)
-
         VISUALIZER_CALL(viewer.render());
-
-        /////////////////////////////////////////////////////////////
-        // TEMP KDTREE TEST CODE
-
-        const int nbQueries = 1;
-        const int nbDims = 3;
-
-        // one point on each row of the matrix
-        flann::Matrix<float> dataset(cloudModel->getMatrixXfMap().data(), cloudModel->size(), 3);
-
-        std::vector<float> queryData({ 0.5, 0.5, 0.5 });
-        std::vector<int> indicesData(nbQueries, 0);
-        std::vector<float> distsData(nbQueries, 0);
-
-        flann::Matrix<float> query(queryData.data(), nbQueries, nbDims);
-        flann::Matrix<int> indices(indicesData.data(), nbQueries, 1);
-        flann::Matrix<float> dists(distsData.data(), nbQueries, 1);
-        // construct an randomized kd-tree index using 4 kd-trees
-        flann::Index<flann::L2<float> > index(dataset, flann::KDTreeIndexParams(4));
-        index.buildIndex();
-        // do a knn search, using 128 checks
-        index.knnSearch(query, indices, dists, nbQueries, flann::SearchParams(128));
-        /////////////////////////////////////////////////////////////
-
     };
 
     // TODO delete files at render
 
     singleViewport();
-    //multipleViewports();
-    //singleViewportGeometryHandlers();
+    multipleViewports();
+    singleViewportGeometryHandlers();
     storeCloudsInClouds();
 
     return 0;
