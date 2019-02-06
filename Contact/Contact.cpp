@@ -201,8 +201,10 @@ int main()
         flann::Index<flann::L2<float> > index(dataset, flann::KDTreeIndexParams(4));
         index.buildIndex();
         // do a knn search, using 128 checks
-        index.knnSearch(query, indices, dists, nbQueries, flann::SearchParams(128));        /////////////////////////////////////////////////////////////
-    };
+        index.knnSearch(query, indices, dists, nbQueries, flann::SearchParams(128));
+        /////////////////////////////////////////////////////////////
+
+    };
 
     // TODO delete files at render
 
