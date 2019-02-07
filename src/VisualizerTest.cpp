@@ -121,6 +121,7 @@ int main()
         VISUALIZER_CALL(viewer.addFeature(cloudModel->points, "x", NAME, [](const pcl::PointXYZ& p) { return p.x; }, viewport));
         VISUALIZER_CALL(viewer.addFeature(cloudModel->points, "y", NAME, [](const pcl::PointXYZ& p) { return p.y; }, viewport));
         VISUALIZER_CALL(viewer.addFeature(cloudModel->points, "z", NAME, [](const pcl::PointXYZ& p) { return p.z; }, viewport));
+        VISUALIZER_CALL(viewer.addSpace("x", "y", "z", NAME));
         viewport++;
 
         NAME = "multiple-clouds-properties-multiplecalls";
@@ -151,7 +152,8 @@ int main()
         std::string name = "space";
         VISUALIZER_CALL(viewer.addFeature(idxn, "u1", name));
         VISUALIZER_CALL(viewer.addFeature(rnd, "u2", name));
-        VISUALIZER_CALL(viewer.addFeature(rnd2, "u3", name).addSpace("u1", "u2", "u3").addCloud(*normals));
+        VISUALIZER_CALL(viewer.addFeature(rnd2, "u3", name));
+        VISUALIZER_CALL(viewer.addSpace("u1", "u2", "u3", name).addCloud(*normals));
 
         VISUALIZER_CALL(viewer.render());
     };

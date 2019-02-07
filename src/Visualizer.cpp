@@ -38,6 +38,11 @@ Cloud& Visualizer::addFeature(const FeatureData& data, const FeatureName& featNa
     return mClouds[cloudName].addFeature(data, featName, viewport);
 }
 
+Cloud& Visualizer::addSpace(const FeatureName& a, const FeatureName& b, const FeatureName& c, const CloudName& cloudName)
+{
+    return mClouds[cloudName].addSpace(a, b, c);
+}
+
 void Visualizer::render()
 {
     // TODO match handlers index and patch missing with kind of 'null' handler
@@ -428,9 +433,9 @@ Cloud& Cloud::addCloud(const pcl::PointCloud<pcl::PointNormal>& data, ViewportId
 
 Cloud& Cloud::addSpace(const FeatureName& a, const FeatureName& b, const FeatureName& c)
 {
-    if (!hasFeature(a))      logError("[addSpace] following feature does not exit: " + a);
-    else if (!hasFeature(b)) logError("[addSpace] following feature does not exit: " + b);
-    else if (!hasFeature(c)) logError("[addSpace] following feature does not exit: " + c);
+    if      (!hasFeature(a)) { logError("[addSpace] following feature does not exit: " + a); return *this; }
+    else if (!hasFeature(b)) { logError("[addSpace] following feature does not exit: " + b); return *this; }
+    else if (!hasFeature(c)) { logError("[addSpace] following feature does not exit: " + c); return *this; }
     else mSpaces.emplace_back(*getFeature(a), *getFeature(b), *getFeature(c));
     return *this;
 }

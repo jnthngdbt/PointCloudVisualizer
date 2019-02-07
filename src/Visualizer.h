@@ -112,6 +112,7 @@ namespace pcv
         template<typename T, typename F>
         Cloud& addFeature(const T& data, const FeatureName& featName, const CloudName& name, F func, ViewportIdx viewport = -1);
         Cloud& addFeature(const FeatureData& data, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport = -1);
+        Cloud& addSpace(const FeatureName& a, const FeatureName& b, const FeatureName& c, const CloudName& cloudName);
 
         int getNbClouds() const;
         const std::pair<const CloudName, Cloud>* getCloud(int i) const;
