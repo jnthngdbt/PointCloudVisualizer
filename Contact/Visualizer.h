@@ -113,7 +113,8 @@ namespace vu
         Cloud& addFeature(const T& data, const FeatureName& featName, const CloudName& name, F func, ViewportIdx viewport = -1);
         Cloud& addFeature(const FeatureData& data, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport = -1);
 
-        int getNbClouds() const { return static_cast<int>(mClouds.size()); };
+        int getNbClouds() const;
+        const std::pair<const CloudName, Cloud>* getCloud(int i) const;
 
         void render();
 
