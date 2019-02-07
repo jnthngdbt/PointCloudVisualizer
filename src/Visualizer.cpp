@@ -19,6 +19,8 @@ void logWarning(const std::string& msg)
     std::cout << "[VISUALIZER][WARNING]" << msg << std::endl;
 }
 
+// Constructor. Creates all needed viewports depending on wanted 
+// number of columns and rows.
 Visualizer::Visualizer(const std::string& name, int nbRows, int nbCols) :
     mName(name), mViewer(name)
 {
@@ -38,6 +40,8 @@ Cloud& Visualizer::addFeature(const FeatureData& data, const FeatureName& featNa
 
 void Visualizer::render()
 {
+    // TODO match handlers index and patch missing with kind of 'null' handler
+
     render(mClouds);
 
     // Indexed clouds.
@@ -50,9 +54,6 @@ void Visualizer::render()
             auto& firstIdxCloudMap = idxClouds.begin()->second;
             render(firstIdxCloudMap);
         }
-
-        //// TODO only if some indexed clouds
-        //mViewer.registerPointPickingCallback(&Cloud::pointPickingEventCallback, pair.second);
     }
 
     mViewer.registerPointPickingCallback(&Visualizer::pointPickingEventCallback, *this);
@@ -134,10 +135,6 @@ void Visualizer::render(CloudsMap& clouds)
                 name,
                 mViewportIds[cloud.mViewport]);
         }
-
-        // TODO: only keep common handlers across all clouds, if none, do nothing, error
-        // Maybe not color, but at least geo, or at least per viewport.
-        // Or, maybe think about implications on indexed clouds.
 
         mViewer.filterHandlers(name);
     }
