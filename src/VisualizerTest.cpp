@@ -16,7 +16,7 @@
 
 #include "Visualizer.h"
 
-using namespace vu;
+using namespace pcv;
 
 using PointsType = pcl::PointCloud<pcl::PointXYZ>;
 
