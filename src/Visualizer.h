@@ -16,7 +16,7 @@
 
 void logError(const std::string& msg);
 
-namespace vu
+namespace pcv
 {
     class Cloud;
 

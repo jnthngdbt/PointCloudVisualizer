@@ -5,7 +5,7 @@
 
 #include <pcl/io/pcd_io.h>
 
-using namespace vu;
+using namespace pcv;
 
 const std::string Visualizer::sFilePrefix = "visualizer.";
 
