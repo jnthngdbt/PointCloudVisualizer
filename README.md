@@ -1,4 +1,4 @@
-# CONTACT
+# PointCloudVisualizer
 
 How to install:
 
