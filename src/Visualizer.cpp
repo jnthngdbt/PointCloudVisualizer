@@ -141,6 +141,16 @@ void Visualizer::render(CloudsMap& clouds)
                 mViewportIds[cloud.mViewport]);
         }
 
+        // TODO to remove ///////////////////////////////////////////
+        const auto a = GeometryHandlerConstPtr(new PointCloudGeometryHandlerNull(pclCloudMsg));
+        mViewer.addPointCloud(
+            pclCloudMsg,
+            a,
+            Eigen::Vector4f(0, 0, 0, 0),
+            Eigen::Quaternion<float>(0, 0, 0, 0),
+            name,
+            mViewportIds[cloud.mViewport]);
+
         mViewer.filterHandlers(name);
     }
 }
@@ -175,6 +185,15 @@ std::vector<GeometryHandlerConstPtr> Visualizer::generateGeometryHandlers(const 
         handlers.emplace_back(new GeoHandler(pclCloudMsg, space.u1, space.u2, space.u3));
 
     return std::move(handlers);
+}
+
+std::vector<std::string> Visualizer::generateGeometryHandlerNamesList() const
+{
+    std::vector<std::string> names(getNbClouds());
+
+    // TODO or remove ///////////////////////////////////////////
+
+    return names;
 }
 
 void PclVisualizer::filterHandlers(const std::string &id)

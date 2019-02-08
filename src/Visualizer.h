@@ -33,6 +33,21 @@ namespace pcv
     using GeometryHandlerConstPtr = pcl::visualization::PointCloudGeometryHandler<pcl::PCLPointCloud2>::ConstPtr;
     using ColorHandlerConstPtr = pcl::visualization::PointCloudColorHandler<pcl::PCLPointCloud2>::ConstPtr;
 
+    class PointCloudGeometryHandlerNull : public pcl::visualization::PointCloudGeometryHandler<pcl::PCLPointCloud2>
+    {
+    public:
+        PointCloudGeometryHandlerNull(const PointCloudConstPtr &cloud) :
+            pcl::visualization::PointCloudGeometryHandler<pcl::PCLPointCloud2>(cloud) {}
+
+        virtual std::string getName() const override { return "PointCloudGeometryHandlerNull"; }
+        virtual std::string getFieldName() const override { return "null"; }
+        bool isCapable() const { return (false); }
+        virtual void getGeometry(vtkSmartPointer<vtkPoints> &points) const override
+        {
+            if (!points) points = vtkSmartPointer<vtkPoints>::New();
+            points->SetDataTypeToFloat();
+        };
+    };
 
     struct ColorRGB
     {
@@ -46,6 +61,7 @@ namespace pcv
         Space(const Feature& a, const Feature& b, const Feature& c);
 
         int findPickedPointIndex(float a, float b, float c) const;
+        std::string getName() const { return u1 + '|' + u2 + '|' + u3; } // TODO or remove ///////////////////////////////////////////
 
         FeatureName u1, u2, u3;
         SearchTree mSearchTree;
@@ -129,6 +145,7 @@ namespace pcv
 
         std::vector<ColorHandlerConstPtr> generateColorHandlers(const pcl::PCLPointCloud2::Ptr pclCloudMsg, const Cloud& cloud, bool hasRgb) const;
         std::vector<GeometryHandlerConstPtr> generateGeometryHandlers(const pcl::PCLPointCloud2::Ptr pclCloudMsg, const Cloud& cloud) const;
+        std::vector<std::string> generateGeometryHandlerNamesList() const; // TODO or remove ///////////////////////////////////////////
 
         void render(CloudsMap& clouds);
 
