@@ -177,7 +177,8 @@ std::vector<GeometryHandlerConstPtr> Visualizer::generateGeometryHandlers(const 
 
 std::vector<std::string> Visualizer::generateGeometryHandlerNamesList() const
 {
-    std::vector<std::string> names(getNbClouds());
+    const int nbClouds = mClouds.size();
+    std::vector<std::string> names(nbClouds);
 
     // TODO or remove ///////////////////////////////////////////
 
