@@ -104,6 +104,7 @@ namespace pcv
         Visualizer(const std::string& name, int nbRows = 1, int nbCols = 1);
 
         static const std::string sFilePrefix;
+        static const std::string sFolder;
 
         template<typename T>
         Cloud& addCloud(const pcl::PointCloud<T>& data, const CloudName& name, ViewportIdx viewport = -1);
