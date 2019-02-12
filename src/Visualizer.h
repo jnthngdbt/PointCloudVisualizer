@@ -20,8 +20,9 @@ namespace pcv
 {
     class Cloud;
 
+    using CloudPtr = std::shared_ptr<Cloud>;
     using CloudName = std::string;
-    using CloudsMap = std::map<CloudName, Cloud>;
+    using CloudsMap = std::map<CloudName, CloudPtr>;
     using FeatureName = std::string;
     using FeatureData = std::vector<float>;
     using Feature = std::pair<FeatureName, FeatureData>;
@@ -32,7 +33,6 @@ namespace pcv
 
     using GeometryHandlerConstPtr = pcl::visualization::PointCloudGeometryHandler<pcl::PCLPointCloud2>::ConstPtr;
     using ColorHandlerConstPtr = pcl::visualization::PointCloudColorHandler<pcl::PCLPointCloud2>::ConstPtr;
-
 
     struct ColorRGB
     {
@@ -115,7 +115,8 @@ namespace pcv
         Cloud& addSpace(const FeatureName& a, const FeatureName& b, const FeatureName& c, const CloudName& cloudName);
 
         int getNbClouds() const;
-        const std::pair<const CloudName, Cloud>* getCloud(int i) const;
+        const std::pair<const CloudName, CloudPtr>* getCloud(int i) const;
+        Cloud& getCloud(const CloudName& name);
 
         void render();
 
@@ -150,7 +151,7 @@ namespace pcv
     template<typename T, typename F>
     Cloud& Visualizer::addFeature(const T& data, const FeatureName& featName, const CloudName& name, F func, ViewportIdx viewport)
     {
-        return mClouds[name].addFeature(data, featName, func, viewport);
+        return getCloud(name).addFeature(data, featName, func, viewport);
     }
 
     template<typename T, typename F>
@@ -164,7 +165,7 @@ namespace pcv
     template<typename T>
     Cloud& Visualizer::addCloud(const pcl::PointCloud<T>& data, const CloudName& name, ViewportIdx viewport)
     {
-        return mClouds[name].addCloud(data, viewport);
+        return getCloud(name).addCloud(data, viewport);
     }
 
     template<typename T>
@@ -173,7 +174,10 @@ namespace pcv
         if (i < 0 || i >= getNbPoints())
             logError("[addCloudIndexed] Index out of range. Adding the cloud anyway, but it will never be rendered.");
 
-        return mIndexedClouds[i][name].addCloud(data, viewport);
+        if (!mIndexedClouds[i][name])
+            mIndexedClouds[i][name].reset(new Cloud());
+
+        return mIndexedClouds[i][name]->addCloud(data, viewport); // TODO get reset
     }
 
     template<typename T>
@@ -187,6 +191,6 @@ namespace pcv
         if (mClouds.count(parentCloudName) == 0)
             logError("[Visualizer::addCloudIndexed] must add an indexed cloud in an existing cloud. [" + parentCloudName + "] does not exist.");
 
-        return mClouds[parentCloudName].addCloudIndexed(data, i, indexedCloudName, viewport);
+        return getCloud(parentCloudName).addCloudIndexed(data, i, indexedCloudName, viewport);
     }
 }
