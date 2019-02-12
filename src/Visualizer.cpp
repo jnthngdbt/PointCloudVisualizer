@@ -318,6 +318,10 @@ void Visualizer::pointPickingEventCallback(const pcl::visualization::PointPickin
             {
                 std::cout << "Found point #" << foundIdx << std::endl;
                 render(cloud.mIndexedClouds[foundIdx]);
+
+                // Update the main map.
+                for (const auto& idxPair : cloud.mIndexedClouds[foundIdx])
+                    mClouds[idxPair.first] = idxPair.second;
             }
         }
     }
