@@ -49,19 +49,6 @@ void Visualizer::render()
 
     render(mClouds);
 
-    // Indexed clouds.
-    for (auto& pair : mClouds)
-    {
-        // Show the first indexed cloud if any.
-
-        auto& idxClouds = pair.second->mIndexedClouds;
-        if (idxClouds.size() > 0)
-        {
-            auto& firstIdxCloudMap = idxClouds.begin()->second;
-            render(firstIdxCloudMap);
-        }
-    }
-
     mViewer.registerPointPickingCallback(&Visualizer::pointPickingEventCallback, *this);
     mViewer.registerKeyboardCallback(&Visualizer::keyboardEventCallback, *this);
 
@@ -222,7 +209,7 @@ void Visualizer::identifyClouds(bool enabled, bool back)
 {
     if (!enabled && mState.mIdentifiedCloudIdx < 0) return; // early exit, nothing to do, already disabled
 
-    const int nbClouds = getNbClouds();
+    const int nbClouds = mClouds.size();
 
     // Determine next cloud to highlight.
     if (enabled)
@@ -236,14 +223,11 @@ void Visualizer::identifyClouds(bool enabled, bool back)
     mViewer.removeShape(textId);
 
     // Loop on clouds and set opacity.
-    for (int i = 0; i < nbClouds; ++i)
+    int i = 0;
+    for (const auto& pair : mClouds)
     {
-        const auto* pair = getCloud(i);
-
-        if (!pair) continue;
-
-        const auto& name = pair->first;
-        const auto& cloud = *pair->second;
+        const auto& name = pair.first;
+        const auto& cloud = *pair.second;
 
         const bool isHighlighted = mState.mIdentifiedCloudIdx == i;
         const bool isIdentificationDisabled = mState.mIdentifiedCloudIdx == -1;
@@ -260,56 +244,8 @@ void Visualizer::identifyClouds(bool enabled, bool back)
 
         mViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getOpacity(), name);
         mViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, isIdentificationDisabled || isHighlighted ? cloud.mSize : 1, name);
+        ++i;
     }
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// Get total number of clouds, including rendered indexed clouds.
-int Visualizer::getNbClouds() const
-{
-    int N = 0;
-
-    N += mClouds.size();
-    for (const auto& pair : mClouds)
-    {
-        if (pair.second->mIndexedClouds.size() > 0)
-        {
-            const auto& firstIndexedCloudPair = pair.second->mIndexedClouds.begin();
-            const auto& firstIndexedCloudMap = firstIndexedCloudPair->second;
-            N += firstIndexedCloudMap.size(); // here we assume that all indexes have same amount of indexed clouds
-        }
-    }
-
-    return N;
-}
-
-// Get the cloud at the specified index. This index includes rendered indexed clouds.
-const std::pair<const CloudName, CloudPtr>* Visualizer::getCloud(int i) const
-{
-    int k = 0;
-    for (const auto& pair : mClouds)
-    {
-        if (k == i)
-            return &pair;
-
-        ++k;
-
-        const auto& idxClouds = pair.second->mIndexedClouds;
-        int N = idxClouds.size();
-        if (i < k + N)
-        {
-            const auto& firstIdxCloudMap = idxClouds.begin()->second; // TODO here we assume that all indexed clouds have the same properties
-            for (const auto& idxPair : firstIdxCloudMap)
-            {
-                if (k == i)
-                    return &idxPair;
-
-                ++k;
-            }
-        }
-    }
-
-    return nullptr; // invalid
 }
 
 Cloud& Visualizer::getCloud(const CloudName& name)

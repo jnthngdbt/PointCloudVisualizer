@@ -114,8 +114,6 @@ namespace pcv
         Cloud& addFeature(const FeatureData& data, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport = -1);
         Cloud& addSpace(const FeatureName& a, const FeatureName& b, const FeatureName& c, const CloudName& cloudName);
 
-        int getNbClouds() const;
-        const std::pair<const CloudName, CloudPtr>* getCloud(int i) const;
         Cloud& getCloud(const CloudName& name);
 
         void render();
@@ -177,7 +175,7 @@ namespace pcv
         if (!mIndexedClouds[i][name])
             mIndexedClouds[i][name].reset(new Cloud());
 
-        return mIndexedClouds[i][name]->addCloud(data, viewport); // TODO get reset
+        return mIndexedClouds[i][name]->addCloud(data, viewport);
     }
 
     template<typename T>
@@ -191,6 +189,12 @@ namespace pcv
         if (mClouds.count(parentCloudName) == 0)
             logError("[Visualizer::addCloudIndexed] must add an indexed cloud in an existing cloud. [" + parentCloudName + "] does not exist.");
 
-        return getCloud(parentCloudName).addCloudIndexed(data, i, indexedCloudName, viewport);
+        // Create the indexed cloud, inside the parent cloud.
+        getCloud(parentCloudName).addCloudIndexed(data, i, indexedCloudName, viewport);
+
+        // Create a cloud in the visualizer that actually points to this new indexed cloud.
+        mClouds[indexedCloudName] = mClouds[parentCloudName]->mIndexedClouds[i][indexedCloudName];
+
+        return *mClouds[indexedCloudName];
     }
 }
