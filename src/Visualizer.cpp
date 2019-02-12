@@ -1,7 +1,6 @@
 #include "Visualizer.h"
 
 #include <algorithm>
-#include <filesystem>
 #include <iostream>
 
 #include <pcl/io/pcd_io.h>
