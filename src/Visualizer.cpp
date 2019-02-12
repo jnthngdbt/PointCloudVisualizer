@@ -1,6 +1,7 @@
 #include "Visualizer.h"
 
 #include <algorithm>
+#include <filesystem>
 #include <iostream>
 
 #include <pcl/io/pcd_io.h>
@@ -8,6 +9,7 @@
 using namespace pcv;
 
 const std::string Visualizer::sFilePrefix = "visualizer.";
+const std::string Visualizer::sFolder = "VisualizerData/";
 
 void logError(const std::string& msg)
 {
@@ -85,10 +87,15 @@ void Visualizer::render(CloudsMap& clouds)
         // and the best way to create them is by reading a file. That is nice, because
         // we want to save the file anyway, because allows to save in a single cloud
         // multiple custom features.
-        const std::string fileName = sFilePrefix + mName + "." + name + ".pcd";
-        cloud.save(fileName);
         pcl::PCLPointCloud2::Ptr pclCloudMsg(new pcl::PCLPointCloud2());
-        pcl::io::loadPCDFile(fileName, *pclCloudMsg);
+        if (CreateDirectory(sFolder.c_str(), NULL) || (ERROR_ALREADY_EXISTS == GetLastError())) // WARNING: Windows only. With c++17, use std::filesystem::create_directory.
+        {
+            const std::string fileName = sFolder + sFilePrefix + mName + "." + name + ".pcd";
+            cloud.save(fileName);
+            pcl::io::loadPCDFile(fileName, *pclCloudMsg);
+        }
+        else
+            logError("Could not create folder '" + sFolder + "', undefined behavior will follow.");
 
         const auto colorHandlers = generateColorHandlers(pclCloudMsg, cloud, hasRGB);
         const auto geometryHandlers = generateGeometryHandlers(pclCloudMsg, cloud);
