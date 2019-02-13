@@ -174,7 +174,9 @@ int main()
             tree->nearestKSearch(p, 10, pi, FeatureData());
 
             PointsType::Ptr neigh(new PointsType(*cloudModel, pi));
-            VISUALIZER_CALL(viewer.addCloudIndexed(*neigh, "model", i++, "neighborhood", 1).setSize(5));
+            VISUALIZER_CALL(viewer.addCloudIndexed(*neigh, "model", i, "neighborhood", 1).setSize(5));
+            VISUALIZER_CALL(viewer.addCloudIndexed(*neigh, "model", i, "pick", 0).setSize(5).setColor(1,1,1));
+            ++i;
         }
 
         VISUALIZER_CALL(viewer.render());
