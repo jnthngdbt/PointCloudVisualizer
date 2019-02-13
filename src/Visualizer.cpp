@@ -60,7 +60,7 @@ void Visualizer::addBasis(
             pcl::PointXYZ(p2[0], p2[1], p2[2]), 
             color[0], color[1], color[2], 
             lineName, 
-            viewport);
+            mViewportIds[viewport]);
     };
 
     addLine(origin, origin + u1 * scale, { 1,0,0 }, name + "u1");
