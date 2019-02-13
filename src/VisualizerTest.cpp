@@ -162,6 +162,14 @@ int main()
 
         VISUALIZER_CALL(viewer.addCloud(*cloudModel, "model").addCloud(*normals).setOpacity(0.7));
 
+        // Construct a basis.
+        const auto u3 = normals->at(1000).getNormalVector3fMap(); // z
+        const auto tmp = u3.cross(Eigen::Vector3f(1, 0, 0)); // ~ y
+        const auto u1 = tmp.cross(u3); // x
+        const auto u2 = u3.cross(u1); // y
+
+        VISUALIZER_CALL(viewer.addBasis(u1, u2, u3, cloudModel->points[1000].getVector3fMap(), "basis", 0.01, 0));
+
         using KdTree = pcl::search::KdTree<pcl::PointXYZ>;
         KdTree::Ptr tree(new KdTree());
         tree->setInputCloud(cloudModel);
