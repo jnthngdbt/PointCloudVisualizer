@@ -147,8 +147,6 @@ int main()
     {
         VISUALIZER_CALL(Visualizer viewer("single-viewport-geometry-handlers"));
 
-        // TODO add method  viewer.addSpace("u1", "u2", "u3", name).
-
         std::string name = "space";
         VISUALIZER_CALL(viewer.addFeature(idxn, "u1", name));
         VISUALIZER_CALL(viewer.addFeature(rnd, "u2", name));
