@@ -44,6 +44,30 @@ Cloud& Visualizer::addSpace(const FeatureName& a, const FeatureName& b, const Fe
     return getCloud(cloudName).addSpace(a, b, c);
 }
 
+void Visualizer::addBasis(
+    const Eigen::Vector3f& u1,
+    const Eigen::Vector3f& u2,
+    const Eigen::Vector3f& u3,
+    const Eigen::Vector3f& origin,
+    const std::string& name,
+    double scale,
+    ViewportIdx viewport)
+{
+    auto addLine = [&](const Eigen::Vector3f& p1, const Eigen::Vector3f& p2, const Eigen::Vector3f& color, const std::string& lineName)
+    {
+        mViewer.addLine(
+            pcl::PointXYZ(p1[0], p1[1], p1[2]), 
+            pcl::PointXYZ(p2[0], p2[1], p2[2]), 
+            color[0], color[1], color[2], 
+            lineName, 
+            mViewportIds[viewport]);
+    };
+
+    addLine(origin, origin + u1 * scale, { 1,0,0 }, name + "u1");
+    addLine(origin, origin + u2 * scale, { 0,1,0 }, name + "u2");
+    addLine(origin, origin + u3 * scale, { 0,0,1 }, name + "u3");
+}
+
 void Visualizer::render()
 {
     // TODO match handlers index and patch missing with kind of 'null' handler
@@ -87,7 +111,7 @@ void Visualizer::render(CloudsMap& clouds)
         // we want to save the file anyway, because allows to save in a single cloud
         // multiple custom features.
         pcl::PCLPointCloud2::Ptr pclCloudMsg(new pcl::PCLPointCloud2());
-        if (CreateDirectory(sFolder.c_str(), NULL) || (ERROR_ALREADY_EXISTS == GetLastError())) // WARNING: Windows only. With c++17, use std::filesystem::create_directory.
+        if (CreateDirectoryA(sFolder.c_str(), NULL) || (ERROR_ALREADY_EXISTS == GetLastError())) // WARNING: Windows only. With c++17, use std::filesystem::create_directory.
         {
             const std::string fileName = sFolder + sFilePrefix + mName + "." + name + ".pcd";
             cloud.save(fileName);
@@ -403,7 +427,22 @@ Cloud& Cloud::addCloud(const pcl::PointCloud<pcl::PointNormal>& data, ViewportId
     addFeature(data, "normal_z", [](const P& p) { return p.normal_z; }, viewport);
     addFeature(data, "curvature", [](const P& p) { return p.curvature; }, viewport);
     addSpace("x", "y", "z");
-    addSpace("normal_x", "normal_y", "normal_");
+    addSpace("normal_x", "normal_y", "normal_z");
+    setViewport(viewport);
+    return *this;
+}
+
+template<>
+Cloud& Cloud::addCloud(const pcl::PointCloud<pcl::PrincipalCurvatures>& data, ViewportIdx viewport)
+{
+    using P = pcl::PrincipalCurvatures;
+    addFeature(data, "principal_curvature_x", [](const P& p) { return p.principal_curvature_x; }, viewport);
+    addFeature(data, "principal_curvature_y", [](const P& p) { return p.principal_curvature_y; }, viewport);
+    addFeature(data, "principal_curvature_z", [](const P& p) { return p.principal_curvature_z; }, viewport);
+    addFeature(data, "pc1", [](const P& p) { return p.pc1; }, viewport);
+    addFeature(data, "pc2", [](const P& p) { return p.pc2; }, viewport);
+    addSpace("principal_curvature_x", "principal_curvature_y", "principal_curvature_z");
+    // TODO would be nice to support kind of 2d mode, to add pc1/pc2
     setViewport(viewport);
     return *this;
 }

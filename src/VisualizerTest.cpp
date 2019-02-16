@@ -147,8 +147,6 @@ int main()
     {
         VISUALIZER_CALL(Visualizer viewer("single-viewport-geometry-handlers"));
 
-        // TODO add method  viewer.addSpace("u1", "u2", "u3", name).
-
         std::string name = "space";
         VISUALIZER_CALL(viewer.addFeature(idxn, "u1", name));
         VISUALIZER_CALL(viewer.addFeature(rnd, "u2", name));
@@ -164,6 +162,14 @@ int main()
 
         VISUALIZER_CALL(viewer.addCloud(*cloudModel, "model").addCloud(*normals).setOpacity(0.7));
 
+        // Construct a basis.
+        const auto u3 = normals->at(1000).getNormalVector3fMap(); // z
+        const auto tmp = u3.cross(Eigen::Vector3f(1, 0, 0)); // ~ y
+        const auto u1 = tmp.cross(u3); // x
+        const auto u2 = u3.cross(u1); // y
+
+        VISUALIZER_CALL(viewer.addBasis(u1, u2, u3, cloudModel->points[1000].getVector3fMap(), "basis", 0.01, 0));
+
         using KdTree = pcl::search::KdTree<pcl::PointXYZ>;
         KdTree::Ptr tree(new KdTree());
         tree->setInputCloud(cloudModel);
@@ -176,7 +182,9 @@ int main()
             tree->nearestKSearch(p, 10, pi, FeatureData());
 
             PointsType::Ptr neigh(new PointsType(*cloudModel, pi));
-            VISUALIZER_CALL(viewer.addCloudIndexed(*neigh, "model", i++, "neighborhood", 1).setSize(5));
+            VISUALIZER_CALL(viewer.addCloudIndexed(*neigh, "model", i, "neighborhood", 1).setSize(5));
+            VISUALIZER_CALL(viewer.addCloudIndexed(*neigh, "model", i, "pick", 0).setSize(5).setColor(1,1,1));
+            ++i;
         }
 
         VISUALIZER_CALL(viewer.render());
