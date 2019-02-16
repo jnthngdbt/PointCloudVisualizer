@@ -50,6 +50,34 @@ namespace pcv
         };
     };
 
+    class PointCloudColorHandlerNull : public pcl::visualization::PointCloudColorHandler<pcl::PCLPointCloud2>
+    {
+    public:
+        PointCloudColorHandlerNull(const PointCloudConstPtr &cloud) :
+            pcl::visualization::PointCloudColorHandler<pcl::PCLPointCloud2>(cloud) { capable_ = false; }
+
+        virtual std::string getName() const override { return "PointCloudColorHandlerNull"; }
+        virtual std::string getFieldName() const override { return "null"; }
+        bool isCapable() const { return (false); }
+        virtual bool getColor(vtkSmartPointer<vtkDataArray> &scalars) const override
+        { 
+            // TODO works, but not very well. Returning false is not enough, even if capable_is false.
+            // It crashes. Must set the scalars array. Got some code from PCL github. Kind of simulating
+            // RGBA (4 components) all filled with 0 (to have alpha = 0). It works, but sometimes we
+            // see the cloud (if on top of another) with the color of the background.
+
+            // https://github.com/PointCloudLibrary/pcl/blob/master/visualization/src/point_cloud_handlers.cpp
+            if (!scalars) scalars = vtkSmartPointer<vtkUnsignedCharArray>::New();
+            scalars->SetNumberOfComponents(4); // 4 to have alpha
+            vtkIdType nr_points = cloud_->width * cloud_->height;
+            reinterpret_cast<vtkUnsignedCharArray*>(&(*scalars))->SetNumberOfTuples(nr_points);
+
+            reinterpret_cast<vtkUnsignedCharArray*>(&(*scalars))->Fill(0.0); // to set alpha = 0
+
+            return false; // does not seem to have an effect
+        };
+    };
+
     struct ColorRGB
     {
         // Note: PCL supports RGBA, but it does not seem to be fully supported everywhere (e.g. the PCL viewer).

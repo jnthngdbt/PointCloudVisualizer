@@ -169,6 +169,15 @@ void Visualizer::render(CloudsMap& clouds)
             name,
             mViewportIds[cloud.mViewport]);
 
+        const auto b = ColorHandlerConstPtr(new PointCloudColorHandlerNull(pclCloudMsg));
+        mViewer.addPointCloud(
+            pclCloudMsg,
+            b,
+            Eigen::Vector4f(0, 0, 0, 0),
+            Eigen::Quaternion<float>(0, 0, 0, 0),
+            name,
+            mViewportIds[cloud.mViewport]);
+
         mViewer.filterHandlers(name);
     }
 }
