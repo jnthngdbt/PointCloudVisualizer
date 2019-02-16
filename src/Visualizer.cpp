@@ -111,7 +111,7 @@ void Visualizer::render(CloudsMap& clouds)
         // we want to save the file anyway, because allows to save in a single cloud
         // multiple custom features.
         pcl::PCLPointCloud2::Ptr pclCloudMsg(new pcl::PCLPointCloud2());
-        if (CreateDirectory(sFolder.c_str(), NULL) || (ERROR_ALREADY_EXISTS == GetLastError())) // WARNING: Windows only. With c++17, use std::filesystem::create_directory.
+        if (CreateDirectoryA(sFolder.c_str(), NULL) || (ERROR_ALREADY_EXISTS == GetLastError())) // WARNING: Windows only. With c++17, use std::filesystem::create_directory.
         {
             const std::string fileName = sFolder + sFilePrefix + mName + "." + name + ".pcd";
             cloud.save(fileName);
