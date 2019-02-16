@@ -407,7 +407,22 @@ Cloud& Cloud::addCloud(const pcl::PointCloud<pcl::PointNormal>& data, ViewportId
     addFeature(data, "normal_z", [](const P& p) { return p.normal_z; }, viewport);
     addFeature(data, "curvature", [](const P& p) { return p.curvature; }, viewport);
     addSpace("x", "y", "z");
-    addSpace("normal_x", "normal_y", "normal_");
+    addSpace("normal_x", "normal_y", "normal_z");
+    setViewport(viewport);
+    return *this;
+}
+
+template<>
+Cloud& Cloud::addCloud(const pcl::PointCloud<pcl::PrincipalCurvatures>& data, ViewportIdx viewport)
+{
+    using P = pcl::PrincipalCurvatures;
+    addFeature(data, "principal_curvature_x", [](const P& p) { return p.principal_curvature_x; }, viewport);
+    addFeature(data, "principal_curvature_y", [](const P& p) { return p.principal_curvature_y; }, viewport);
+    addFeature(data, "principal_curvature_z", [](const P& p) { return p.principal_curvature_z; }, viewport);
+    addFeature(data, "pc1", [](const P& p) { return p.pc1; }, viewport);
+    addFeature(data, "pc2", [](const P& p) { return p.pc2; }, viewport);
+    addSpace("principal_curvature_x", "principal_curvature_y", "principal_curvature_z");
+    // TODO would be nice to support kind of 2d mode, to add pc1/pc2
     setViewport(viewport);
     return *this;
 }
