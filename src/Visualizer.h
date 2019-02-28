@@ -131,7 +131,6 @@ namespace pcv
         ColorRGB mRGB{ -1.0, -1.0, -1.0 };
         std::vector<Space> mSpaces; // using vector instead of [unordered_]map to keep order of insertion
         std::map<int, CloudsMap> mIndexedClouds;
-    private:
         std::vector<Feature> mFeatures; // using vector instead of [unordered_]map to keep order of insertion
     };
 
@@ -176,7 +175,7 @@ namespace pcv
 
         std::vector<ColorHandlerConstPtr> generateColorHandlers(const pcl::PCLPointCloud2::Ptr pclCloudMsg, const Cloud& cloud, bool hasRgb) const;
         std::vector<GeometryHandlerConstPtr> generateGeometryHandlers(const pcl::PCLPointCloud2::Ptr pclCloudMsg, const Cloud& cloud) const;
-        std::vector<std::string> generateGeometryHandlerNamesList() const; // TODO or remove ///////////////////////////////////////////
+        void generateCommonHandlersLists(CloudsMap& clouds);
 
         void render(CloudsMap& clouds);
 
@@ -191,6 +190,8 @@ namespace pcv
         CloudsMap mClouds;
         std::vector<int> mViewportIds;
         State mState;
+
+        std::vector<std::string> mCommonColorNames;
     };
 
     // EXPLICIT INSTANTIATIONS

@@ -82,6 +82,8 @@ void Visualizer::render()
 
 void Visualizer::render(CloudsMap& clouds)
 {
+    generateCommonHandlersLists(clouds);
+
     for (auto& pair : clouds)
     {
         const auto& name = pair.first;
@@ -159,30 +161,31 @@ void Visualizer::render(CloudsMap& clouds)
                 mViewportIds[cloud.mViewport]);
         }
 
-        // TODO to remove ///////////////////////////////////////////
-        const auto a = GeometryHandlerConstPtr(new PointCloudGeometryHandlerNull(pclCloudMsg));
-        mViewer.addPointCloud(
-            pclCloudMsg,
-            a,
-            Eigen::Vector4f(0, 0, 0, 0),
-            Eigen::Quaternion<float>(0, 0, 0, 0),
-            name,
-            mViewportIds[cloud.mViewport]);
-
-        const auto b = ColorHandlerConstPtr(new PointCloudColorHandlerNull(pclCloudMsg));
-        mViewer.addPointCloud(
-            pclCloudMsg,
-            b,
-            Eigen::Vector4f(0, 0, 0, 0),
-            Eigen::Quaternion<float>(0, 0, 0, 0),
-            name,
-            mViewportIds[cloud.mViewport]);
-
         mViewer.filterHandlers(name);
     }
 }
 
-std::vector<ColorHandlerConstPtr> Visualizer::generateColorHandlers(const pcl::PCLPointCloud2::Ptr pclCloudMsg, const Cloud& cloud, bool hasRGB) const
+void Visualizer::generateCommonHandlersLists(CloudsMap& clouds)
+{
+    mCommonColorNames.clear();
+
+    for (const auto& cloud : clouds)
+    {
+        // Color names.
+        for (const auto& feature : cloud.second->mFeatures)
+        {
+            // Only add if not there.
+            const auto& name = feature.first;
+            if (std::find(mCommonColorNames.begin(), mCommonColorNames.end(), name) == mCommonColorNames.end())
+                mCommonColorNames.push_back(name);
+        }
+    }
+}
+
+std::vector<ColorHandlerConstPtr> Visualizer::generateColorHandlers(
+    const pcl::PCLPointCloud2::Ptr pclCloudMsg,
+    const Cloud& cloud, 
+    bool hasRGB) const
 {
     std::vector<ColorHandlerConstPtr> handlers;
 
@@ -193,11 +196,19 @@ std::vector<ColorHandlerConstPtr> Visualizer::generateColorHandlers(const pcl::P
     else
         handlers.emplace_back(new pcl::visualization::PointCloudColorHandlerRandom<pcl::PCLPointCloud2>(pclCloudMsg));
 
-    using ColorHandler = pcl::visualization::PointCloudColorHandlerGenericField<pcl::PCLPointCloud2>;
-    for (const auto& field : pclCloudMsg->fields)
+    const auto& fields = pclCloudMsg->fields;
+
+    if (mCommonColorNames.size() <= 0)
+        logError("[generateColorHandlers] Common color names list not generated.");
+
+    for (const auto& name : mCommonColorNames)
     {
-        if (field.name == "rgb") continue; // already dealt with
-        handlers.emplace_back(new ColorHandler(pclCloudMsg, field.name));
+        if (name == "rgb") continue; // already dealt with
+
+        if (std::find_if(fields.begin(), fields.end(), [&name](const pcl::PCLPointField& p) { return p.name == name; }) != fields.end())
+            handlers.emplace_back(new pcl::visualization::PointCloudColorHandlerGenericField<pcl::PCLPointCloud2>(pclCloudMsg, name));
+        else
+            handlers.emplace_back(new PointCloudColorHandlerNull(pclCloudMsg));
     }
 
     return std::move(handlers);
@@ -212,16 +223,6 @@ std::vector<GeometryHandlerConstPtr> Visualizer::generateGeometryHandlers(const 
         handlers.emplace_back(new GeoHandler(pclCloudMsg, space.u1, space.u2, space.u3));
 
     return std::move(handlers);
-}
-
-std::vector<std::string> Visualizer::generateGeometryHandlerNamesList() const
-{
-    const int nbClouds = mClouds.size();
-    std::vector<std::string> names(nbClouds);
-
-    // TODO or remove ///////////////////////////////////////////
-
-    return names;
 }
 
 void PclVisualizer::filterHandlers(const std::string &id)
