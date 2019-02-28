@@ -91,9 +91,9 @@ int main()
     std::cout << *cloudModel << std::endl;
     pcl::io::savePCDFile("cloud.pcd", *cloudModel);
 
-    auto multipleViewports = [&]()
+    auto testAddingFeaturesAndClouds = [&]()
     {
-        VISUALIZER_CALL(Visualizer viewer("multiple-viewports", 2, 3));
+        VISUALIZER_CALL(Visualizer viewer("test-adding-features-and-clouds", 2, 3));
 
         std::string NAME;
         int viewport = 0;
@@ -132,9 +132,9 @@ int main()
         VISUALIZER_CALL(viewer.render());
     };
 
-    auto singleViewport = [&]()
+    auto testMultipleClouds = [&]()
     {
-        VISUALIZER_CALL(Visualizer viewer("single-viewport"));
+        VISUALIZER_CALL(Visualizer viewer("test-multiple-clouds"));
 
         VISUALIZER_CALL(viewer.addCloud(*cloudNoisy, "scan").setOpacity(0.4));
         VISUALIZER_CALL(viewer.addCloud(*cloudModel, "model").addCloud(*normals).setOpacity(0.7));
@@ -143,9 +143,9 @@ int main()
         VISUALIZER_CALL(viewer.render());
     };
 
-    auto singleViewportGeometryHandlers = [&]()
+    auto testCustomGeometryHandler = [&]()
     {
-        VISUALIZER_CALL(Visualizer viewer("single-viewport-geometry-handlers"));
+        VISUALIZER_CALL(Visualizer viewer("test-custom-geometry-handler"));
 
         std::string name = "space";
         VISUALIZER_CALL(viewer.addFeature(idxn, "u1", name));
@@ -156,9 +156,9 @@ int main()
         VISUALIZER_CALL(viewer.render());
     };
 
-    auto storeCloudsInClouds = [&]()
+    auto testIndexedClouds = [&]()
     {
-        VISUALIZER_CALL(Visualizer viewer("store-clouds-in-clouds", 1, 2));
+        VISUALIZER_CALL(Visualizer viewer("test-indexed-clouds", 1, 2));
 
         VISUALIZER_CALL(viewer.addCloud(*cloudModel, "model").addCloud(*normals).setOpacity(0.7));
 
@@ -190,12 +190,24 @@ int main()
         VISUALIZER_CALL(viewer.render());
     };
 
+    auto testConsistentHandlers = [&]()
+    {
+        VISUALIZER_CALL(Visualizer viewer("test-consistent-handlers"));
+
+        VISUALIZER_CALL(viewer.addCloud(*cloudNoisy, "scan").setOpacity(0.4));                                          // x, y, z
+        VISUALIZER_CALL(viewer.addCloud(*cloudModel, "model").addCloud(*normals).setOpacity(0.7));                      // x, y, z + normals
+        VISUALIZER_CALL(viewer.addCloud(*cloudPatch1, "patch").addFeature(rnd, "randv").setColor(1, 0, 0).setSize(3));  // x, y, z, randv
+
+        VISUALIZER_CALL(viewer.render());
+    };
+
     // TODO delete files at render
 
-    singleViewport();
-    multipleViewports();
-    singleViewportGeometryHandlers();
-    storeCloudsInClouds();
+    //testMultipleClouds();
+    //testAddingFeaturesAndClouds();
+    //testCustomGeometryHandler();
+    //testIndexedClouds();
+    testConsistentHandlers();
 
     return 0;
 }
