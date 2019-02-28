@@ -90,7 +90,7 @@ namespace pcv
         Space(const Feature& a, const Feature& b, const Feature& c);
 
         int findPickedPointIndex(float a, float b, float c) const;
-        std::string getName() const { return u1 + '|' + u2 + '|' + u3; } // TODO or remove ///////////////////////////////////////////
+        std::string getName() const { return u1 + u2 + u3; }
 
         FeatureName u1, u2, u3;
         SearchTree mSearchTree;
@@ -192,6 +192,7 @@ namespace pcv
         State mState;
 
         std::vector<std::string> mCommonColorNames;
+        std::vector<std::string> mCommonGeoNames;
     };
 
     // EXPLICIT INSTANTIATIONS
