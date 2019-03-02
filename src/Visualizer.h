@@ -123,6 +123,8 @@ namespace pcv
         const FeatureData& getFeatureData(const FeatureName& name) const;
         FeatureData& getFeatureData(const FeatureName& name);
 
+        bool hasRgb() const;
+
         void save(const std::string& filename) const;
 
         int mViewport{ 0 };
@@ -173,7 +175,7 @@ namespace pcv
             int mIdentifiedCloudIdx{ -1 };
         };
 
-        std::vector<ColorHandlerConstPtr> generateColorHandlers(const pcl::PCLPointCloud2::Ptr pclCloudMsg, const Cloud& cloud, bool hasRgb) const;
+        std::vector<ColorHandlerConstPtr> generateColorHandlers(const pcl::PCLPointCloud2::Ptr pclCloudMsg, const Cloud& cloud) const;
         std::vector<GeometryHandlerConstPtr> generateGeometryHandlers(const pcl::PCLPointCloud2::Ptr pclCloudMsg, const Cloud& cloud) const;
         void generateCommonHandlersLists(CloudsMap& clouds);
 

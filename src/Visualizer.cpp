@@ -96,9 +96,7 @@ void Visualizer::render(CloudsMap& clouds)
             continue;
         }
 
-        const bool hasRGB = (cloud.mRGB.r >= 0.0);
-
-        if (hasRGB)
+        if (cloud.mRGB.r >= 0.0)
         {
             // Create packed RGB value.
             const auto r = static_cast<uint8_t>(cloud.mRGB.r * 255);
@@ -122,7 +120,7 @@ void Visualizer::render(CloudsMap& clouds)
         else
             logError("Could not create folder '" + sFolder + "', undefined behavior will follow.");
 
-        const auto colorHandlers = generateColorHandlers(pclCloudMsg, cloud, hasRGB);
+        const auto colorHandlers = generateColorHandlers(pclCloudMsg, cloud);
         const auto geometryHandlers = generateGeometryHandlers(pclCloudMsg, cloud);
 
         if (colorHandlers.size() == 0 || geometryHandlers.size() == 0)
@@ -194,8 +192,7 @@ void Visualizer::generateCommonHandlersLists(CloudsMap& clouds)
 
 std::vector<ColorHandlerConstPtr> Visualizer::generateColorHandlers(
     const pcl::PCLPointCloud2::Ptr pclCloudMsg,
-    const Cloud& cloud, 
-    bool hasRGB) const
+    const Cloud& cloud) const
 {
     if (mCommonColorNames.size() <= 0)
         logError("[generateColorHandlers] Common color names list not generated.");
@@ -204,7 +201,7 @@ std::vector<ColorHandlerConstPtr> Visualizer::generateColorHandlers(
 
     // First field is RGB if available, otherwise random.
     pcl::visualization::PointCloudColorHandler<pcl::PCLPointCloud2>::Ptr firstColor;
-    if (hasRGB)
+    if (cloud.hasRgb())
         handlers.emplace_back(new pcl::visualization::PointCloudColorHandlerRGBField<pcl::PCLPointCloud2>(pclCloudMsg));
     else
         handlers.emplace_back(new pcl::visualization::PointCloudColorHandlerRandom<pcl::PCLPointCloud2>(pclCloudMsg));
@@ -522,6 +519,12 @@ const FeatureData& Cloud::getFeatureData(const FeatureName& name) const
 bool Cloud::hasFeature(const FeatureName& name) const
 {
     return getFeature(name) != mFeatures.end();
+}
+
+bool Cloud::hasRgb() const
+{
+    return mFeatures.end() != std::find_if(
+        mFeatures.begin(), mFeatures.end(), [](const Feature& f) { return f.first == "rgb"; });
 }
 
 void Cloud::save(const std::string& filename) const
