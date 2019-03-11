@@ -70,14 +70,27 @@ void Visualizer::addBasis(
 
 void Visualizer::render()
 {
-    // TODO match handlers index and patch missing with kind of 'null' handler
-
     render(mClouds);
 
     mViewer.registerPointPickingCallback(&Visualizer::pointPickingEventCallback, *this);
     mViewer.registerKeyboardCallback(&Visualizer::keyboardEventCallback, *this);
 
-    mViewer.spin();
+    const std::string infoTextId = "infoTextId";
+    mViewer.addText("", 10, 10, infoTextId);
+
+    while (!mViewer.wasStopped())
+    {
+        const auto colorIdx = mViewer.getColorHandlerIndex(mClouds.cbegin()->first); // if colorIdx is 0, user pressed numkey '1'
+
+        if (colorIdx <= mCommonColorNames.size())
+        {
+            const std::string colorName = colorIdx > 0 ? mCommonColorNames[colorIdx-1] : "random/rgb";
+            const auto help = "Color handler: " + std::to_string(colorIdx+1) + " (" + colorName+ ")";
+            mViewer.updateText(help, 10, 10, 18, 0.5, 0.5, 0.5, infoTextId); // text, xpos, ypos, fontsize, r, g, b, id
+        }
+
+        mViewer.spinOnce(100);
+    }
 }
 
 void Visualizer::render(CloudsMap& clouds)
