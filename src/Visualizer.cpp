@@ -30,8 +30,17 @@ Visualizer::Visualizer(const std::string& name, int nbRows, int nbCols) :
     const float sizeY = 1.0 / nbRows;
     int k = 0;
     for (int j = 0; j < nbRows; ++j)
+    {
         for (int i = 0; i < nbCols; ++i)
-            mViewer.createViewPort(i*sizeX, 1.0 - (j + 1)*sizeY, (i + 1)*sizeX, 1.0 - j * sizeY, mViewportIds[k++]);
+        {
+            mViewer.createViewPort(i*sizeX, 1.0 - (j + 1)*sizeY, (i + 1)*sizeX, 1.0 - j * sizeY, mViewportIds[k]);
+
+            if ((j == nbRows - 1) && (i == 0)) // last row first column (bottom left)
+                mInfoTextViewportId = mViewportIds[k];
+
+            ++k;
+        }
+    }
 }
 
 Cloud& Visualizer::addFeature(const FeatureData& data, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport)
@@ -76,7 +85,7 @@ void Visualizer::render()
     mViewer.registerKeyboardCallback(&Visualizer::keyboardEventCallback, *this);
 
     const std::string infoTextId = "infoTextId";
-    mViewer.addText("", 10, 10, infoTextId);
+    mViewer.addText("", 10, 10, infoTextId, mInfoTextViewportId);
 
     while (!mViewer.wasStopped())
     {

@@ -192,6 +192,7 @@ namespace pcv
         CloudsMap mClouds;
         std::vector<int> mViewportIds;
         State mState;
+        int mInfoTextViewportId{ -1 };
 
         std::vector<std::string> mCommonColorNames;
         std::vector<std::string> mCommonGeoNames;
