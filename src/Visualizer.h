@@ -162,6 +162,7 @@ namespace pcv
         Cloud& addSpace(const FeatureName& a, const FeatureName& b, const FeatureName& c, const CloudName& cloudName);
 
         void addBasis(const Eigen::Vector3f& u1, const Eigen::Vector3f& u2, const Eigen::Vector3f& u3, const Eigen::Vector3f& origin, const std::string& name, double scale = 1.0, ViewportIdx viewport= 0);
+        void setFeaturesOrder(const std::vector<FeatureName>& names);
 
         Cloud& getCloud(const CloudName& name);
 
@@ -196,6 +197,7 @@ namespace pcv
 
         std::vector<std::string> mCommonColorNames;
         std::vector<std::string> mCommonGeoNames;
+        std::vector<FeatureName> mFeaturesOrder;
     };
 
     // EXPLICIT INSTANTIATIONS

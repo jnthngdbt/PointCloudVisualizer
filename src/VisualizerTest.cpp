@@ -201,13 +201,24 @@ int main()
         VISUALIZER_CALL(viewer.render());
     };
 
+    auto testOrderingFeatures = [&]()
+    {
+        VISUALIZER_CALL(Visualizer viewer("test-ordering-features"));
+
+        VISUALIZER_CALL(viewer.addCloud(*cloudModel, "cloud").addFeature(rnd, "randv").addFeature(idx, "index").addFeature(normals->points, "c", [](const pcl::Normal& p) { return p.curvature; }));
+        VISUALIZER_CALL(viewer.setFeaturesOrder({"index", "c"}));
+
+        VISUALIZER_CALL(viewer.render());
+    };
+
     // TODO delete files at render
 
-    //testMultipleClouds();
-    //testAddingFeaturesAndClouds();
-    //testCustomGeometryHandler();
-    //testIndexedClouds();
+    testMultipleClouds();
+    testAddingFeaturesAndClouds();
+    testCustomGeometryHandler();
+    testIndexedClouds();
     testConsistentHandlers();
+    testOrderingFeatures();
 
     return 0;
 }

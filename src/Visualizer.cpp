@@ -91,10 +91,9 @@ void Visualizer::render()
     {
         const auto colorIdx = mViewer.getColorHandlerIndex(mClouds.cbegin()->first); // if colorIdx is 0, user pressed numkey '1'
 
-        if (colorIdx <= mCommonColorNames.size())
+        if (colorIdx < mCommonColorNames.size())
         {
-            const std::string colorName = colorIdx > 0 ? mCommonColorNames[colorIdx-1] : "random/rgb";
-            const auto help = "Color handler: " + std::to_string(colorIdx+1) + " (" + colorName+ ")";
+            const auto help = "Color handler: " + std::to_string(colorIdx+1) + " (" + mCommonColorNames[colorIdx] + ")";
             mViewer.updateText(help, 10, 10, 18, 0.5, 0.5, 0.5, infoTextId); // text, xpos, ypos, fontsize, r, g, b, id
         }
 
@@ -190,13 +189,19 @@ void Visualizer::generateCommonHandlersLists(CloudsMap& clouds)
     mCommonColorNames.clear();
     mCommonGeoNames.clear();
 
+    // By default, we start with RGB color handler. If rendering a cloud
+    // that does not have this feature, a 'random' color handler will be used.
+    mCommonColorNames.push_back("rgb");
+
     for (const auto& cloud : clouds)
     {
         // Color names.
         for (const auto& feature : cloud.second->mFeatures)
         {
-            // Only add if not there.
             const auto& name = feature.first;
+            if (name == "rgb") continue; // already added
+
+            // Only add if not there.
             if (std::find(mCommonColorNames.begin(), mCommonColorNames.end(), name) == mCommonColorNames.end())
                 mCommonColorNames.push_back(name);
         }
@@ -210,6 +215,17 @@ void Visualizer::generateCommonHandlersLists(CloudsMap& clouds)
                 mCommonGeoNames.push_back(name);
         }
     }
+
+    // Reorder color handlers if necessary.
+    for (auto it = mFeaturesOrder.crbegin(); it != mFeaturesOrder.crend(); ++it)
+    {
+        const auto featureName = *it;
+        auto pivot = std::find_if(mCommonColorNames.begin(), mCommonColorNames.end(),
+            [&featureName](const FeatureName& n) -> bool { return n == featureName; });
+
+        if (pivot != mCommonColorNames.end())
+            std::rotate(mCommonColorNames.begin(), pivot, pivot + 1);
+    }
 }
 
 std::vector<ColorHandlerConstPtr> Visualizer::generateColorHandlers(
@@ -219,26 +235,23 @@ std::vector<ColorHandlerConstPtr> Visualizer::generateColorHandlers(
     if (mCommonColorNames.size() <= 0)
         logError("[generateColorHandlers] Common color names list not generated.");
     
-    std::vector<ColorHandlerConstPtr> handlers;
-
-    // First field is RGB if available, otherwise random.
-    pcl::visualization::PointCloudColorHandler<pcl::PCLPointCloud2>::Ptr firstColor;
-    if (cloud.hasRgb())
-        handlers.emplace_back(new pcl::visualization::PointCloudColorHandlerRGBField<pcl::PCLPointCloud2>(pclCloudMsg));
-    else
-        handlers.emplace_back(new pcl::visualization::PointCloudColorHandlerRandom<pcl::PCLPointCloud2>(pclCloudMsg));
-
     auto hasFieldInPointCloudMsg = [&pclCloudMsg] (const std::string& name)
     {
         const auto& f = pclCloudMsg->fields;
         return std::find_if(f.begin(), f.end(), [&name](const pcl::PCLPointField& p) { return p.name == name; }) != f.end();
     };
 
+    std::vector<ColorHandlerConstPtr> handlers;
     for (const auto& name : mCommonColorNames)
     {
-        if (name == "rgb") continue; // already dealt with
-
-        if (hasFieldInPointCloudMsg(name))
+        if (name == "rgb")
+        {
+            if (hasFieldInPointCloudMsg(name))
+                handlers.emplace_back(new pcl::visualization::PointCloudColorHandlerRGBField<pcl::PCLPointCloud2>(pclCloudMsg));
+            else
+                handlers.emplace_back(new pcl::visualization::PointCloudColorHandlerRandom<pcl::PCLPointCloud2>(pclCloudMsg));
+        }
+        else if (hasFieldInPointCloudMsg(name))
             handlers.emplace_back(new pcl::visualization::PointCloudColorHandlerGenericField<pcl::PCLPointCloud2>(pclCloudMsg, name));
         else
             handlers.emplace_back(new PointCloudColorHandlerNull(pclCloudMsg));
@@ -287,6 +300,11 @@ void PclVisualizer::filterHandlers(const std::string &id)
         // should be grouped together.
         h.erase(std::unique(h.begin(), h.end(), compare), h.end());
     }
+}
+
+void Visualizer::setFeaturesOrder(const std::vector<FeatureName>& names)
+{
+    mFeaturesOrder = names;
 }
 
 // Overriding to get index from the correct cloud actor map. Obscur why.
