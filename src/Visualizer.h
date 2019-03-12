@@ -104,6 +104,8 @@ namespace pcv
         template<typename T>
         Cloud& addCloud(const pcl::PointCloud<T>& data, ViewportIdx viewport = -1);
         template<typename T>
+        Cloud& addCloud(const pcl::PointCloud<T>& data, const pcl::PointIndices& indices, ViewportIdx viewport = -1);
+        template<typename T>
         Cloud& addCloudIndexed(const pcl::PointCloud<T>& data, int i, const CloudName& name, ViewportIdx viewport = -1);
         template<typename T, typename F>
         Cloud& addFeature(const T& data, const FeatureName& featName, F func, ViewportIdx viewport = -1);
@@ -154,6 +156,8 @@ namespace pcv
 
         template<typename T>
         Cloud& addCloud(const pcl::PointCloud<T>& data, const CloudName& name, ViewportIdx viewport = -1);
+        template<typename T>
+        Cloud& addCloud(const pcl::PointCloud<T>& data, const pcl::PointIndices& indices, const CloudName& name, ViewportIdx viewport = -1);
         template<typename T>
         Cloud& addCloudIndexed(const pcl::PointCloud<T>& data, const CloudName& parentCloudName, int i, const CloudName& indexedCloudName, ViewportIdx viewport = -1);
         template<typename T, typename F>
@@ -220,6 +224,20 @@ namespace pcv
     Cloud& Visualizer::addCloud(const pcl::PointCloud<T>& data, const CloudName& name, ViewportIdx viewport)
     {
         return getCloud(name).addCloud(data, viewport);
+    }
+
+    template<typename T>
+    Cloud& Visualizer::addCloud(const pcl::PointCloud<T>& data, const pcl::PointIndices& indices, const CloudName& name, ViewportIdx viewport)
+    {
+        return getCloud(name).addCloud(data, indices, viewport);
+    }
+
+    template<typename T>
+    Cloud& Cloud::addCloud(const pcl::PointCloud<T>& data, const pcl::PointIndices& indices, ViewportIdx viewport)
+    {
+        pcl::PointCloud<T> filtered;
+        pcl::copyPointCloud(data, indices, filtered);
+        return addCloud(filtered, viewport);
     }
 
     template<typename T>
