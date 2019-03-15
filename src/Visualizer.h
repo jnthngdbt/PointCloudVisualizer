@@ -175,10 +175,6 @@ namespace pcv
         PclVisualizer& getViewer() { return mViewer; }
 
     private:
-        struct State
-        {
-            int mIdentifiedCloudIdx{ -1 };
-        };
 
         std::vector<ColorHandlerConstPtr> generateColorHandlers(const pcl::PCLPointCloud2::Ptr pclCloudMsg, const Cloud& cloud) const;
         std::vector<GeometryHandlerConstPtr> generateGeometryHandlers(const pcl::PCLPointCloud2::Ptr pclCloudMsg, const Cloud& cloud) const;
@@ -196,12 +192,13 @@ namespace pcv
         PclVisualizer mViewer;
         CloudsMap mClouds;
         std::vector<int> mViewportIds;
-        State mState;
-        int mInfoTextViewportId{ -1 };
 
         std::vector<std::string> mCommonColorNames;
         std::vector<std::string> mCommonGeoNames;
         std::vector<FeatureName> mFeaturesOrder;
+
+        int mInfoTextViewportId{ -1 };
+        int mIdentifiedCloudIdx{ -1 };
     };
 
     // EXPLICIT INSTANTIATIONS

@@ -333,17 +333,17 @@ void Visualizer::keyboardEventCallback(const pcl::visualization::KeyboardEvent& 
 
 void Visualizer::identifyClouds(bool enabled, bool back)
 {
-    if (!enabled && mState.mIdentifiedCloudIdx < 0) return; // early exit, nothing to do, already disabled
+    if (!enabled && mIdentifiedCloudIdx < 0) return; // early exit, nothing to do, already disabled
 
     const int nbClouds = mClouds.size();
 
     // Determine next cloud to highlight.
     if (enabled)
-        mState.mIdentifiedCloudIdx = back ? 
-            std::fmod(std::max(0, mState.mIdentifiedCloudIdx) - 1 + nbClouds, nbClouds) : // supports case starting at -1
-            mState.mIdentifiedCloudIdx = std::fmod(mState.mIdentifiedCloudIdx + 1, nbClouds); // supports case starting at -1
+         mIdentifiedCloudIdx = back ? 
+            std::fmod(std::max(0, mIdentifiedCloudIdx) - 1 + nbClouds, nbClouds) : // supports case starting at -1
+            mIdentifiedCloudIdx = std::fmod(mIdentifiedCloudIdx + 1, nbClouds); // supports case starting at -1
     else
-        mState.mIdentifiedCloudIdx = -1;
+        mIdentifiedCloudIdx = -1;
 
     const std::string textId = "cloud-identification";
     mViewer.removeShape(textId);
@@ -355,17 +355,17 @@ void Visualizer::identifyClouds(bool enabled, bool back)
         const auto& name = pair.first;
         const auto& cloud = *pair.second;
 
-        const bool isHighlighted = mState.mIdentifiedCloudIdx == i;
-        const bool isIdentificationDisabled = mState.mIdentifiedCloudIdx == -1;
+        const bool isHighlighted = mIdentifiedCloudIdx == i;
+        const bool isIdentificationDisabled = mIdentifiedCloudIdx == -1;
 
         auto getOpacity = [&]()
         {
             if (isIdentificationDisabled) return cloud.mOpacity;
             if (isHighlighted) return 1.0;
-            return 0.1;
+            return 0.01;
         };
 
-        if (mState.mIdentifiedCloudIdx == i) 
+        if (mIdentifiedCloudIdx == i) 
             mViewer.addText(name, 0, 0, textId, mViewportIds[cloud.mViewport]);
 
         mViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getOpacity(), name);
@@ -588,7 +588,7 @@ void Cloud::save(const std::string& filename) const
 
     f << "TYPE";
     for (int i = 0; i < getNbFeatures(); ++i)
-        f << " F";
+        f << (mFeatures[i].first == "rgb" ? " U" : " F");
     f << std::endl;
 
     f << "COUNT";
@@ -605,7 +605,13 @@ void Cloud::save(const std::string& filename) const
     for (int i = 0; i < getNbPoints(); ++i)
     {
         for (const auto& feature : mFeatures)
-            f << feature.second[i] << " "; // TODO should make sure that all features have same amount of points
+        {
+            // TODO should make sure that all features have same amount of points
+            if (feature.first == "rgb")
+                f << static_cast<uint32_t>(feature.second[i]) << " ";
+            else
+                f << feature.second[i] << " ";
+        }
         f << std::endl;
     }
 
