@@ -79,7 +79,7 @@ void Visualizer::addBasis(
 
 void Visualizer::render()
 {
-    render(mClouds);
+    prepareCloudsForRender(mClouds);
 
     mViewer.registerPointPickingCallback(&Visualizer::pointPickingEventCallback, *this);
     mViewer.registerKeyboardCallback(&Visualizer::keyboardEventCallback, *this);
@@ -101,7 +101,7 @@ void Visualizer::render()
     }
 }
 
-void Visualizer::render(CloudsMap& clouds)
+void Visualizer::prepareCloudsForRender(CloudsMap& clouds)
 {
     generateCommonHandlersLists(clouds);
 
@@ -443,7 +443,7 @@ void Visualizer::pointPickingEventCallback(const pcl::visualization::PointPickin
             if (foundIdx >= 0)
             {
                 std::cout << "Found point #" << foundIdx << std::endl;
-                render(cloud.mIndexedClouds[foundIdx]);
+                prepareCloudsForRender(cloud.mIndexedClouds[foundIdx]);
 
                 // Update the main map.
                 for (const auto& idxPair : cloud.mIndexedClouds[foundIdx])

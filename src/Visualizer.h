@@ -180,7 +180,7 @@ namespace pcv
         std::vector<GeometryHandlerConstPtr> generateGeometryHandlers(const pcl::PCLPointCloud2::Ptr pclCloudMsg, const Cloud& cloud) const;
         void generateCommonHandlersLists(CloudsMap& clouds);
 
-        void render(CloudsMap& clouds);
+        void prepareCloudsForRender(CloudsMap& clouds);
 
         // Interactivity
         void keyboardEventCallback(const pcl::visualization::KeyboardEvent& event, void*);
