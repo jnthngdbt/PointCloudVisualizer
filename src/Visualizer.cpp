@@ -163,10 +163,10 @@ void Visualizer::render(CloudsMap& clouds)
                 Eigen::Quaternion<float>(0, 0, 0, 0),
                 name,
                 mViewportIds[cloud.mViewport]);
-
-            mViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, cloud.mSize, name);
-            mViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, cloud.mOpacity, name);
         }
+
+        mViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, cloud.mSize, name);
+        mViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, cloud.mOpacity, name);
 
         // Add geometry handlers (spaces).
         for (const auto& geometry : geometryHandlers)
