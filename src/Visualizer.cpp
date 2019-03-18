@@ -333,15 +333,16 @@ void Visualizer::keyboardEventCallback(const pcl::visualization::KeyboardEvent& 
 
 void Visualizer::identifyClouds(bool enabled, bool back)
 {
-    if (!enabled && mIdentifiedCloudIdx < 0) return; // early exit, nothing to do, already disabled
-
     const int nbClouds = mClouds.size();
+
+    if (nbClouds <= 0) return; // early exit
+    if (!enabled && mIdentifiedCloudIdx < 0) return; // early exit, nothing to do, already disabled
 
     // Determine next cloud to highlight.
     if (enabled)
          mIdentifiedCloudIdx = back ? 
             std::fmod(std::max(0, mIdentifiedCloudIdx) - 1 + nbClouds, nbClouds) : // supports case starting at -1
-            mIdentifiedCloudIdx = std::fmod(mIdentifiedCloudIdx + 1, nbClouds); // supports case starting at -1
+            std::fmod(mIdentifiedCloudIdx + 1, nbClouds); // supports case starting at -1
     else
         mIdentifiedCloudIdx = -1;
 
