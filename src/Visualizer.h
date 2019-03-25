@@ -108,15 +108,51 @@ namespace pcv
     public:
         Cloud() = default;
 
+        /// Add a point cloud to render.
+        /// @param  data: PCL point cloud
+        /// @param  viewport (optional): the viewport index (0 based) in which to render
+        /// @return reference to the updated visualizer cloud (allows chainable commands)
         template<typename T>
         Cloud& addCloud(const pcl::PointCloud<T>& data, ViewportIdx viewport = -1);
+
+        /// Add a point cloud to render, but only points at specified indices.
+        /// @param  data: PCL point cloud
+        /// @param  indices: indices of points to consider
+        /// @param  viewport (optional): the viewport index (0 based) in which to render
+        /// @return reference to the updated visualizer cloud (allows chainable commands)
         template<typename T>
         Cloud& addCloud(const pcl::PointCloud<T>& data, const pcl::PointIndices& indices, ViewportIdx viewport = -1);
+
+        /// Add a point cloud to render associated with a specific point of the current cloud (each point has its own point cloud)
+        /// @param  data: PCL point cloud
+        /// @param  i: point index of the current cloud with which to associate the input cloud
+        /// @param  name: the name of the point cloud to add
+        /// @param  viewport (optional): the viewport index (0 based) in which to render
+        /// @return reference to the updated visualizer cloud (allows chainable commands)
         template<typename T>
         Cloud& addCloudIndexed(const pcl::PointCloud<T>& data, int i, const CloudName& name, ViewportIdx viewport = -1);
+
+        /// Add a feature to the cloud, from a generic container and a lambda specifying how to get the data from the container.
+        /// @param  data: generic container of the feature data
+        /// @param  featName: the name of the feature to add
+        /// @param  func: lamdba having as input a reference of an element of the container and that returns the feature value of that element
+        /// @param  viewport (optional): the viewport index (0 based) in which to render
+        /// @return reference to the updated visualizer cloud (allows chainable commands)
         template<typename T, typename F>
         Cloud& addFeature(const T& data, const FeatureName& featName, F func, ViewportIdx viewport = -1);
+
+        /// Add a feature to the cloud, from an array of values.
+        /// @param  data: array of feature values
+        /// @param  featName: the name of the feature to add
+        /// @param  viewport (optional): the viewport index (0 based) in which to render
+        /// @return reference to the updated visualizer cloud (allows chainable commands)
         Cloud& addFeature(const FeatureData& data, const FeatureName& name, ViewportIdx viewport = -1);
+
+        /// Define a space (in PCL terms, a geometry handler) to represent the cloud's data.
+        /// @param  a: name of the feature to use has the first ('x') dimension
+        /// @param  b: name of the feature to use has the second ('y') dimension
+        /// @param  c: name of the feature to use has the third ('z') dimension
+        /// @return reference to the updated visualizer cloud (allows chainable commands)
         Cloud& addSpace(const FeatureName& a, const FeatureName& b, const FeatureName& c);
 
         Cloud& setViewport(ViewportIdx viewport);
@@ -167,20 +203,69 @@ namespace pcv
         static const std::string sFilePrefix;
         static const std::string sFolder;
 
+        /// Add a point cloud to render.
+        /// @param  data: PCL point cloud
+        /// @param  name: cloud name
+        /// @param  viewport (optional): the viewport index (0 based) in which to render
+        /// @return reference to the updated visualizer cloud (allows chainable commands)
         template<typename T>
         Cloud& addCloud(const pcl::PointCloud<T>& data, const CloudName& name, ViewportIdx viewport = -1);
+ 
+        /// Add a point cloud to render, but only points at specified indices.
+        /// @param  data: PCL point cloud
+        /// @param  indices: indices of points to consider
+        /// @param  name: cloud name
+        /// @param  viewport (optional): the viewport index (0 based) in which to render
+        /// @return reference to the updated visualizer cloud (allows chainable commands)
         template<typename T>
         Cloud& addCloud(const pcl::PointCloud<T>& data, const pcl::PointIndices& indices, const CloudName& name, ViewportIdx viewport = -1);
+
+        /// Add a point cloud to render associated with a specific point of the current cloud (each point has its own point cloud)
+        /// @param  data: PCL point cloud
+        /// @param  parentCloudName: the name of the parent point cloud, whose points will contain the indexed clouds
+        /// @param  i: point index of the parent cloud with which to associate the input cloud
+        /// @param  indexedCloudName: the name of the indexed point cloud to add
+        /// @param  viewport (optional): the viewport index (0 based) in which to render
+        /// @return reference to the updated visualizer cloud (allows chainable commands)
         template<typename T>
         Cloud& addCloudIndexed(const pcl::PointCloud<T>& data, const CloudName& parentCloudName, int i, const CloudName& indexedCloudName, ViewportIdx viewport = -1);
+
+        /// Add a feature to the cloud, from a generic container and a lambda specifying how to get the data from the container.
+        /// @param  data: generic container of the feature data
+        /// @param  featName: the name of the feature to add
+        /// @param  name: the name of the point cloud to which to add the feature
+        /// @param  func: lamdba having as input a reference of an element of the container and that returns the feature value of that element
+        /// @param  viewport (optional): the viewport index (0 based) in which to render
+        /// @return reference to the updated visualizer cloud (allows chainable commands)
         template<typename T, typename F>
         Cloud& addFeature(const T& data, const FeatureName& featName, const CloudName& name, F func, ViewportIdx viewport = -1);
+
+        /// Add a feature to the cloud, from an array of values.
+        /// @param  data: array of feature values
+        /// @param  featName: the name of the feautre to add
+        /// @param  name: the name of the point cloud to which the feature is added
+        /// @param  viewport (optional): the viewport index (0 based) in which to render
+        /// @return reference to the updated visualizer cloud (allows chainable commands)
         Cloud& addFeature(const FeatureData& data, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport = -1);
+
+        /// Define a space (in PCL terms, a geometry handler) to represent the cloud's data.
+        /// @param  a: name of the feature to use has the first ('x') dimension
+        /// @param  b: name of the feature to use has the second ('y') dimension
+        /// @param  c: name of the feature to use has the third ('z') dimension
+        /// @param  cloudName: the name of the point cloud to which the space is defined
+        /// @return reference to the updated visualizer cloud (allows chainable commands)
         Cloud& addSpace(const FeatureName& a, const FeatureName& b, const FeatureName& c, const CloudName& cloudName);
 
+        /// Get the refence of a visualizer cloud.
+        /// @param  name: cloud name
+        /// @return reference to the updated visualizer cloud (allows chainable commands)
         Cloud& getCloud(const CloudName& name);
 
+        /// Render current state: consolidate data, save files and generate visualization window (blocks code execution).
         void render();
+
+        /// Specify some features to render first (put them first in the list of features), in specified order; all other features will keep their default order.
+        /// @param  names: array of the ordered features to put first in the features list
         void setFeaturesOrder(const std::vector<FeatureName>& names);
 
 #ifndef SAVE_FILE_ONLY
