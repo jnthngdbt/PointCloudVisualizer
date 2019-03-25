@@ -69,7 +69,7 @@ void Visualizer::addBasis(
             pcl::PointXYZ(p2[0], p2[1], p2[2]), 
             color[0], color[1], color[2], 
             lineName, 
-            mViewportIds[viewport]);
+            getViewportId(viewport));
     };
 
     addLine(origin, origin + u1 * scale, { 1,0,0 }, name + "u1");
@@ -150,7 +150,7 @@ void Visualizer::prepareCloudsForRender(CloudsMap& clouds)
             continue;
         }
 
-        mViewer.removePointCloud(name, mViewportIds[cloud.mViewport]);
+        mViewer.removePointCloud(name, getViewportId(cloud.mViewport));
 
         // Add color handlers.
         for (const auto& color : colorHandlers)
@@ -162,7 +162,7 @@ void Visualizer::prepareCloudsForRender(CloudsMap& clouds)
                 Eigen::Vector4f(0, 0, 0, 0),
                 Eigen::Quaternion<float>(0, 0, 0, 0),
                 name,
-                mViewportIds[cloud.mViewport]);
+                getViewportId(cloud.mViewport));
         }
 
         mViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, cloud.mSize, name);
@@ -177,7 +177,7 @@ void Visualizer::prepareCloudsForRender(CloudsMap& clouds)
                 Eigen::Vector4f(0, 0, 0, 0),
                 Eigen::Quaternion<float>(0, 0, 0, 0),
                 name,
-                mViewportIds[cloud.mViewport]);
+                getViewportId(cloud.mViewport));
         }
 
         mViewer.filterHandlers(name);
@@ -367,7 +367,7 @@ void Visualizer::identifyClouds(bool enabled, bool back)
         };
 
         if (mIdentifiedCloudIdx == i) 
-            mViewer.addText(name, 0, 0, textId, mViewportIds[cloud.mViewport]);
+            mViewer.addText(name, 0, 0, textId, getViewportId(cloud.mViewport));
 
         mViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getOpacity(), name);
         mViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, isIdentificationDisabled || isHighlighted ? cloud.mSize : 1, name);
@@ -399,6 +399,14 @@ void Visualizer::printHelp() const
         "   CTRL + i, I   : exit clouds identification loop\n"
         "\n"
     );
+}
+
+int Visualizer::getViewportId(ViewportIdx viewport) const
+{
+    const int nbViewportIds = mViewportIds.size();
+    const bool isValid = (viewport < nbViewportIds) && (viewport >= 0);
+    if (!isValid) logError("[getViewportId] Viewport index out of range. Make sure you specified the viewports layout at Visualizer construction.");
+    return isValid ? mViewportIds[viewport] : 0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -645,7 +653,7 @@ Space::Space(const Feature& a, const Feature& b, const Feature& c) :
         mSearchTree.buildIndex(flann::Matrix<float>(data.data(), N, 3));
     }
     else
-        mSearchTree.buildIndex();
+        mSearchTree.buildIndex(); // initialize it with nothing to avoid crash if null
 }
 
 int Space::findPickedPointIndex(float a, float b, float c) const

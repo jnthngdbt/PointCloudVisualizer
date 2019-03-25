@@ -182,6 +182,8 @@ namespace pcv
 
         void prepareCloudsForRender(CloudsMap& clouds);
 
+        int getViewportId(ViewportIdx viewport) const;
+
         // Interactivity
         void keyboardEventCallback(const pcl::visualization::KeyboardEvent& event, void*);
         void pointPickingEventCallback(const pcl::visualization::PointPickingEvent& event, void*);
