@@ -1,6 +1,6 @@
 #pragma once
 
-#define SAVE_FILE_ONLY
+//#define SAVE_FILE_ONLY
 
 #include <stdlib.h>
 
