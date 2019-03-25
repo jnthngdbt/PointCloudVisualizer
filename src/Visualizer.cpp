@@ -631,16 +631,21 @@ Space::Space(const Feature& a, const Feature& b, const Feature& c) :
     if (va.size() != N || vb.size() != N || vc.size() != N)
         logError("All features must have the same size. Will crash.");
 
-    FeatureData data;
-    data.reserve(N*3);
-    for (int i = 0; i < N; ++i)
+    if (N > 0)
     {
-        data.push_back(va[i]);
-        data.push_back(vb[i]);
-        data.push_back(vc[i]);
-    }
+        FeatureData data;
+        data.reserve(N * 3);
+        for (int i = 0; i < N; ++i)
+        {
+            data.push_back(va[i]);
+            data.push_back(vb[i]);
+            data.push_back(vc[i]);
+        }
 
-    mSearchTree.buildIndex(flann::Matrix<float>(data.data(), N, 3));
+        mSearchTree.buildIndex(flann::Matrix<float>(data.data(), N, 3));
+    }
+    else
+        mSearchTree.buildIndex();
 }
 
 int Space::findPickedPointIndex(float a, float b, float c) const
