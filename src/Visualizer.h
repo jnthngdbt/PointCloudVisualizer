@@ -1,6 +1,6 @@
 #pragma once
 
-//#define SAVE_FILE_ONLY
+#define SAVE_FILE_ONLY
 
 #include <stdlib.h>
 
@@ -146,7 +146,22 @@ namespace pcv
         /// @param  featName: the name of the feature to add
         /// @param  viewport (optional): the viewport index (0 based) in which to render
         /// @return reference to the updated visualizer cloud (allows chainable commands)
+        template<typename T>
+        Cloud& addFeature(const std::vector<T>& data, const FeatureName& name, ViewportIdx viewport = -1);
+
+        /// Add a feature to the cloud, from an array of values.
+        /// @param  data: array of feature values
+        /// @param  featName: the name of the feature to add
+        /// @param  viewport (optional): the viewport index (0 based) in which to render
+        /// @return reference to the updated visualizer cloud (allows chainable commands)
         Cloud& addFeature(const FeatureData& data, const FeatureName& name, ViewportIdx viewport = -1);
+
+        /// Add a label feature to the cloud, from an array of array of point indices.
+        /// @param  componentsIndixes: each array corresponds to a label (component, cluster) and contains indices of the points assigned this label
+        /// @param  name: the name of the label feature to add
+        /// @param  viewport (optional): the viewport index (0 based) in which to render
+        /// @return reference to the updated visualizer cloud (allows chainable commands)
+        Cloud& addLabelsFeature(const std::vector< std::vector<int> >& componentsIndixes, const FeatureName& name, ViewportIdx viewport = -1);
 
         /// Define a space (in PCL terms, a geometry handler) to represent the cloud's data.
         /// @param  a: name of the feature to use has the first ('x') dimension
@@ -240,6 +255,14 @@ namespace pcv
         template<typename T, typename F>
         Cloud& addFeature(const T& data, const FeatureName& featName, const CloudName& name, F func, ViewportIdx viewport = -1);
 
+        /// Add a label feature to the cloud, from an array of array of point indices.
+        /// @param  componentsIndixes: each array corresponds to a label (component, cluster) and contains indices of the points assigned this label
+        /// @param  featName: the name of the label feature to add
+        /// @param  cloudName: the name of the cloud to which to add the label feature
+        /// @param  viewport (optional): the viewport index (0 based) in which to render
+        /// @return reference to the updated visualizer cloud (allows chainable commands)
+        Cloud& addLabelsFeature(const std::vector< std::vector<int> >& componentsIndixes, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport = -1);
+
         /// Add a feature to the cloud, from an array of values.
         /// @param  data: array of feature values
         /// @param  featName: the name of the feautre to add
@@ -320,6 +343,17 @@ namespace pcv
         FeatureData values(data.size());
         std::transform(std::begin(data), std::end(data), std::begin(values), func);
         return addFeature(values, featName, viewport);
+    }
+
+    template<typename T>
+    Cloud& Cloud::addFeature(const std::vector<T>& data, const FeatureName& name, ViewportIdx viewport)
+    {
+        FeatureData castData;
+        castData.reserve(data.size());
+        for (auto d : data)
+            castData.emplace_back(static_cast<float>(d));
+
+        return addFeature(castData, name, viewport);
     }
 
     template<typename T>

@@ -56,6 +56,11 @@ Cloud& Visualizer::addFeature(const FeatureData& data, const FeatureName& featNa
     return getCloud(cloudName).addFeature(data, featName, viewport);
 }
 
+Cloud& Visualizer::addLabelsFeature(const std::vector< std::vector<int> >& componentsIndixes, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport)
+{
+    return getCloud(cloudName).addLabelsFeature(componentsIndixes, featName, viewport);
+}
+
 Cloud& Visualizer::addSpace(const FeatureName& a, const FeatureName& b, const FeatureName& c, const CloudName& cloudName)
 {
     return getCloud(cloudName).addSpace(a, b, c);
@@ -295,6 +300,36 @@ void Cloud::createTimestamp()
     std::stringstream nowSs;
     nowSs << std::put_time(std::localtime(&nowAsTimeT), "%Y%m%d.%H%M%S.") << std::setfill('0') << std::setw(3) << nowMs.count();
     mTimestamp = nowSs.str();
+}
+
+Cloud& Cloud::addLabelsFeature(const std::vector< std::vector<int> >& componentsIndixes, const FeatureName& name, ViewportIdx viewport)
+{
+    const int nbPoints = getNbPoints();
+
+    if (nbPoints <= 0)
+        logError("[addLabelsFeature] no points in the specified cloud, addLabelsFeature should be called after at least one call to addCloud.");
+    else
+    {
+        FeatureData labels(nbPoints, -1);
+
+        int label = 0;
+        for (const auto& componentIndices : componentsIndixes)
+        {
+            for (const int i : componentIndices)
+            {
+                if (i >= 0 && i < nbPoints)
+                    labels[i] = label;
+                else
+                    logError("[addLabelsFeature] indices are out of bounds.");
+            }
+
+            ++label;
+        }
+
+        addFeature(labels, name, viewport);
+    }
+
+    return *this;
 }
 
 Cloud& Cloud::addSpace(const FeatureName& a, const FeatureName& b, const FeatureName& c)
