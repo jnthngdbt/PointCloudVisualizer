@@ -143,6 +143,10 @@ namespace pcv
         std::vector<Space> mSpaces; // using vector instead of [unordered_]map to keep order of insertion
         std::map<int, CloudsMap> mIndexedClouds;
         std::vector<Feature> mFeatures; // using vector instead of [unordered_]map to keep order of insertion
+        std::string mTimestamp;
+    private:
+        void addCloudCommon(ViewportIdx viewport);
+        void createTimestamp();
     };
 
 #ifndef SAVE_FILE_ONLY

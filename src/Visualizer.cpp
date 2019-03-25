@@ -2,6 +2,10 @@
 
 #include <algorithm>
 #include <iostream>
+#include <iomanip>
+#include <ctime>
+#include <chrono>
+#include <sstream>
 
 #include <pcl/io/pcd_io.h>
 
@@ -118,7 +122,7 @@ void Visualizer::prepareCloudsForRender(CloudsMap& clouds)
         pcl::PCLPointCloud2::Ptr pclCloudMsg(new pcl::PCLPointCloud2());
         if (CreateDirectoryA(sFolder.c_str(), NULL) || (ERROR_ALREADY_EXISTS == GetLastError())) // WARNING: Windows only. With c++17, use std::filesystem::create_directory.
         {
-            const std::string fileName = sFolder + sFilePrefix + mName + "." + name + ".pcd";
+            const std::string fileName = sFolder + sFilePrefix + cloud.mTimestamp + "." + mName + "." + name + ".pcd";
             cloud.save(fileName);
             pcl::io::loadPCDFile(fileName, *pclCloudMsg);
         }
@@ -228,7 +232,7 @@ Cloud& Cloud::addCloud(const pcl::PointCloud<pcl::PointXYZ>& data, ViewportIdx v
     addFeature(data, "y", [](const P& p) { return p.y; }, viewport);
     addFeature(data, "z", [](const P& p) { return p.z; }, viewport);
     addSpace("x", "y", "z");
-    setViewport(viewport);
+    addCloudCommon(viewport);
     return *this;
 }
 
@@ -241,7 +245,7 @@ Cloud& Cloud::addCloud(const pcl::PointCloud<pcl::Normal>& data, ViewportIdx vie
     addFeature(data, "normal_z", [](const P& p) { return p.normal_z; }, viewport);
     addFeature(data, "curvature", [](const P& p) { return p.curvature; }, viewport);
     addSpace("normal_x", "normal_y", "normal_z");
-    setViewport(viewport);
+    addCloudCommon(viewport);
     return *this;
 }
 
@@ -258,7 +262,7 @@ Cloud& Cloud::addCloud(const pcl::PointCloud<pcl::PointNormal>& data, ViewportId
     addFeature(data, "curvature", [](const P& p) { return p.curvature; }, viewport);
     addSpace("x", "y", "z");
     addSpace("normal_x", "normal_y", "normal_z");
-    setViewport(viewport);
+    addCloudCommon(viewport);
     return *this;
 }
 
@@ -273,8 +277,24 @@ Cloud& Cloud::addCloud(const pcl::PointCloud<pcl::PrincipalCurvatures>& data, Vi
     addFeature(data, "pc2", [](const P& p) { return p.pc2; }, viewport);
     addSpace("principal_curvature_x", "principal_curvature_y", "principal_curvature_z");
     // TODO would be nice to support kind of 2d mode, to add pc1/pc2
-    setViewport(viewport);
+    addCloudCommon(viewport);
     return *this;
+}
+
+void Cloud::addCloudCommon(ViewportIdx viewport)
+{
+    setViewport(viewport);
+    createTimestamp();
+}
+
+void Cloud::createTimestamp()
+{
+    const auto now = std::chrono::system_clock::now();
+    const auto nowAsTimeT = std::chrono::system_clock::to_time_t(now);
+    const auto nowMs = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+    std::stringstream nowSs;
+    nowSs << std::put_time(std::localtime(&nowAsTimeT), "%Y%m%d.%H%M%S.") << std::setfill('0') << std::setw(3) << nowMs.count();
+    mTimestamp = nowSs.str();
 }
 
 Cloud& Cloud::addSpace(const FeatureName& a, const FeatureName& b, const FeatureName& c)
