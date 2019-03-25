@@ -1,5 +1,7 @@
 #pragma once
 
+#define SAVE_FILE_ONLY
+
 #include <stdlib.h>
 
 #include <map>
@@ -8,7 +10,10 @@
 
 #include <pcl/pcl_base.h>
 #include <pcl/point_types.h>
+
+#ifndef SAVE_FILE_ONLY
 #include <pcl/visualization/pcl_visualizer.h>
+#endif
 
 #include <flann/flann.h>
 
@@ -31,6 +36,7 @@ namespace pcv
     using SearchTree = flann::Index<flann::L2<float> >;
     using ViewportIdx = int;
 
+#ifndef SAVE_FILE_ONLY
     using GeometryHandlerConstPtr = pcl::visualization::PointCloudGeometryHandler<pcl::PCLPointCloud2>::ConstPtr;
     using ColorHandlerConstPtr = pcl::visualization::PointCloudColorHandler<pcl::PCLPointCloud2>::ConstPtr;
 
@@ -77,6 +83,7 @@ namespace pcv
             return false; // does not seem to have an effect
         };
     };
+#endif
 
     struct ColorRGB
     {
@@ -138,6 +145,7 @@ namespace pcv
         std::vector<Feature> mFeatures; // using vector instead of [unordered_]map to keep order of insertion
     };
 
+#ifndef SAVE_FILE_ONLY
     class PclVisualizer : public pcl::visualization::PCLVisualizer
     {
     public:
@@ -145,6 +153,7 @@ namespace pcv
         void filterHandlers(const std::string &id);
         int getGeometryHandlerIndex(const std::string &id);
     };
+#endif
 
     class Visualizer
     {
@@ -165,22 +174,28 @@ namespace pcv
         Cloud& addFeature(const FeatureData& data, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport = -1);
         Cloud& addSpace(const FeatureName& a, const FeatureName& b, const FeatureName& c, const CloudName& cloudName);
 
-        void addBasis(const Eigen::Vector3f& u1, const Eigen::Vector3f& u2, const Eigen::Vector3f& u3, const Eigen::Vector3f& origin, const std::string& name, double scale = 1.0, ViewportIdx viewport= 0);
-        void setFeaturesOrder(const std::vector<FeatureName>& names);
-
         Cloud& getCloud(const CloudName& name);
 
         void render();
+        void setFeaturesOrder(const std::vector<FeatureName>& names);
+
+#ifndef SAVE_FILE_ONLY
+        void addBasis(const Eigen::Vector3f& u1, const Eigen::Vector3f& u2, const Eigen::Vector3f& u3, const Eigen::Vector3f& origin, const std::string& name, double scale = 1.0, ViewportIdx viewport= 0);
 
         PclVisualizer& getViewer() { return mViewer; }
+#endif
 
     private:
+        void prepareCloudsForRender(CloudsMap& clouds);
+
+        std::string mName;
+        CloudsMap mClouds;
+
+#ifndef SAVE_FILE_ONLY
 
         std::vector<ColorHandlerConstPtr> generateColorHandlers(const pcl::PCLPointCloud2::Ptr pclCloudMsg, const Cloud& cloud) const;
         std::vector<GeometryHandlerConstPtr> generateGeometryHandlers(const pcl::PCLPointCloud2::Ptr pclCloudMsg, const Cloud& cloud) const;
         void generateCommonHandlersLists(CloudsMap& clouds);
-
-        void prepareCloudsForRender(CloudsMap& clouds);
 
         int getViewportId(ViewportIdx viewport) const;
 
@@ -190,9 +205,7 @@ namespace pcv
         void identifyClouds(bool enabled, bool back);
         void printHelp() const;
 
-        std::string mName;
         PclVisualizer mViewer;
-        CloudsMap mClouds;
         std::vector<int> mViewportIds;
 
         std::vector<std::string> mCommonColorNames;
@@ -201,6 +214,7 @@ namespace pcv
 
         int mInfoTextViewportId{ -1 };
         int mIdentifiedCloudIdx{ -1 };
+#endif
     };
 
     // EXPLICIT INSTANTIATIONS
