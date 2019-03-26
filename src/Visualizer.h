@@ -36,6 +36,8 @@ namespace pcv
     using SearchTree = flann::Index<flann::L2<float> >;
     using ViewportIdx = int;
 
+    class Visualizer;
+
 #ifndef SAVE_FILE_ONLY
     using GeometryHandlerConstPtr = pcl::visualization::PointCloudGeometryHandler<pcl::PCLPointCloud2>::ConstPtr;
     using ColorHandlerConstPtr = pcl::visualization::PointCloudColorHandler<pcl::PCLPointCloud2>::ConstPtr;
@@ -185,7 +187,10 @@ namespace pcv
 
         bool hasRgb() const;
 
+        void render() const;
         void save(const std::string& filename) const;
+
+        void setParent(Visualizer* visualizerPtr) { mVisualizerPtr = visualizerPtr; }
 
         int mViewport{ 0 };
         int mSize{ 1 };
@@ -198,6 +203,8 @@ namespace pcv
     private:
         void addCloudCommon(ViewportIdx viewport);
         void createTimestamp();
+
+        Visualizer* mVisualizerPtr{ nullptr };
     };
 
 #ifndef SAVE_FILE_ONLY
@@ -400,11 +407,12 @@ namespace pcv
             logError("[Visualizer::addCloudIndexed] must add an indexed cloud in an existing cloud. [" + parentCloudName + "] does not exist.");
 
         // Create the indexed cloud, inside the parent cloud.
-        getCloud(parentCloudName).addCloudIndexed(data, i, indexedCloudName, viewport);
+        auto& parentCloud = getCloud(parentCloudName); 
+        parentCloud.addCloudIndexed(data, i, indexedCloudName, viewport);
 
         // Create a cloud in the visualizer that actually points to this new indexed cloud.
-        mClouds[indexedCloudName] = mClouds[parentCloudName]->mIndexedClouds[i][indexedCloudName];
+        mClouds[indexedCloudName] = parentCloud.mIndexedClouds[i][indexedCloudName];
 
-        return *mClouds[indexedCloudName];
+        return getCloud(indexedCloudName); // calling getCloud to make sure the cloud's parent is set
     }
 }

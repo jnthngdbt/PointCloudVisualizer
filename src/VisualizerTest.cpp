@@ -211,6 +211,20 @@ int main()
         VISUALIZER_CALL(viewer.render());
     };
 
+    auto testCloudRender = [&]()
+    {
+        VISUALIZER_CALL(Visualizer viewer("test-cloud-render", 1, 2));
+
+        VISUALIZER_CALL(viewer.addCloud(*cloudModel, "cloud", 1).render());
+
+        // For the following, the window is closed, but will still save files
+        VISUALIZER_CALL(viewer.addFeature(rnd, "u2", "cloud").render());
+        VISUALIZER_CALL(viewer.addCloud(*cloudPatch1, "patch").render());
+
+        VISUALIZER_CALL(Visualizer("test-cloud-render-oneline-window-render").addCloud(*cloudModel, "cloud").render());
+        VISUALIZER_CALL(Visualizer("test-cloud-render-oneline-window-render").addCloud(*cloudPatch1, "patch").render());
+    };
+
     // TODO delete files at render
 
     testMultipleClouds();
@@ -219,6 +233,7 @@ int main()
     testIndexedClouds();
     testConsistentHandlers();
     testOrderingFeatures();
+    testCloudRender();
 
     return 0;
 }

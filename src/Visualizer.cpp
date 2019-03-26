@@ -68,6 +68,11 @@ Cloud& Visualizer::addSpace(const FeatureName& a, const FeatureName& b, const Fe
 
 void Visualizer::render()
 {
+#ifndef SAVE_FILE_ONLY
+    mViewer.removeAllPointClouds();
+    mViewer.removeAllShapes();
+#endif
+
     prepareCloudsForRender(mClouds);
 
 #ifndef SAVE_FILE_ONLY
@@ -185,6 +190,8 @@ Cloud& Visualizer::getCloud(const CloudName& name)
     {
         mClouds[name].reset(new Cloud());
     }
+
+    mClouds[name]->setParent(this);
 
     return *mClouds[name];
 }
@@ -374,6 +381,11 @@ bool Cloud::hasRgb() const
 {
     return mFeatures.end() != std::find_if(
         mFeatures.begin(), mFeatures.end(), [](const Feature& f) { return f.first == "rgb"; });
+}
+
+void Cloud::render() const
+{
+    if (mVisualizerPtr) mVisualizerPtr->render();
 }
 
 void Cloud::save(const std::string& filename) const
