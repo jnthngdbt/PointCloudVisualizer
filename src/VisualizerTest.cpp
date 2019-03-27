@@ -41,6 +41,8 @@ PointsType::Ptr makeCloud()
 
 int main()
 {
+    VISUALIZER_CALL(Visualizer::clearSavedData(24));
+
     PointsType::Ptr cloudModel = makeCloud();
 
     // Noisy cloud.

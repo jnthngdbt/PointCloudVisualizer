@@ -298,6 +298,12 @@ namespace pcv
         /// @param  names: array of the ordered features to put first in the features list
         void setFeaturesOrder(const std::vector<FeatureName>& names);
 
+        /// Delete old saved files in export folder.
+        /// @param  lastHrsToKeep: files older than this value (hrs) will be deleted
+        static void clearSavedData(int lastHrsToKeep);
+
+        static std::string createTimestampString(int hrsBack = 0);
+
 #ifndef SAVE_FILE_ONLY
         void addBasis(const Eigen::Vector3f& u1, const Eigen::Vector3f& u2, const Eigen::Vector3f& u3, const Eigen::Vector3f& origin, const std::string& name, double scale = 1.0, ViewportIdx viewport= 0);
 

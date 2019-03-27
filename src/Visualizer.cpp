@@ -7,6 +7,8 @@
 #include <chrono>
 #include <sstream>
 
+#include <boost/filesystem.hpp>
+
 #include <pcl/io/pcd_io.h>
 
 using namespace pcv;
@@ -203,6 +205,26 @@ void Visualizer::setFeaturesOrder(const std::vector<FeatureName>& names)
 #endif
 }
 
+void Visualizer::clearSavedData(int lastHrsToKeep)
+{
+    const auto timeLimitBack = Visualizer::createTimestampString(lastHrsToKeep);
+
+    // Loop on files in export folder and delete old files.
+    namespace fs = boost::filesystem;
+    for (const auto file : fs::directory_iterator(fs::path(sFolder)))
+    {
+        const auto name = file.path().stem().string();
+        
+        // Only consider "visualizer.20**.****..." files. 
+        if (name.substr(0, sFilePrefix.size() + 2) == (sFilePrefix + "20"))
+        {
+            const auto fileTime = name.substr(sFilePrefix.size(), 19); // YYYYMMDD.HHMMSS.sss
+            if (fileTime < timeLimitBack) // time string format allows direct comparison
+                fs::remove(file.path());
+        }
+    }
+}
+
 ///////////////////////////////////////////////////////////////////////////////////
 // CLOUD
 
@@ -301,12 +323,17 @@ void Cloud::addCloudCommon(ViewportIdx viewport)
 
 void Cloud::createTimestamp()
 {
-    const auto now = std::chrono::system_clock::now();
+    mTimestamp = Visualizer::createTimestampString();
+}
+
+std::string Visualizer::createTimestampString(int hrsBack)
+{
+    const auto now = std::chrono::system_clock::now() - std::chrono::hours(hrsBack);
     const auto nowAsTimeT = std::chrono::system_clock::to_time_t(now);
     const auto nowMs = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
     std::stringstream nowSs;
     nowSs << std::put_time(std::localtime(&nowAsTimeT), "%Y%m%d.%H%M%S.") << std::setfill('0') << std::setw(3) << nowMs.count();
-    mTimestamp = nowSs.str();
+    return nowSs.str();
 }
 
 Cloud& Cloud::addLabelsFeature(const std::vector< std::vector<int> >& componentsIndixes, const FeatureName& name, ViewportIdx viewport)
