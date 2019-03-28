@@ -134,7 +134,7 @@ void Visualizer::prepareCloudsForRender(CloudsMap& clouds)
         pcl::PCLPointCloud2::Ptr pclCloudMsg(new pcl::PCLPointCloud2());
         if (CreateDirectoryA(sFolder.c_str(), NULL) || (ERROR_ALREADY_EXISTS == GetLastError())) // WARNING: Windows only. With c++17, use std::filesystem::create_directory.
         {
-            const std::string fileName = sFolder + sFilePrefix + cloud.mTimestamp + "." + mName + "." + name + ".pcd";
+            const std::string fileName = sFolder + sFilePrefix + cloud.mTimestamp + "." + mName +  "." + std::to_string(cloud.mViewport) + "-view." + name + ".pcd";
             cloud.save(fileName);
             pcl::io::loadPCDFile(fileName, *pclCloudMsg);
         }
