@@ -205,6 +205,32 @@ void Visualizer::setFeaturesOrder(const std::vector<FeatureName>& names)
 #endif
 }
 
+void Visualizer::addBasis(
+    const Eigen::Vector3f& u1,
+    const Eigen::Vector3f& u2,
+    const Eigen::Vector3f& u3,
+    const Eigen::Vector3f& origin,
+    const std::string& name,
+    double scale,
+    ViewportIdx viewport)
+{
+#ifndef SAVE_FILE_ONLY
+    auto addLine = [&](const Eigen::Vector3f& p1, const Eigen::Vector3f& p2, const Eigen::Vector3f& color, const std::string& lineName)
+    {
+        mViewer.addLine(
+            pcl::PointXYZ(p1[0], p1[1], p1[2]), 
+            pcl::PointXYZ(p2[0], p2[1], p2[2]), 
+            color[0], color[1], color[2], 
+            lineName, 
+            getViewportId(viewport));
+    };
+
+    addLine(origin, origin + u1 * scale, { 1,0,0 }, name + "u1");
+    addLine(origin, origin + u2 * scale, { 0,1,0 }, name + "u2");
+    addLine(origin, origin + u3 * scale, { 0,0,1 }, name + "u3");
+#endif
+}
+
 void Visualizer::clearSavedData(int lastHrsToKeep)
 {
     const auto timeLimitBack = Visualizer::createTimestampString(lastHrsToKeep);
@@ -516,30 +542,6 @@ int Space::findPickedPointIndex(float a, float b, float c) const
 }
 
 #ifndef SAVE_FILE_ONLY
-void Visualizer::addBasis(
-    const Eigen::Vector3f& u1,
-    const Eigen::Vector3f& u2,
-    const Eigen::Vector3f& u3,
-    const Eigen::Vector3f& origin,
-    const std::string& name,
-    double scale,
-    ViewportIdx viewport)
-{
-    auto addLine = [&](const Eigen::Vector3f& p1, const Eigen::Vector3f& p2, const Eigen::Vector3f& color, const std::string& lineName)
-    {
-        mViewer.addLine(
-            pcl::PointXYZ(p1[0], p1[1], p1[2]), 
-            pcl::PointXYZ(p2[0], p2[1], p2[2]), 
-            color[0], color[1], color[2], 
-            lineName, 
-            getViewportId(viewport));
-    };
-
-    addLine(origin, origin + u1 * scale, { 1,0,0 }, name + "u1");
-    addLine(origin, origin + u2 * scale, { 0,1,0 }, name + "u2");
-    addLine(origin, origin + u3 * scale, { 0,0,1 }, name + "u3");
-}
-
 void Visualizer::generateCommonHandlersLists(CloudsMap& clouds)
 {
     mCommonColorNames.clear();

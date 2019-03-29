@@ -286,6 +286,16 @@ namespace pcv
         /// @return reference to the updated visualizer cloud (allows chainable commands)
         Cloud& addSpace(const FeatureName& a, const FeatureName& b, const FeatureName& c, const CloudName& cloudName);
 
+        /// Add to draw a 3d basis (3 RGB vectors) at a specified location.
+        /// @param[in] u1: 3d vector of the x axis (red)
+        /// @param[in] u2: 3d vector of the y axis (green)
+        /// @param[in] u3: 3d vector of the z axis (blue)
+        /// @param[in] origin: location where to draw the basis
+        /// @param[in] name: the name to assign to the shape
+        /// @param[in] scale (optional): the scale applied to the basis vectors (defaults to 1.0)
+        /// @param[in] viewport (optional): the viewport index (0 based) in which to draw
+        void addBasis(const Eigen::Vector3f& u1, const Eigen::Vector3f& u2, const Eigen::Vector3f& u3, const Eigen::Vector3f& origin, const std::string& name, double scale = 1.0, ViewportIdx viewport= 0);
+
         /// Get the refence of a visualizer cloud.
         /// @param[in] name: cloud name
         /// @return reference to the updated visualizer cloud (allows chainable commands)
@@ -305,7 +315,6 @@ namespace pcv
         static std::string createTimestampString(int hrsBack = 0);
 
 #ifndef SAVE_FILE_ONLY
-        void addBasis(const Eigen::Vector3f& u1, const Eigen::Vector3f& u2, const Eigen::Vector3f& u3, const Eigen::Vector3f& origin, const std::string& name, double scale = 1.0, ViewportIdx viewport= 0);
 
         PclVisualizer& getViewer() { return mViewer; }
 #endif
