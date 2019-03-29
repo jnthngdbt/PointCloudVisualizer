@@ -123,7 +123,7 @@ namespace pcv
         /// @param[in] viewport (optional): the viewport index (0 based) in which to render
         /// @return reference to the updated visualizer cloud (allows chainable commands)
         template<typename T>
-        Cloud& addCloud(const pcl::PointCloud<T>& data, const pcl::PointIndices& indices, ViewportIdx viewport = -1);
+        Cloud& addCloud(const pcl::PointCloud<T>& data, const std::vector<int>& indices, ViewportIdx viewport = -1);
 
         /// Add a point cloud to render associated with a specific point of the current cloud (each point has its own point cloud)
         /// @param[in] data: PCL point cloud
@@ -240,7 +240,7 @@ namespace pcv
         /// @param[in] viewport (optional): the viewport index (0 based) in which to render
         /// @return reference to the updated visualizer cloud (allows chainable commands)
         template<typename T>
-        Cloud& addCloud(const pcl::PointCloud<T>& data, const pcl::PointIndices& indices, const CloudName& name, ViewportIdx viewport = -1);
+        Cloud& addCloud(const pcl::PointCloud<T>& data, const std::vector<int>& indices, const CloudName& name, ViewportIdx viewport = -1);
 
         /// Add a point cloud to render associated with a specific point of the current cloud (each point has its own point cloud)
         /// @param[in] data: PCL point cloud
@@ -386,13 +386,13 @@ namespace pcv
     }
 
     template<typename T>
-    Cloud& Visualizer::addCloud(const pcl::PointCloud<T>& data, const pcl::PointIndices& indices, const CloudName& name, ViewportIdx viewport)
+    Cloud& Visualizer::addCloud(const pcl::PointCloud<T>& data, const std::vector<int>& indices, const CloudName& name, ViewportIdx viewport)
     {
         return getCloud(name).addCloud(data, indices, viewport);
     }
 
     template<typename T>
-    Cloud& Cloud::addCloud(const pcl::PointCloud<T>& data, const pcl::PointIndices& indices, ViewportIdx viewport)
+    Cloud& Cloud::addCloud(const pcl::PointCloud<T>& data, const std::vector<int>& indices, ViewportIdx viewport)
     {
         pcl::PointCloud<T> filtered;
         pcl::copyPointCloud(data, indices, filtered);
