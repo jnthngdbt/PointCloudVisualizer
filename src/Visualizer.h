@@ -321,6 +321,7 @@ namespace pcv
 
     private:
         void prepareCloudsForRender(CloudsMap& clouds);
+        std::string getCloudFilename(const Cloud& cloud, const std::string& cloudName) const;
 
         std::string mName;
         CloudsMap mClouds;
