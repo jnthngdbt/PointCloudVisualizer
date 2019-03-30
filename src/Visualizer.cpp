@@ -233,10 +233,14 @@ void Visualizer::addBasis(
 
 void Visualizer::clearSavedData(int lastHrsToKeep)
 {
+    namespace fs = boost::filesystem;
+
+    if (!fs::exists(fs::path(sFolder)))
+        return;
+
     const auto timeLimitBack = Visualizer::createTimestampString(lastHrsToKeep);
 
     // Loop on files in export folder and delete old files.
-    namespace fs = boost::filesystem;
     for (const auto file : fs::directory_iterator(fs::path(sFolder)))
     {
         const auto name = file.path().stem().string();
