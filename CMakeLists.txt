@@ -5,7 +5,7 @@ include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
-file(GLOB SOURCES src/*.h src/*.cpp)
+file(GLOB SOURCES src/*.h src/*.cpp src/*.hpp)
 add_executable(VisualizerTest ${SOURCES})
 
 target_link_libraries(VisualizerTest ${PCL_LIBRARIES})
