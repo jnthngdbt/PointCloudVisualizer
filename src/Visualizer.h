@@ -17,8 +17,6 @@
 
 #include <flann/flann.h>
 
-#define VISUALIZER_CALL(x) x
-
 void logError(const std::string& msg);
 
 namespace pcv
