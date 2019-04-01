@@ -255,13 +255,13 @@ void Visualizer::clearSavedData(int lastHrsToKeep)
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////////
-// CLOUD
-
 std::string Visualizer::getCloudFilename(const Cloud& cloud, const std::string& cloudName) const
 {
     return sFolder + sFilePrefix + cloud.mTimestamp + "." + mName +  "." + std::to_string(cloud.mViewport) + "-view." + cloudName + ".pcd";
 }
+
+///////////////////////////////////////////////////////////////////////////////////
+// CLOUD
 
 int Cloud::getNbPoints() const
 {
@@ -381,7 +381,7 @@ Cloud& Cloud::addLabelsFeature(const std::vector< std::vector<int> >& components
     {
         FeatureData labels(nbPoints, -1);
 
-        int label = 0;
+        int label = 0;  
         for (const auto& componentIndices : componentsIndixes)
         {
             for (const int i : componentIndices)
