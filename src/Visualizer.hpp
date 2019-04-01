@@ -79,4 +79,49 @@ namespace pcv
 
         return getCloud(indexedCloudName); // calling getCloud to make sure the cloud's parent is set
     }
+
+    template <typename PointSource, typename PointTarget>
+    VisualizerRegistration& VisualizerRegistration::set(
+        pcl::Registration<PointSource, PointTarget>* pRegistration, 
+        const pcl::PointCloud<PointSource>& alignedSource,
+        const pcl::Correspondences& correspondences)
+    {
+        addCloud(alignedSource, "source-aligned", 0).setColor(0.5, 0.5, 0.5);
+        addCloud(*pRegistration->getInputSource(), "source", 0).setColor(0.5, 0.5, 0.5).setOpacity(0.2);
+        addCloud(*pRegistration->getInputTarget(), "target", 0).setColor(1.0, 0.0, 0.0);
+
+        auto getCorrespondencesIndices = [&](bool fromSourceOrTarget)
+        {
+            std::vector<int> indices;
+            indices.reserve(correspondences.size());
+
+            for (const auto& c : correspondences)
+                indices.emplace_back(fromSourceOrTarget ? c.index_query : c.index_match);
+
+            return std::move(indices);
+        };
+
+        auto& corrCloud = addCloud(alignedSource, getCorrespondencesIndices(1), "correspondences", 1);
+
+        const int Nc = correspondences.size();
+        FeatureData distance; distance.reserve(Nc);
+        FeatureData distancelog; distancelog.reserve(Nc);
+        FeatureData idxSource; idxSource.reserve(Nc);
+        FeatureData idxTarget; idxTarget.reserve(Nc);
+
+        for (const auto c : correspondences)
+        {
+            distance.push_back(c.distance);
+            distancelog.push_back(std::log10(c.distance));
+            idxSource.push_back(c.index_query);
+            idxTarget.push_back(c.index_match);
+        }
+
+        corrCloud.addFeature(distance, "distance");
+        corrCloud.addFeature(distancelog, "distance-log");
+        corrCloud.addFeature(idxSource, "index-source");
+        corrCloud.addFeature(idxTarget, "index-target");
+
+        return *this;
+    }
 }
