@@ -231,13 +231,13 @@ int main()
 
     // TODO delete files at render
 
-    testMultipleClouds();
-    testAddingFeaturesAndClouds();
-    testCustomGeometryHandler();
+    //testMultipleClouds();
+    //testAddingFeaturesAndClouds();
+    //testCustomGeometryHandler();
     testIndexedClouds();
-    testConsistentHandlers();
-    testOrderingFeatures();
-    testCloudRender();
+    //testConsistentHandlers();
+    //testOrderingFeatures();
+    //testCloudRender();
 
     return 0;
 }
