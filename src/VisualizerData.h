@@ -154,7 +154,7 @@ namespace pcv
     class VisualizerData
     {
     public:
-        VisualizerData(const std::string& name, int nbRows = 1, int nbCols = 1);
+        VisualizerData(const std::string& name);
 
         static const std::string sFilePrefix;
         static const std::string sFolder;
@@ -247,10 +247,10 @@ namespace pcv
         static void clearSavedData(int lastHrsToKeep);
 
         static std::string createTimestampString(int hrsBack = 0);
+        std::string getCloudFilename(const Cloud& cloud, const std::string& cloudName) const;
 
     private:
         void prepareCloudsForRender(CloudsMap& clouds);
-        std::string getCloudFilename(const Cloud& cloud, const std::string& cloudName) const;
 
         std::string mName;
         CloudsMap mClouds;

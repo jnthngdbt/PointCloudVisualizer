@@ -26,7 +26,7 @@ void logWarning(const std::string& msg)
     std::cout << "[VISUALIZER][WARNING]" << msg << std::endl;
 }
 
-VisualizerData::VisualizerData(const std::string& name, int nbRows, int nbCols) : mName(name) { }
+VisualizerData::VisualizerData(const std::string& name) : mName(name) { }
 
 Cloud& VisualizerData::addFeature(const FeatureData& data, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport)
 {
@@ -141,13 +141,13 @@ void VisualizerData::clearSavedData(int lastHrsToKeep)
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////////
-// CLOUD
-
 std::string VisualizerData::getCloudFilename(const Cloud& cloud, const std::string& cloudName) const
 {
     return sFolder + sFilePrefix + cloud.mTimestamp + "." + mName +  "." + std::to_string(cloud.mViewport) + "-view." + cloudName + ".pcd";
 }
+
+///////////////////////////////////////////////////////////////////////////////////
+// CLOUD
 
 int Cloud::getNbPoints() const
 {

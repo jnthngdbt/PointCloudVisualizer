@@ -14,7 +14,7 @@
 //#include <pcl/io/pcd_io.h>
 //#include <pcl/search/kdtree.h>
 
-#include "Visualizer.h"
+#include "VisualizerData.h"
 
 using namespace pcv;
 

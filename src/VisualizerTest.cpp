@@ -14,13 +14,14 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/search/kdtree.h>
 
-#include "Visualizer.h"
+#include "VisualizerData.h"
 
 #define VISUALIZER_CALL(x) x
 
 using namespace pcv;
 
 using PointsType = pcl::PointCloud<pcl::PointXYZ>;
+using VisualizerType = VisualizerData;
 
 float randf() { return rand() / static_cast<float>(RAND_MAX); }
 
@@ -43,7 +44,7 @@ PointsType::Ptr makeCloud()
 
 int main()
 {
-    VISUALIZER_CALL(Visualizer::clearSavedData(24));
+    VISUALIZER_CALL(VisualizerType::clearSavedData(24));
 
     PointsType::Ptr cloudModel = makeCloud();
 
@@ -97,7 +98,7 @@ int main()
 
     auto testAddingFeaturesAndClouds = [&]()
     {
-        VISUALIZER_CALL(Visualizer viewer("test-adding-features-and-clouds", 2, 3));
+        VISUALIZER_CALL(VisualizerType viewer("test-adding-features-and-clouds"));
 
         std::string NAME;
         int viewport = 0;
@@ -138,7 +139,7 @@ int main()
 
     auto testMultipleClouds = [&]()
     {
-        VISUALIZER_CALL(Visualizer viewer("test-multiple-clouds"));
+        VISUALIZER_CALL(VisualizerType viewer("test-multiple-clouds"));
 
         VISUALIZER_CALL(viewer.addCloud(*cloudNoisy, "scan").setOpacity(0.4));
         VISUALIZER_CALL(viewer.addCloud(*cloudModel, "model").addCloud(*normals).setOpacity(0.7));
@@ -149,7 +150,7 @@ int main()
 
     auto testCustomGeometryHandler = [&]()
     {
-        VISUALIZER_CALL(Visualizer viewer("test-custom-geometry-handler"));
+        VISUALIZER_CALL(VisualizerType viewer("test-custom-geometry-handler"));
 
         std::string name = "space";
         VISUALIZER_CALL(viewer.addFeature(idxn, "u1", name));
@@ -162,7 +163,7 @@ int main()
 
     auto testIndexedClouds = [&]()
     {
-        VISUALIZER_CALL(Visualizer viewer("test-indexed-clouds", 1, 2));
+        VISUALIZER_CALL(VisualizerType viewer("test-indexed-clouds"));
 
         VISUALIZER_CALL(viewer.addCloud(*cloudModel, "model").addCloud(*normals).setOpacity(0.7));
 
@@ -196,7 +197,7 @@ int main()
 
     auto testConsistentHandlers = [&]()
     {
-        VISUALIZER_CALL(Visualizer viewer("test-consistent-handlers"));
+        VISUALIZER_CALL(VisualizerType viewer("test-consistent-handlers"));
 
         VISUALIZER_CALL(viewer.addCloud(*cloudNoisy, "scan").setOpacity(0.4));                                          // x, y, z
         VISUALIZER_CALL(viewer.addCloud(*cloudModel, "model").addCloud(*normals).setOpacity(0.7));                      // x, y, z + normals
@@ -207,7 +208,7 @@ int main()
 
     auto testOrderingFeatures = [&]()
     {
-        VISUALIZER_CALL(Visualizer viewer("test-ordering-features"));
+        VISUALIZER_CALL(VisualizerType viewer("test-ordering-features"));
 
         VISUALIZER_CALL(viewer.addCloud(*cloudModel, "cloud").addFeature(rnd, "randv").addFeature(idx, "index").addFeature(normals->points, "c", [](const pcl::Normal& p) { return p.curvature; }));
         VISUALIZER_CALL(viewer.setFeaturesOrder({"index", "c"}));
@@ -217,7 +218,7 @@ int main()
 
     auto testCloudRender = [&]()
     {
-        VISUALIZER_CALL(Visualizer viewer("test-cloud-render", 1, 2));
+        VISUALIZER_CALL(VisualizerType viewer("test-cloud-render"));
 
         VISUALIZER_CALL(viewer.addCloud(*cloudModel, "cloud", 1).render());
 
@@ -225,8 +226,8 @@ int main()
         VISUALIZER_CALL(viewer.addFeature(rnd, "u2", "cloud").render());
         VISUALIZER_CALL(viewer.addCloud(*cloudPatch1, "patch").render());
 
-        VISUALIZER_CALL(Visualizer("test-cloud-render-oneline-window-render").addCloud(*cloudModel, "cloud").render());
-        VISUALIZER_CALL(Visualizer("test-cloud-render-oneline-window-render").addCloud(*cloudPatch1, "patch").render());
+        VISUALIZER_CALL(VisualizerType("test-cloud-render-oneline-window-render").addCloud(*cloudModel, "cloud").render());
+        VISUALIZER_CALL(VisualizerType("test-cloud-render-oneline-window-render").addCloud(*cloudPatch1, "patch").render());
     };
 
     // TODO delete files at render
