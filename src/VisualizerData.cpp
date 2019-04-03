@@ -43,14 +43,12 @@ Cloud& VisualizerData::addSpace(const FeatureName& a, const FeatureName& b, cons
     return getCloud(cloudName).addSpace(a, b, c);
 }
 
-void VisualizerData::render()
+const FileNames& VisualizerData::render()
 {
-    prepareCloudsForRender(mClouds);
-}
+    mFileNames.clear();
+    mFileNames.reserve(mClouds.size());
 
-void VisualizerData::prepareCloudsForRender(CloudsMap& clouds)
-{
-    for (auto& pair : clouds)
+    for (auto& pair : mClouds)
     {
         const auto& name = pair.first;
         auto& cloud = *pair.second;
@@ -80,12 +78,15 @@ void VisualizerData::prepareCloudsForRender(CloudsMap& clouds)
         if (CreateDirectoryA(sFolder.c_str(), NULL) || (ERROR_ALREADY_EXISTS == GetLastError())) // WARNING: Windows only. With c++17, use std::filesystem::create_directory.
         {
             const std::string fileName = getCloudFilename(cloud, name);
+            mFileNames.push_back(fileName);
             cloud.save(fileName);
             pcl::io::loadPCDFile(fileName, *pclCloudMsg);
         }
         else
             logError("Could not create folder '" + sFolder + "', undefined behavior will follow.");
     }
+
+    return mFileNames;
 }
 
 Cloud& VisualizerData::getCloud(const CloudName& name)

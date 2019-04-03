@@ -26,6 +26,7 @@ namespace pcv
     using Feature = std::pair<FeatureName, FeatureData>;
     using FeatureIt = std::vector<Feature>::iterator;
     using FeatureConstIt = std::vector<Feature>::const_iterator;
+    using FileNames = std::vector<std::string>;
     using SearchTree = flann::Index<flann::L2<float> >;
     using ViewportIdx = int;
 
@@ -236,7 +237,8 @@ namespace pcv
         Cloud& getCloud(const CloudName& name);
 
         /// Render current state: consolidate data, save files and generate visualization window (blocks code execution).
-        void render();
+        /// @return File names that have been written.
+        const FileNames& render();
 
         /// Specify some features to render first (put them first in the list of features), in specified order; all other features will keep their default order.
         /// @param[in] names: array of the ordered features to put first in the features list
@@ -250,10 +252,9 @@ namespace pcv
         std::string getCloudFilename(const Cloud& cloud, const std::string& cloudName) const;
 
     private:
-        void prepareCloudsForRender(CloudsMap& clouds);
-
         std::string mName;
         CloudsMap mClouds;
+        FileNames mFileNames;
     };
 
     class VisualizerRegistration : public VisualizerData
