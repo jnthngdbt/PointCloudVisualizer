@@ -361,7 +361,12 @@ namespace pcv
         /// @param[in] correspondences: the final correspondences (not directly accessible from registration instance)
         /// @return reference to the instance (allows chainable commands)
         template <typename PointSource, typename PointTarget>
-        VisualizerRegistration& set(pcl::Registration<PointSource, PointTarget>* pRegistration, const pcl::PointCloud<PointSource>& alignedSource, const pcl::Correspondences& correspondences);
+        VisualizerRegistration& init(
+            pcl::Registration<PointSource, PointTarget>* pRegistration, 
+            const pcl::PointCloud<PointSource>& alignedSource, 
+            const pcl::Correspondences& correspondences,
+            const std::vector<double>* deviationMapPointToPlane = nullptr,
+            const std::vector<double>* deviationMapPointToPoint = nullptr);
     };
 }
 
