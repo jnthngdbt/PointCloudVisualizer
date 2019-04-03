@@ -20,9 +20,8 @@
 namespace pcv
 {
     using FeatureName = std::string;
+    using FileNames = std::vector<std::string>;
     using ViewportIdx = int;
-
-    using CloudsMap = std::vector<pcl::PCLPointCloud2::Ptr>; ////
 
 #ifndef SAVE_FILE_ONLY
     using GeometryHandlerConstPtr = pcl::visualization::PointCloudGeometryHandler<pcl::PCLPointCloud2>::ConstPtr;
@@ -86,7 +85,29 @@ namespace pcv
     class Visualizer
     {
     public:
-        Visualizer(const std::string& name, int nbRows = 1, int nbCols = 1);
+        Visualizer(const FileNames& fileNames);
+
+#ifndef SAVE_FILE_ONLY
+        PclVisualizer& getViewer();
+#endif
+
+    private:
+        class Cloud
+        {
+        public:
+            Cloud(const std::string& filename, const std::string& cloudname, int viewport = 0);
+
+            pcl::PCLPointCloud2::Ptr mPointCloudMessage;
+            std::string mName;
+            int mViewport{ -1 };
+        };
+
+        using BundleClouds = std::vector<Cloud>;
+        using BundleName = std::string;
+        using Bundle = std::pair<BundleName, BundleClouds>;
+        using BundlesMap = std::vector<Bundle>;
+
+        void initBundlesFromFiles(const FileNames& fileNames);
 
         /// Add to draw a 3d basis (3 RGB vectors) at a specified location.
         /// @param[in] u1: 3d vector of the x axis (red)
@@ -99,28 +120,29 @@ namespace pcv
         void addBasis(const Eigen::Vector3f& u1, const Eigen::Vector3f& u2, const Eigen::Vector3f& u3, const Eigen::Vector3f& origin, const std::string& name, double scale = 1.0, ViewportIdx viewport= 0);
 
         /// Render current state: consolidate data, save files and generate visualization window (blocks code execution).
-        void render();
+        /// @param[in] bundle: the bundle of clouds to render
+        void render(const Bundle& bundle);
 
         /// Specify some features to render first (put them first in the list of features), in specified order; all other features will keep their default order.
         /// @param[in] names: array of the ordered features to put first in the features list
         void setFeaturesOrder(const std::vector<FeatureName>& names);
 
-#ifndef SAVE_FILE_ONLY
+        void prepareCloudsForRender(const BundleClouds& clouds);
 
-        PclVisualizer& getViewer() { return mViewer; }
-#endif
+        const Bundle& getCurrentBundle() const;
+        Bundle& getBundle(BundleName name);
 
-    private:
-        void prepareCloudsForRender(CloudsMap& clouds);
+        void logError(const std::string& msg) const { std::cout << "[VISUALIZER][ERROR]" << msg << std::endl; }
+        void logWarning(const std::string& msg) const { std::cout << "[VISUALIZER][WARNING]" << msg << std::endl; }
 
-        std::string mName;
-        CloudsMap mClouds;
+        BundlesMap mBundles;
+        int mCurrentBundleIdx{ 0 };
 
 #ifndef SAVE_FILE_ONLY
 
         std::vector<ColorHandlerConstPtr> generateColorHandlers(const pcl::PCLPointCloud2::Ptr pclCloudMsg, const Cloud& cloud) const;
         std::vector<GeometryHandlerConstPtr> generateGeometryHandlers(const pcl::PCLPointCloud2::Ptr pclCloudMsg, const Cloud& cloud) const;
-        void generateCommonHandlersLists(CloudsMap& clouds);
+        void generateCommonHandlersLists(BundleClouds& clouds);
 
         int getViewportId(ViewportIdx viewport) const;
 
@@ -130,7 +152,7 @@ namespace pcv
         void identifyClouds(bool enabled, bool back);
         void printHelp() const;
 
-        PclVisualizer mViewer;
+        std::shared_ptr<PclVisualizer> mViewer;
         std::vector<int> mViewportIds;
 
         std::vector<std::string> mCommonColorNames;

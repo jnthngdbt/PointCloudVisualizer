@@ -13,65 +13,141 @@
 
 using namespace pcv;
 
-// Constructor. Creates all needed viewports depending on wanted 
-// number of columns and rows.
-#ifndef SAVE_FILE_ONLY
-Visualizer::Visualizer(const std::string& name, int nbRows, int nbCols) :
-    mName(name), mViewer(name)
+Visualizer::Visualizer(const FileNames& fileNames)
 {
-    mViewportIds.resize(nbRows * nbCols);
-    const float sizeX = 1.0 / nbCols;
-    const float sizeY = 1.0 / nbRows;
-    int k = 0;
-    for (int j = 0; j < nbRows; ++j)
+    initBundlesFromFiles(fileNames);
+
+    //mViewportIds.resize(nbRows * nbCols);
+    //const float sizeX = 1.0 / nbCols;
+    //const float sizeY = 1.0 / nbRows;
+    //int k = 0;
+    //for (int j = 0; j < nbRows; ++j)
+    //{
+    //    for (int i = 0; i < nbCols; ++i)
+    //    {
+    //        mViewer.createViewPort(i*sizeX, 1.0 - (j + 1)*sizeY, (i + 1)*sizeX, 1.0 - j * sizeY, mViewportIds[k]);
+
+    //        if ((j == nbRows - 1) && (i == 0)) // last row first column (bottom left)
+    //            mInfoTextViewportId = mViewportIds[k];
+
+    //        ++k;
+    //    }
+    //}
+
+}
+
+void Visualizer::initBundlesFromFiles(const FileNames& fileNames)
+{
+    const int nbFiles = fileNames.size();
+    mBundles.reserve(nbFiles);
+
+    for (const auto& fileName : fileNames)
     {
-        for (int i = 0; i < nbCols; ++i)
+        const auto name = boost::filesystem::path(fileName).stem().string();
+
+        std::stringstream ss(name);
+        std::string substr;
+
+        auto getTokenFromDelim = [&](char c)
         {
-            mViewer.createViewPort(i*sizeX, 1.0 - (j + 1)*sizeY, (i + 1)*sizeX, 1.0 - j * sizeY, mViewportIds[k]);
+            getline( ss, substr, c );
+            return substr;
+        };
 
-            if ((j == nbRows - 1) && (i == 0)) // last row first column (bottom left)
-                mInfoTextViewportId = mViewportIds[k];
+        auto getToken = [&]()
+        {
+            return getTokenFromDelim('.');
+        };
 
-            ++k;
-        }
+        auto assertValidFile = [&](bool test)
+        {
+            if (!test)
+                logWarning("[Visualizer] file " + name + " is not a valid visualizer file name. Skipping.");
+
+            return test;
+        };
+
+        if (!assertValidFile(getToken() == "visualizer")) continue;
+
+        // Skip timestamp "YYYYMMDD.hhmmss.sss".
+        if (!assertValidFile(getToken().size() == 8)) continue; // date
+        if (!assertValidFile(getToken().size() == 6)) continue; // time
+        if (!assertValidFile(getToken().size() == 3)) continue; // ms
+
+        const std::string bundleName = getToken();
+
+        // Get viewport index from "?-view".
+        const int viewport = std::stoi(getTokenFromDelim('-'));
+        getToken(); // skip the "view"
+
+        const std::string cloudName = getToken();
+
+        // Initialize the cloud.
+        BundleClouds& clouds = getBundle(bundleName).second;
+        clouds.reserve(nbFiles);
+        clouds.emplace_back(fileName, cloudName, viewport);
     }
 }
-#else
-Visualizer::Visualizer(const std::string& name, int nbRows, int nbCols) : mName(name) { }
-#endif
 
-void Visualizer::render()
+Visualizer::Cloud::Cloud(const std::string& filename, const std::string& cloudname, int viewport) : 
+    mPointCloudMessage(new pcl::PCLPointCloud2()),
+    mName(cloudname),
+    mViewport(viewport)
+{
+    pcl::io::loadPCDFile(filename, *mPointCloudMessage);
+};
+
+const Visualizer::Bundle& Visualizer::getCurrentBundle() const
+{
+    assert(mBundles.size() > mCurrentBundleIdx);
+    return mBundles[mCurrentBundleIdx];
+}
+
+Visualizer::Bundle& Visualizer::getBundle(BundleName name)
+{
+    const auto bundle = std::find_if(mBundles.begin(), mBundles.end(), 
+        [&name](const Bundle& b) { return b.first == name; });
+
+    if (bundle != mBundles.end()) // exists
+        return *bundle;
+
+    mBundles.push_back(std::make_pair(name, BundleClouds()));
+    return mBundles.back();
+}
+
+void Visualizer::render(const Bundle& bundle)
 {
 #ifndef SAVE_FILE_ONLY
-    mViewer.removeAllPointClouds();
-    mViewer.removeAllShapes();
+    getViewer().removeAllPointClouds();
+    getViewer().removeAllShapes();
 #endif
 
-    prepareCloudsForRender(mClouds);
+    prepareCloudsForRender(bundle.second);
 
 #ifndef SAVE_FILE_ONLY
-    mViewer.registerPointPickingCallback(&Visualizer::pointPickingEventCallback, *this);
-    mViewer.registerKeyboardCallback(&Visualizer::keyboardEventCallback, *this);
+    getViewer().registerPointPickingCallback(&Visualizer::pointPickingEventCallback, *this);
+    getViewer().registerKeyboardCallback(&Visualizer::keyboardEventCallback, *this);
 
     const std::string infoTextId = "infoTextId";
-    mViewer.addText("", 10, 10, infoTextId, mInfoTextViewportId);
+    getViewer().addText("", 10, 10, infoTextId, mInfoTextViewportId);
 
-    while (!mViewer.wasStopped())
+    while (!getViewer().wasStopped())
     {
-        const auto colorIdx = mViewer.getColorHandlerIndex(mClouds.cbegin()->first); // if colorIdx is 0, user pressed numkey '1'
+        const auto& firstCloudName = bundle.second.cbegin()->mName;
+        const auto colorIdx = getViewer().getColorHandlerIndex(firstCloudName); // if colorIdx is 0, user pressed numkey '1'
 
         if (colorIdx < mCommonColorNames.size())
         {
             const auto help = "Color handler: " + std::to_string(colorIdx+1) + " (" + mCommonColorNames[colorIdx] + ")";
-            mViewer.updateText(help, 10, 10, 18, 0.5, 0.5, 0.5, infoTextId); // text, xpos, ypos, fontsize, r, g, b, id
+            getViewer().updateText(help, 10, 10, 18, 0.5, 0.5, 0.5, infoTextId); // text, xpos, ypos, fontsize, r, g, b, id
         }
 
-        mViewer.spinOnce(100);
+        getViewer().spinOnce(100);
     }
 #endif
 }
 
-void Visualizer::prepareCloudsForRender(CloudsMap& clouds)
+void Visualizer::prepareCloudsForRender(const BundleClouds& clouds)
 {
 #ifndef SAVE_FILE_ONLY
     generateCommonHandlersLists(clouds);
@@ -89,12 +165,12 @@ void Visualizer::prepareCloudsForRender(CloudsMap& clouds)
             continue;
         }
 
-        mViewer.removePointCloud(name, getViewportId(cloud.mViewport));
+        getViewer().removePointCloud(name, getViewportId(cloud.mViewport));
 
         // Add color handlers.
         for (const auto& color : colorHandlers)
         {
-            mViewer.addPointCloud(
+            getViewer().addPointCloud(
                 pclCloudMsg,
                 geometryHandlers[0], // will be duplicate
                 color,
@@ -104,13 +180,13 @@ void Visualizer::prepareCloudsForRender(CloudsMap& clouds)
                 getViewportId(cloud.mViewport));
         }
 
-        mViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, cloud.mSize, name);
-        mViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, cloud.mOpacity, name);
+        getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, cloud.mSize, name);
+        getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, cloud.mOpacity, name);
 
         // Add geometry handlers (spaces).
         for (const auto& geometry : geometryHandlers)
         {
-            mViewer.addPointCloud(
+            getViewer().addPointCloud(
                 pclCloudMsg,
                 geometry,
                 Eigen::Vector4f(0, 0, 0, 0),
@@ -119,7 +195,7 @@ void Visualizer::prepareCloudsForRender(CloudsMap& clouds)
                 getViewportId(cloud.mViewport));
         }
 
-        mViewer.filterHandlers(name);
+        getViewer().filterHandlers(name);
 #endif
     }
 }
@@ -143,7 +219,7 @@ void Visualizer::addBasis(
 #ifndef SAVE_FILE_ONLY
     auto addLine = [&](const Eigen::Vector3f& p1, const Eigen::Vector3f& p2, const Eigen::Vector3f& color, const std::string& lineName)
     {
-        mViewer.addLine(
+        getViewer().addLine(
             pcl::PointXYZ(p1[0], p1[1], p1[2]), 
             pcl::PointXYZ(p2[0], p2[1], p2[2]), 
             color[0], color[1], color[2], 
@@ -158,7 +234,15 @@ void Visualizer::addBasis(
 }
 
 #ifndef SAVE_FILE_ONLY
-void Visualizer::generateCommonHandlersLists(CloudsMap& clouds)
+PclVisualizer& Visualizer::getViewer()
+{
+    if (!mViewer)
+        mViewer.reset(new PclVisualiser("N/A"));
+
+    return *mViewer; 
+}
+
+void Visualizer::generateCommonHandlersLists(BundleClouds& clouds)
 {
     mCommonColorNames.clear();
     mCommonGeoNames.clear();
@@ -170,24 +254,29 @@ void Visualizer::generateCommonHandlersLists(CloudsMap& clouds)
     for (const auto& cloud : clouds)
     {
         // Color names.
-        for (const auto& feature : cloud.second->mFeatures)
+        for (const auto& feature : cloud.mPointCloudMessage->fields)
         {
-            const auto& name = feature.first;
+            const auto& name = feature.name;
             if (name == "rgb") continue; // already added
 
-                                         // Only add if not there.
+            // Only add if not there.
             if (std::find(mCommonColorNames.begin(), mCommonColorNames.end(), name) == mCommonColorNames.end())
                 mCommonColorNames.push_back(name);
         }
 
-        // Geo names.
-        for (const auto& space : cloud.second->mSpaces)
-        {
-            // Only add if not there.
-            const auto& name = space.getName();
-            if (std::find(mCommonGeoNames.begin(), mCommonGeoNames.end(), name) == mCommonGeoNames.end())
-                mCommonGeoNames.push_back(name);
-        }
+        ///////////////////////////////////////
+        //// Geo names.
+        //for (const auto& space : cloud.second->mSpaces)
+        //{
+        //    // Only add if not there.
+        //    const auto& name = space.getName();
+        //    if (std::find(mCommonGeoNames.begin(), mCommonGeoNames.end(), name) == mCommonGeoNames.end())
+        //        mCommonGeoNames.push_back(name);
+        //}
+
+        mCommonGeoNames.push_back("xyz"); // TODO SPACES
+        ///////////////////////////////////////
+
     }
 
     // Reorder color handlers if necessary.
@@ -316,7 +405,7 @@ void Visualizer::identifyClouds(bool enabled, bool back)
         mIdentifiedCloudIdx = -1;
 
     const std::string textId = "cloud-identification";
-    mViewer.removeShape(textId);
+    getViewer().removeShape(textId);
 
     // Loop on clouds and set opacity.
     int i = 0;
@@ -336,10 +425,10 @@ void Visualizer::identifyClouds(bool enabled, bool back)
         };
 
         if (mIdentifiedCloudIdx == i) 
-            mViewer.addText(name, 0, 0, textId, getViewportId(cloud.mViewport));
+            getViewer().addText(name, 0, 0, textId, getViewportId(cloud.mViewport));
 
-        mViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getOpacity(), name);
-        mViewer.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, isIdentificationDisabled || isHighlighted ? cloud.mSize : 1, name);
+        getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getOpacity(), name);
+        getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, isIdentificationDisabled || isHighlighted ? cloud.mSize : 1, name);
         ++i;
     }
 }
@@ -384,7 +473,7 @@ void Visualizer::pointPickingEventCallback(const pcl::visualization::PointPickin
         if (cloud.mIndexedClouds.size() > 0) // has indexed clouds
         {
             // Find the point in the current space (geometry handler).
-            const int iGeo = mViewer.getGeometryHandlerIndex(name);
+            const int iGeo = getViewer().getGeometryHandlerIndex(name);
             const auto& space = cloud.mSpaces[iGeo];
             const int foundIdx = space.findPickedPointIndex(x, y, z);
 

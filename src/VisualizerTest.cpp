@@ -14,6 +14,7 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/search/kdtree.h>
 
+#include "Visualizer.h"
 #include "VisualizerData.h"
 
 #define VISUALIZER_CALL(x) x
@@ -133,7 +134,7 @@ int main()
         VISUALIZER_CALL(viewer.addCloud(*cloudNoisy, NAME + "-1", viewport));
         viewport++;
 
-        VISUALIZER_CALL(viewer.render());
+        VISUALIZER_CALL(Visualizer(viewer.render()));
     };
 
     auto testMultipleClouds = [&]()
@@ -144,7 +145,7 @@ int main()
         VISUALIZER_CALL(viewer.addCloud(*cloudModel, "model").addCloud(*normals).setOpacity(0.7));
         VISUALIZER_CALL(viewer.addCloud(*cloudPatch1, "patch").setColor(1, 0, 0).setSize(3));
 
-        VISUALIZER_CALL(viewer.render());
+        VISUALIZER_CALL(Visualizer(viewer.render())); //////////////////////////////////////////////
     };
 
     auto testCustomGeometryHandler = [&]()
@@ -231,13 +232,13 @@ int main()
 
     // TODO delete files at render
 
-    testMultipleClouds();
+    //testMultipleClouds();
     testAddingFeaturesAndClouds();
-    testCustomGeometryHandler();
-    testIndexedClouds();
-    testConsistentHandlers();
-    testOrderingFeatures();
-    testCloudRender();
+    //testCustomGeometryHandler();
+    //testIndexedClouds();
+    //testConsistentHandlers();
+    //testOrderingFeatures();
+    //testCloudRender();
 
     return 0;
 }
