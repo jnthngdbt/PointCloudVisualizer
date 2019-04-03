@@ -145,7 +145,7 @@ int main()
         VISUALIZER_CALL(viewer.addCloud(*cloudModel, "model").addCloud(*normals).setOpacity(0.7));
         VISUALIZER_CALL(viewer.addCloud(*cloudPatch1, "patch").setColor(1, 0, 0).setSize(3));
 
-        VISUALIZER_CALL(Visualizer(viewer.render())); //////////////////////////////////////////////
+        VISUALIZER_CALL(Visualizer(viewer.render()));
     };
 
     auto testCustomGeometryHandler = [&]()
@@ -158,7 +158,7 @@ int main()
         VISUALIZER_CALL(viewer.addFeature(rnd2, "u3", name));
         VISUALIZER_CALL(viewer.addSpace("u1", "u2", "u3", name).addCloud(*normals));
 
-        VISUALIZER_CALL(viewer.render());
+        VISUALIZER_CALL(Visualizer(viewer.render()));
     };
 
     auto testIndexedClouds = [&]()
@@ -192,7 +192,7 @@ int main()
             ++i;
         }
 
-        VISUALIZER_CALL(viewer.render());
+        VISUALIZER_CALL(Visualizer(viewer.render()));
     };
 
     auto testConsistentHandlers = [&]()
@@ -203,7 +203,7 @@ int main()
         VISUALIZER_CALL(viewer.addCloud(*cloudModel, "model").addCloud(*normals).setOpacity(0.7));                      // x, y, z + normals
         VISUALIZER_CALL(viewer.addCloud(*cloudPatch1, "patch").addFeature(rnd, "randv").setColor(1, 0, 0).setSize(3));  // x, y, z, randv
 
-        VISUALIZER_CALL(viewer.render());
+        VISUALIZER_CALL(Visualizer(viewer.render()));
     };
 
     auto testOrderingFeatures = [&]()
@@ -213,11 +213,13 @@ int main()
         VISUALIZER_CALL(viewer.addCloud(*cloudModel, "cloud").addFeature(rnd, "randv").addFeature(idx, "index").addFeature(normals->points, "c", [](const pcl::Normal& p) { return p.curvature; }));
         VISUALIZER_CALL(viewer.setFeaturesOrder({"index", "c"}));
 
-        VISUALIZER_CALL(viewer.render());
+        VISUALIZER_CALL(Visualizer(viewer.render()));
     };
 
     auto testCloudRender = [&]()
     {
+        // TODO test with Visualizer /////////
+
         VISUALIZER_CALL(VisualizerData viewer("test-cloud-render"));
 
         VISUALIZER_CALL(viewer.addCloud(*cloudModel, "cloud", 1).render());
@@ -232,13 +234,13 @@ int main()
 
     // TODO delete files at render
 
-    //testMultipleClouds();
+    testMultipleClouds();
     testAddingFeaturesAndClouds();
-    //testCustomGeometryHandler();
-    //testIndexedClouds();
-    //testConsistentHandlers();
-    //testOrderingFeatures();
-    //testCloudRender();
+    testCustomGeometryHandler();
+    testIndexedClouds();
+    testConsistentHandlers();
+    testOrderingFeatures();
+    testCloudRender();
 
     return 0;
 }

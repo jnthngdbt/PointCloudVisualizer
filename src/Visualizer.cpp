@@ -17,23 +17,8 @@ Visualizer::Visualizer(const FileNames& fileNames)
 {
     initBundlesFromFiles(fileNames);
 
-    //mViewportIds.resize(nbRows * nbCols);
-    //const float sizeX = 1.0 / nbCols;
-    //const float sizeY = 1.0 / nbRows;
-    //int k = 0;
-    //for (int j = 0; j < nbRows; ++j)
-    //{
-    //    for (int i = 0; i < nbCols; ++i)
-    //    {
-    //        mViewer.createViewPort(i*sizeX, 1.0 - (j + 1)*sizeY, (i + 1)*sizeX, 1.0 - j * sizeY, mViewportIds[k]);
-
-    //        if ((j == nbRows - 1) && (i == 0)) // last row first column (bottom left)
-    //            mInfoTextViewportId = mViewportIds[k];
-
-    //        ++k;
-    //    }
-    //}
-
+    if (mBundles.size() > 0)
+        render(getCurrentBundle());
 }
 
 void Visualizer::initBundlesFromFiles(const FileNames& fileNames)
@@ -89,6 +74,36 @@ void Visualizer::initBundlesFromFiles(const FileNames& fileNames)
     }
 }
 
+void Visualizer::initViewer(const Bundle& bundle)
+{
+    mViewer.reset(new PclVisualizer(bundle.first));
+
+    //    getViewer().removeAllPointClouds();
+    //    getViewer().removeAllShapes();
+
+    int nbRows{ 1 };
+    int nbCols{ 0 };
+    for (const auto& cloud : bundle.second)
+        nbCols = std::max(cloud.mViewport + 1, nbCols);
+
+    mViewportIds.resize(nbRows * nbCols);
+    const float sizeX = 1.0 / nbCols;
+    const float sizeY = 1.0 / nbRows;
+    int k = 0;
+    for (int j = 0; j < nbRows; ++j)
+    {
+        for (int i = 0; i < nbCols; ++i)
+        {
+            getViewer().createViewPort(i*sizeX, 1.0 - (j + 1)*sizeY, (i + 1)*sizeX, 1.0 - j * sizeY, mViewportIds[k]);
+
+            if ((j == nbRows - 1) && (i == 0)) // last row first column (bottom left)
+                mInfoTextViewportId = mViewportIds[k];
+
+            ++k;
+        }
+    }
+}
+
 Visualizer::Cloud::Cloud(const std::string& filename, const std::string& cloudname, int viewport) : 
     mPointCloudMessage(new pcl::PCLPointCloud2()),
     mName(cloudname),
@@ -117,15 +132,11 @@ Visualizer::Bundle& Visualizer::getBundle(BundleName name)
 
 void Visualizer::render(const Bundle& bundle)
 {
-#ifndef SAVE_FILE_ONLY
-    getViewer().removeAllPointClouds();
-    getViewer().removeAllShapes();
-#endif
+    initViewer(bundle);
 
     prepareCloudsForRender(bundle.second);
 
-#ifndef SAVE_FILE_ONLY
-    getViewer().registerPointPickingCallback(&Visualizer::pointPickingEventCallback, *this);
+    //getViewer().registerPointPickingCallback(&Visualizer::pointPickingEventCallback, *this);
     getViewer().registerKeyboardCallback(&Visualizer::keyboardEventCallback, *this);
 
     const std::string infoTextId = "infoTextId";
@@ -144,67 +155,60 @@ void Visualizer::render(const Bundle& bundle)
 
         getViewer().spinOnce(100);
     }
-#endif
 }
 
 void Visualizer::prepareCloudsForRender(const BundleClouds& clouds)
 {
-#ifndef SAVE_FILE_ONLY
     generateCommonHandlersLists(clouds);
-#endif
 
-    for (auto& pair : clouds)
+    for (auto& cloud : clouds)
     {
-#ifndef SAVE_FILE_ONLY
-        const auto colorHandlers = generateColorHandlers(pclCloudMsg, cloud);
-        const auto geometryHandlers = generateGeometryHandlers(pclCloudMsg, cloud);
+        const auto colorHandlers = generateColorHandlers(cloud.mPointCloudMessage);
+        const auto geometryHandlers = generateGeometryHandlers(cloud.mPointCloudMessage);
 
         if (colorHandlers.size() == 0 || geometryHandlers.size() == 0)
         {
-            logError("[render] Something went wrong. No color or geometry handler. Won't add cloud [" + name + "].");
+            logError("[render] Something went wrong. No color or geometry handler. Won't add cloud [" + cloud.mName + "].");
             continue;
         }
 
-        getViewer().removePointCloud(name, getViewportId(cloud.mViewport));
+        getViewer().removePointCloud(cloud.mName, getViewportId(cloud.mViewport));
 
         // Add color handlers.
         for (const auto& color : colorHandlers)
         {
             getViewer().addPointCloud(
-                pclCloudMsg,
+                cloud.mPointCloudMessage,
                 geometryHandlers[0], // will be duplicate
                 color,
                 Eigen::Vector4f(0, 0, 0, 0),
                 Eigen::Quaternion<float>(0, 0, 0, 0),
-                name,
+                cloud.mName,
                 getViewportId(cloud.mViewport));
         }
 
-        getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, cloud.mSize, name);
-        getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, cloud.mOpacity, name);
+        //////////getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, cloud.mSize, cloud.mName);
+        //////////getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, cloud.mOpacity, cloud.mName);
 
         // Add geometry handlers (spaces).
         for (const auto& geometry : geometryHandlers)
         {
             getViewer().addPointCloud(
-                pclCloudMsg,
+                cloud.mPointCloudMessage,
                 geometry,
                 Eigen::Vector4f(0, 0, 0, 0),
                 Eigen::Quaternion<float>(0, 0, 0, 0),
-                name,
+                cloud.mName,
                 getViewportId(cloud.mViewport));
         }
 
-        getViewer().filterHandlers(name);
-#endif
+        getViewer().filterHandlers(cloud.mName);
     }
 }
 
 void Visualizer::setFeaturesOrder(const std::vector<FeatureName>& names)
 {
-#ifndef SAVE_FILE_ONLY
     mFeaturesOrder = names;
-#endif
 }
 
 void Visualizer::addBasis(
@@ -216,7 +220,6 @@ void Visualizer::addBasis(
     double scale,
     ViewportIdx viewport)
 {
-#ifndef SAVE_FILE_ONLY
     auto addLine = [&](const Eigen::Vector3f& p1, const Eigen::Vector3f& p2, const Eigen::Vector3f& color, const std::string& lineName)
     {
         getViewer().addLine(
@@ -230,19 +233,17 @@ void Visualizer::addBasis(
     addLine(origin, origin + u1 * scale, { 1,0,0 }, name + "u1");
     addLine(origin, origin + u2 * scale, { 0,1,0 }, name + "u2");
     addLine(origin, origin + u3 * scale, { 0,0,1 }, name + "u3");
-#endif
 }
 
-#ifndef SAVE_FILE_ONLY
 PclVisualizer& Visualizer::getViewer()
 {
     if (!mViewer)
-        mViewer.reset(new PclVisualiser("N/A"));
+        mViewer.reset(new PclVisualizer("N/A"));
 
     return *mViewer; 
 }
 
-void Visualizer::generateCommonHandlersLists(BundleClouds& clouds)
+void Visualizer::generateCommonHandlersLists(const BundleClouds& clouds)
 {
     mCommonColorNames.clear();
     mCommonGeoNames.clear();
@@ -292,8 +293,7 @@ void Visualizer::generateCommonHandlersLists(BundleClouds& clouds)
 }
 
 std::vector<ColorHandlerConstPtr> Visualizer::generateColorHandlers(
-    const pcl::PCLPointCloud2::Ptr pclCloudMsg,
-    const Cloud& cloud) const
+    const pcl::PCLPointCloud2::Ptr pclCloudMsg) const
 {
     if (mCommonColorNames.size() <= 0)
         logError("[generateColorHandlers] Common color names list not generated.");
@@ -323,28 +323,32 @@ std::vector<ColorHandlerConstPtr> Visualizer::generateColorHandlers(
     return std::move(handlers);
 }
 
-std::vector<GeometryHandlerConstPtr> Visualizer::generateGeometryHandlers(const pcl::PCLPointCloud2::Ptr pclCloudMsg, const Cloud& cloud) const
+std::vector<GeometryHandlerConstPtr> Visualizer::generateGeometryHandlers(const pcl::PCLPointCloud2::Ptr pclCloudMsg) const
 {
     if (mCommonGeoNames.size() <= 0)
         logError("[generateGeometryHandlers] Common geo names list not generated.");
 
     std::vector<GeometryHandlerConstPtr> handlers;
 
-    auto findSpace = [&cloud] (const std::string& name)
-    {
-        const auto& s = cloud.mSpaces;
-        return std::find_if(s.begin(), s.end(), [&name](const Space& space) { return space.getName() == name; });
-    };
+    // TODO spaces
 
-    using GeoHandler = pcl::visualization::PointCloudGeometryHandlerCustom<pcl::PCLPointCloud2>;
-    for (const auto& name : mCommonGeoNames)
-    {
-        const auto space = findSpace(name);
-        if (space != cloud.mSpaces.end())
-            handlers.emplace_back(new GeoHandler(pclCloudMsg, space->u1, space->u2, space->u3));
-        else
-            handlers.emplace_back(new PointCloudGeometryHandlerNull(pclCloudMsg));
-    }
+    //////auto findSpace = [&cloud] (const std::string& name)
+    //////{
+    //////    const auto& s = cloud.mSpaces;
+    //////    return std::find_if(s.begin(), s.end(), [&name](const Space& space) { return space.getName() == name; });
+    //////};
+
+    //////using GeoHandler = pcl::visualization::PointCloudGeometryHandlerCustom<pcl::PCLPointCloud2>;
+    //////for (const auto& name : mCommonGeoNames)
+    //////{
+    //////    const auto space = findSpace(name);
+    //////    if (space != cloud.mSpaces.end())
+    //////        handlers.emplace_back(new GeoHandler(pclCloudMsg, space->u1, space->u2, space->u3));
+    //////    else
+    //////        handlers.emplace_back(new PointCloudGeometryHandlerNull(pclCloudMsg));
+    //////}
+
+    handlers.emplace_back(new pcl::visualization::PointCloudGeometryHandlerXYZ<pcl::PCLPointCloud2>(pclCloudMsg)); // TODO spces: replace by above
 
     return std::move(handlers);
 }
@@ -391,12 +395,13 @@ void Visualizer::keyboardEventCallback(const pcl::visualization::KeyboardEvent& 
 
 void Visualizer::identifyClouds(bool enabled, bool back)
 {
-    const int nbClouds = mClouds.size();
+    const auto& clouds = getCurrentBundle().second;
+    const int nbClouds = clouds.size();
 
     if (nbClouds <= 0) return; // early exit
     if (!enabled && mIdentifiedCloudIdx < 0) return; // early exit, nothing to do, already disabled
 
-                                                     // Determine next cloud to highlight.
+    // Determine next cloud to highlight.
     if (enabled)
         mIdentifiedCloudIdx = back ? 
         std::fmod(std::max(0, mIdentifiedCloudIdx) - 1 + nbClouds, nbClouds) : // supports case starting at -1
@@ -409,26 +414,23 @@ void Visualizer::identifyClouds(bool enabled, bool back)
 
     // Loop on clouds and set opacity.
     int i = 0;
-    for (const auto& pair : mClouds)
+    for (const auto& cloud : clouds)
     {
-        const auto& name = pair.first;
-        const auto& cloud = *pair.second;
-
         const bool isHighlighted = mIdentifiedCloudIdx == i;
         const bool isIdentificationDisabled = mIdentifiedCloudIdx == -1;
 
         auto getOpacity = [&]()
         {
-            if (isIdentificationDisabled) return cloud.mOpacity;
+            if (isIdentificationDisabled) return 1.0; // cloud.mOpacity;
             if (isHighlighted) return 1.0;
             return 0.01;
         };
 
         if (mIdentifiedCloudIdx == i) 
-            getViewer().addText(name, 0, 0, textId, getViewportId(cloud.mViewport));
+            getViewer().addText(cloud.mName, 0, 0, textId, getViewportId(cloud.mViewport));
 
-        getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getOpacity(), name);
-        getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, isIdentificationDisabled || isHighlighted ? cloud.mSize : 1, name);
+        getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getOpacity(), cloud.mName);
+        //getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, isIdentificationDisabled || isHighlighted ? cloud.mSize : 1, cloud.mName);
         ++i;
     }
 }
@@ -457,36 +459,36 @@ int Visualizer::getViewportId(ViewportIdx viewport) const
     return isValid ? mViewportIds[viewport] : 0;
 }
 
-void Visualizer::pointPickingEventCallback(const pcl::visualization::PointPickingEvent& event, void*)
-{
-    const int pickedIdx = event.getPointIndex();
-    float x, y, z;
-    event.getPoint(x, y, z);
-
-    std::cout << "Picked point #" << pickedIdx << ": (" << x << ", " << y << ", " << z << ")" << std::endl;
-
-    // Find corresponding point in clouds that have indexed clouds.
-    for (auto& pair : mClouds)
-    {
-        auto& name = pair.first;
-        auto& cloud = *pair.second;
-        if (cloud.mIndexedClouds.size() > 0) // has indexed clouds
-        {
-            // Find the point in the current space (geometry handler).
-            const int iGeo = getViewer().getGeometryHandlerIndex(name);
-            const auto& space = cloud.mSpaces[iGeo];
-            const int foundIdx = space.findPickedPointIndex(x, y, z);
-
-            if (foundIdx >= 0)
-            {
-                std::cout << "Found point #" << foundIdx << std::endl;
-                prepareCloudsForRender(cloud.mIndexedClouds[foundIdx]);
-
-                // Update the main map.
-                for (const auto& idxPair : cloud.mIndexedClouds[foundIdx])
-                    mClouds[idxPair.first] = idxPair.second;
-            }
-        }
-    }
-}
-#endif
+// TODO indexed cloud
+//void Visualizer::pointPickingEventCallback(const pcl::visualization::PointPickingEvent& event, void*)
+//{
+//    const int pickedIdx = event.getPointIndex();
+//    float x, y, z;
+//    event.getPoint(x, y, z);
+//
+//    std::cout << "Picked point #" << pickedIdx << ": (" << x << ", " << y << ", " << z << ")" << std::endl;
+//
+//    // Find corresponding point in clouds that have indexed clouds.
+//    for (auto& pair : mClouds)
+//    {
+//        auto& name = pair.first;
+//        auto& cloud = *pair.second;
+//        if (cloud.mIndexedClouds.size() > 0) // has indexed clouds
+//        {
+//            // Find the point in the current space (geometry handler).
+//            const int iGeo = getViewer().getGeometryHandlerIndex(name);
+//            const auto& space = cloud.mSpaces[iGeo];
+//            const int foundIdx = space.findPickedPointIndex(x, y, z);
+//
+//            if (foundIdx >= 0)
+//            {
+//                std::cout << "Found point #" << foundIdx << std::endl;
+//                prepareCloudsForRender(cloud.mIndexedClouds[foundIdx]);
+//
+//                // Update the main map.
+//                for (const auto& idxPair : cloud.mIndexedClouds[foundIdx])
+//                    mClouds[idxPair.first] = idxPair.second;
+//            }
+//        }
+//    }
+//}

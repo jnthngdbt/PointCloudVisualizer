@@ -1,7 +1,5 @@
 #pragma once
 
-#define SAVE_FILE_ONLY
-
 #include <stdlib.h>
 
 #include <map>
@@ -10,12 +8,9 @@
 
 #include <pcl/pcl_base.h>
 #include <pcl/point_types.h>
-
-#ifndef SAVE_FILE_ONLY
 #include <pcl/visualization/pcl_visualizer.h>
-#endif
 
-#include <flann/flann.h>
+#include <flann/flann.h> // TODO put this with spaces
 
 namespace pcv
 {
@@ -23,7 +18,6 @@ namespace pcv
     using FileNames = std::vector<std::string>;
     using ViewportIdx = int;
 
-#ifndef SAVE_FILE_ONLY
     using GeometryHandlerConstPtr = pcl::visualization::PointCloudGeometryHandler<pcl::PCLPointCloud2>::ConstPtr;
     using ColorHandlerConstPtr = pcl::visualization::PointCloudColorHandler<pcl::PCLPointCloud2>::ConstPtr;
 
@@ -70,9 +64,7 @@ namespace pcv
             return false; // does not seem to have an effect
         };
     };
-#endif
 
-#ifndef SAVE_FILE_ONLY
     class PclVisualizer : public pcl::visualization::PCLVisualizer
     {
     public:
@@ -80,16 +72,13 @@ namespace pcv
         void filterHandlers(const std::string &id);
         int getGeometryHandlerIndex(const std::string &id);
     };
-#endif
 
     class Visualizer
     {
     public:
         Visualizer(const FileNames& fileNames);
 
-#ifndef SAVE_FILE_ONLY
         PclVisualizer& getViewer();
-#endif
 
     private:
         class Cloud
@@ -108,6 +97,8 @@ namespace pcv
         using BundlesMap = std::vector<Bundle>;
 
         void initBundlesFromFiles(const FileNames& fileNames);
+
+        void initViewer(const Bundle& bundle);
 
         /// Add to draw a 3d basis (3 RGB vectors) at a specified location.
         /// @param[in] u1: 3d vector of the x axis (red)
@@ -135,25 +126,23 @@ namespace pcv
         void logError(const std::string& msg) const { std::cout << "[VISUALIZER][ERROR]" << msg << std::endl; }
         void logWarning(const std::string& msg) const { std::cout << "[VISUALIZER][WARNING]" << msg << std::endl; }
 
-        BundlesMap mBundles;
-        int mCurrentBundleIdx{ 0 };
-
-#ifndef SAVE_FILE_ONLY
-
-        std::vector<ColorHandlerConstPtr> generateColorHandlers(const pcl::PCLPointCloud2::Ptr pclCloudMsg, const Cloud& cloud) const;
-        std::vector<GeometryHandlerConstPtr> generateGeometryHandlers(const pcl::PCLPointCloud2::Ptr pclCloudMsg, const Cloud& cloud) const;
-        void generateCommonHandlersLists(BundleClouds& clouds);
+        std::vector<ColorHandlerConstPtr> generateColorHandlers(const pcl::PCLPointCloud2::Ptr pclCloudMsg) const;
+        std::vector<GeometryHandlerConstPtr> generateGeometryHandlers(const pcl::PCLPointCloud2::Ptr pclCloudMsg) const;
+        void generateCommonHandlersLists(const BundleClouds& clouds);
 
         int getViewportId(ViewportIdx viewport) const;
 
         // Interactivity
         void keyboardEventCallback(const pcl::visualization::KeyboardEvent& event, void*);
-        void pointPickingEventCallback(const pcl::visualization::PointPickingEvent& event, void*);
+        //void pointPickingEventCallback(const pcl::visualization::PointPickingEvent& event, void*);
         void identifyClouds(bool enabled, bool back);
         void printHelp() const;
 
         std::shared_ptr<PclVisualizer> mViewer;
         std::vector<int> mViewportIds;
+
+        BundlesMap mBundles;
+        int mCurrentBundleIdx{ 0 };
 
         std::vector<std::string> mCommonColorNames;
         std::vector<std::string> mCommonGeoNames;
@@ -161,7 +150,6 @@ namespace pcv
 
         int mInfoTextViewportId{ -1 };
         int mIdentifiedCloudIdx{ -1 };
-#endif
     };
 }
 
