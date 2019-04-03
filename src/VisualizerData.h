@@ -8,6 +8,7 @@
 
 #include <pcl/pcl_base.h>
 #include <pcl/point_types.h>
+#include <pcl/registration/registration.h>
 
 #include <flann/flann.h>
 
@@ -253,6 +254,24 @@ namespace pcv
 
         std::string mName;
         CloudsMap mClouds;
+    };
+
+    class VisualizerRegistration : public VisualizerData
+    {
+    public:
+        VisualizerRegistration(const std::string& name) : VisualizerData(name) {}
+
+        /// Fill viewer with registration algorithm accessible data.
+        /// @param[in] pRegistration: registration algorithm instance
+        /// @param[in] correspondences: the final correspondences (not directly accessible from registration instance)
+        /// @return reference to the instance (allows chainable commands)
+        template <typename PointSource, typename PointTarget>
+        VisualizerRegistration& init(
+            pcl::Registration<PointSource, PointTarget>* pRegistration, 
+            const pcl::PointCloud<PointSource>& alignedSource, 
+            const pcl::Correspondences& correspondences,
+            const std::vector<double>* deviationMapPointToPlane = nullptr,
+            const std::vector<double>* deviationMapPointToPoint = nullptr);
     };
 }
 
