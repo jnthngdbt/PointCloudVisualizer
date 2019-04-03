@@ -10,6 +10,7 @@
 
 #include <pcl/pcl_base.h>
 #include <pcl/point_types.h>
+#include <pcl/registration/registration.h>
 
 #ifndef SAVE_FILE_ONLY
 #include <pcl/visualization/pcl_visualizer.h>
@@ -114,6 +115,7 @@ namespace pcv
         void prepareCloudsForRender(CloudsMap& clouds);
 
         std::string mName;
+        CloudsMap mClouds;
 
 #ifndef SAVE_FILE_ONLY
 
@@ -139,6 +141,24 @@ namespace pcv
         int mInfoTextViewportId{ -1 };
         int mIdentifiedCloudIdx{ -1 };
 #endif
+    };
+
+    class VisualizerRegistration : public Visualizer
+    {
+    public:
+        VisualizerRegistration(const std::string& name) : Visualizer(name, 2, 2) {}
+
+        /// Fill viewer with registration algorithm accessible data.
+        /// @param[in] pRegistration: registration algorithm instance
+        /// @param[in] correspondences: the final correspondences (not directly accessible from registration instance)
+        /// @return reference to the instance (allows chainable commands)
+        template <typename PointSource, typename PointTarget>
+        VisualizerRegistration& init(
+            pcl::Registration<PointSource, PointTarget>* pRegistration, 
+            const pcl::PointCloud<PointSource>& alignedSource, 
+            const pcl::Correspondences& correspondences,
+            const std::vector<double>* deviationMapPointToPlane = nullptr,
+            const std::vector<double>* deviationMapPointToPoint = nullptr);
     };
 }
 

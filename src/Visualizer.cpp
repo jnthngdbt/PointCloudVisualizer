@@ -47,7 +47,7 @@ void Visualizer::render()
     mViewer.removeAllShapes();
 #endif
 
-    //////////prepareCloudsForRender(mClouds);
+    prepareCloudsForRender(mClouds);
 
 #ifndef SAVE_FILE_ONLY
     mViewer.registerPointPickingCallback(&Visualizer::pointPickingEventCallback, *this);
