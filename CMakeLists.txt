@@ -7,7 +7,13 @@ include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
-file(GLOB VisualizerFiles src/Visualizer.h src/Visualizer.cpp src/Visualizer.hpp)
+file(GLOB VisualizerFiles 
+  src/Visualizer.h 
+  src/Visualizer.cpp 
+  src/Visualizer.hpp 
+  src/VisualizerData.h 
+  src/VisualizerData.cpp 
+  src/VisualizerData.hpp)
 file(GLOB VisualizerAppFiles src/VisualizerApp.cpp)
 file(GLOB VisualizerTestFiles src/VisualizerTest.cpp)
 file(GLOB ProjectFiles src/stdafx.h src/stdafx.cpp src/targetver.h)
