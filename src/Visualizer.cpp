@@ -142,16 +142,18 @@ void Visualizer::render(const Bundle& bundle)
     const std::string infoTextId = "infoTextId";
     getViewer().addText("", 10, 10, infoTextId, mInfoTextViewportId);
 
+    const auto& firstCloudName = bundle.second.cbegin()->mName;
+
+    mColormapSourceId = firstCloudName; // initialize the lut source with the first cloud
+
     while (!getViewer().wasStopped())
     {
-        const auto& firstCloudName = bundle.second.cbegin()->mName;
         const auto colorIdx = getViewer().getColorHandlerIndex(firstCloudName); // if colorIdx is 0, user pressed numkey '1'
 
-        if (colorIdx < mCommonColorNames.size())
-        {
-            const auto help = "Color handler: " + std::to_string(colorIdx+1) + " (" + mCommonColorNames[colorIdx] + ")";
-            getViewer().updateText(help, 10, 10, 18, 0.5, 0.5, 0.5, infoTextId); // text, xpos, ypos, fontsize, r, g, b, id
-        }
+        std::string help = "";
+        help += "Colormap source: " + mColormapSourceId + "\n\r";
+        help += "Color handler: " + std::to_string(colorIdx + 1) + " (" + ((colorIdx < mCommonColorNames.size()) ? mCommonColorNames[colorIdx] : "-") + ")";
+        getViewer().updateText(help, 10, 10, 18, 0.5, 0.5, 0.5, infoTextId); // text, xpos, ypos, fontsize, r, g, b, id
 
         getViewer().spinOnce(100);
     }
@@ -404,8 +406,8 @@ void Visualizer::identifyClouds(bool enabled, bool back)
     // Determine next cloud to highlight.
     if (enabled)
         mIdentifiedCloudIdx = back ? 
-        std::fmod(std::max(0, mIdentifiedCloudIdx) - 1 + nbClouds, nbClouds) : // supports case starting at -1
-        std::fmod(mIdentifiedCloudIdx + 1, nbClouds); // supports case starting at -1
+            std::fmod(std::max(0, mIdentifiedCloudIdx) - 1 + nbClouds, nbClouds) : // supports case starting at -1
+            std::fmod(mIdentifiedCloudIdx + 1, nbClouds); // supports case starting at -1
     else
         mIdentifiedCloudIdx = -1;
 
@@ -426,8 +428,13 @@ void Visualizer::identifyClouds(bool enabled, bool back)
             return 0.01;
         };
 
-        if (mIdentifiedCloudIdx == i) 
+        if (isHighlighted)
+        {
             getViewer().addText(cloud.mName, 0, 0, textId, getViewportId(cloud.mViewport));
+
+            // Set this cloud as the data source for the lookup table (when pressing 'u').
+            mColormapSourceId = cloud.mName;
+        }
 
         getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getOpacity(), cloud.mName);
         //getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, isIdentificationDisabled || isHighlighted ? cloud.mSize : 1, cloud.mName);

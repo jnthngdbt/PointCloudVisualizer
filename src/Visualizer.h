@@ -150,6 +150,7 @@ namespace pcv
 
         int mInfoTextViewportId{ -1 };
         int mIdentifiedCloudIdx{ -1 };
+        std::string mColormapSourceId;
     };
 }
 
