@@ -2,50 +2,22 @@
 
 #include <math.h>
 #include <stdlib.h>
-
 #include <string>
 #include <vector>
 
-#include <pcl/pcl_base.h>
-#include <pcl/point_types.h>
-//#include <pcl/common/transforms.h>
-//#include <pcl/features/normal_3d.h>
-//#include <pcl/filters/passthrough.h>
-//#include <pcl/io/pcd_io.h>
-//#include <pcl/search/kdtree.h>
-
-#include "VisualizerData.h"
+#include "Visualizer.h"
 
 using namespace pcv;
 
-class VisualizerApp
+int main(int argc, char* argv[])
 {
-public:
-    VisualizerApp();
-private:
-    void init();
-    void render();
-};
+    std::vector<std::string> files;
+    files.reserve(argc);
 
-VisualizerApp::VisualizerApp()
-{
-    init();
-    render();
-}
+    for(int i = 1; i < argc; i++)
+        files.push_back(argv[i]);
 
-void VisualizerApp::init()
-{
-    ;
-}
-
-void VisualizerApp::render()
-{
-    ;
-}
-
-int main()
-{
-    VisualizerApp();
+    Visualizer app(files);
 
     return 0;
 }
