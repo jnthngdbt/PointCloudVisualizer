@@ -32,13 +32,6 @@ namespace pcv
 
     class VisualizerData;
 
-    struct ColorRGB
-    {
-        // Note: PCL supports RGBA, but it does not seem to be fully supported everywhere (e.g. the PCL viewer).
-        ColorRGB(float ri, float gi, float bi) : r(ri), g(gi), b(bi) {}
-        float r, g, b;
-    };
-
     struct Space
     {
         Space(const Feature& a, const Feature& b, const Feature& c);
@@ -120,7 +113,8 @@ namespace pcv
         Cloud& setViewport(ViewportIdx viewport);
         Cloud& setSize(int size) { mSize = size; return *this; };
         Cloud& setOpacity(double opacity) { mOpacity = opacity; return *this; };
-        Cloud& setColor(float r, float g, float b) { mRGB = ColorRGB({ r,g,b }); return *this; };
+
+        Cloud& setColor(float r, float g, float b);
         Cloud& setDefaultFeature(const FeatureName& name);
 
         int getNbPoints() const;
@@ -141,7 +135,6 @@ namespace pcv
         int mViewport{ 0 };
         int mSize{ 1 };
         double mOpacity{ 1.0 };
-        ColorRGB mRGB{ -1.0, -1.0, -1.0 };
         std::vector<Space> mSpaces; // using vector instead of [unordered_]map to keep order of insertion
         std::map<int, CloudsMap> mIndexedClouds;
         std::vector<Feature> mFeatures; // using vector instead of [unordered_]map to keep order of insertion

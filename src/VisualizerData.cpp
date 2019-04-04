@@ -59,16 +59,6 @@ const FileNames& VisualizerData::render()
             continue;
         }
 
-        if (cloud.mRGB.r >= 0.0) // TODO do the addFeature at setColor
-        {
-            // Create packed RGB value.
-            const auto r = static_cast<uint8_t>(cloud.mRGB.r * 255);
-            const auto g = static_cast<uint8_t>(cloud.mRGB.g * 255);
-            const auto b = static_cast<uint8_t>(cloud.mRGB.b * 255);
-            const auto rgb = static_cast<float>((r << 16) + (g << 8) + (b));
-            cloud.addFeature(std::vector<float>(cloud.getNbPoints(), rgb), "rgb", cloud.mViewport);
-        }
-
         // Some color and geometry handlers only work with PointCloud2 objects, 
         // and the best way to create them is by reading a file. That is nice, because
         // we want to save the file anyway, because allows to save in a single cloud
@@ -293,6 +283,25 @@ Cloud& Cloud::addSpace(const FeatureName& a, const FeatureName& b, const Feature
     else if (!hasFeature(b)) { logError("[addSpace] following feature does not exit: " + b); return *this; }
     else if (!hasFeature(c)) { logError("[addSpace] following feature does not exit: " + c); return *this; }
     else mSpaces.emplace_back(*getFeature(a), *getFeature(b), *getFeature(c));
+    return *this;
+}
+
+Cloud& Cloud::setColor(float r, float g, float b)
+{
+    const int N = getNbPoints();
+
+    if (N <= 0)
+        logError("[setColor] cannot set color on an empty cloud.");
+    else
+    {
+        // Create packed RGB value.
+        const auto ri = static_cast<uint8_t>(r * 255);
+        const auto gi = static_cast<uint8_t>(g * 255);
+        const auto bi = static_cast<uint8_t>(b * 255);
+        const auto rgb = static_cast<float>((ri << 16) + (gi << 8) + (bi));
+        addFeature(std::vector<float>(N, rgb), "rgb");
+    }
+
     return *this;
 }
 
