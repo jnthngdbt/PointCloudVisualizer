@@ -232,8 +232,6 @@ int main()
         VISUALIZER_CALL(VisualizerData("test-cloud-render-oneline-window-render").addCloud(*cloudPatch1, "patch").render());
     };
 
-    // TODO delete files at render
-
     testMultipleClouds();
     testAddingFeaturesAndClouds();
     testCustomGeometryHandler();
