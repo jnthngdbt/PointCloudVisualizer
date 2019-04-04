@@ -53,14 +53,13 @@ const FileNames& VisualizerData::render()
         const auto& name = pair.first;
         auto& cloud = *pair.second;
 
-        // TODO make generateAllPossibleGeoHandlers if no space defined
         if (cloud.mSpaces.size() == 0)
         {
             logError("[render] No space set for [" + name + "]. Must call addSpace().");
             continue;
         }
 
-        if (cloud.mRGB.r >= 0.0)
+        if (cloud.mRGB.r >= 0.0) // TODO do the addFeature at setColor
         {
             // Create packed RGB value.
             const auto r = static_cast<uint8_t>(cloud.mRGB.r * 255);
@@ -335,6 +334,19 @@ bool Cloud::hasRgb() const
 void Cloud::render() const
 {
     if (mVisualizerPtr) mVisualizerPtr->render();
+}
+
+
+Cloud& Cloud::setDefaultFeature(const FeatureName& name)
+{
+    if (!hasFeature(name))
+        logError("[setDefaultFeature] feature " + name + " does not exist.");
+    else if (name == "rgb")
+        logWarning("[setDefaultFeature] feature " + name + " is a special case and can not be set as default."); // rgb is encoded in a special way
+    else
+        addFeature(getFeatureData(name), "default");
+
+    return *this;
 }
 
 void Cloud::save(const std::string& filename) const

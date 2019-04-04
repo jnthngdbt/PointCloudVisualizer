@@ -232,6 +232,17 @@ int main()
         VISUALIZER_CALL(VisualizerData("test-cloud-render-oneline-window-render").addCloud(*cloudPatch1, "patch").render());
     };
 
+    auto testDefaultFeature = [&]()
+    {
+        VISUALIZER_CALL(VisualizerData viewer("test-default-feature"));
+
+        VISUALIZER_CALL(viewer.addCloud(*cloudModel, "nothing", 0));
+        VISUALIZER_CALL(viewer.addCloud(*cloudNoisy, "rgb", 1).setColor(0.0, 1.0, 0.0));
+        VISUALIZER_CALL(viewer.addCloud(*cloudMoved, "default", 2).setDefaultFeature("z"));
+
+        VISUALIZER_CALL(Visualizer(viewer.render()));
+    };
+
     testMultipleClouds();
     testAddingFeaturesAndClouds();
     testCustomGeometryHandler();
@@ -239,6 +250,7 @@ int main()
     testConsistentHandlers();
     testOrderingFeatures();
     testCloudRender();
+    testDefaultFeature();
 
     return 0;
 }

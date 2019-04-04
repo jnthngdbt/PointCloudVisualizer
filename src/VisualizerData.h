@@ -121,6 +121,7 @@ namespace pcv
         Cloud& setSize(int size) { mSize = size; return *this; };
         Cloud& setOpacity(double opacity) { mOpacity = opacity; return *this; };
         Cloud& setColor(float r, float g, float b) { mRGB = ColorRGB({ r,g,b }); return *this; };
+        Cloud& setDefaultFeature(const FeatureName& name);
 
         int getNbPoints() const;
         int getNbFeatures() const { return static_cast<int>(mFeatures.size()); };

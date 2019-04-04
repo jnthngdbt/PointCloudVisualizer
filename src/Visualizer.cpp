@@ -250,9 +250,12 @@ void Visualizer::generateCommonHandlersLists(const BundleClouds& clouds)
     mCommonColorNames.clear();
     mCommonGeoNames.clear();
 
-    // By default, we start with RGB color handler. If rendering a cloud
+    // TODO remove rbg special case everywhere, add it as feature at setColor, in rendering it is set as default if not default set
+    // default becomes the new special case.
+
+    // By default, we start with 'default'. If rendering a cloud
     // that does not have this feature, a 'random' color handler will be used.
-    mCommonColorNames.push_back("rgb");
+    mCommonColorNames.push_back("default");
 
     for (const auto& cloud : clouds)
     {
@@ -260,7 +263,7 @@ void Visualizer::generateCommonHandlersLists(const BundleClouds& clouds)
         for (const auto& feature : cloud.mPointCloudMessage->fields)
         {
             const auto& name = feature.name;
-            if (name == "rgb") continue; // already added
+            if (name == "default") continue; // already added
 
             // Only add if not there.
             if (std::find(mCommonColorNames.begin(), mCommonColorNames.end(), name) == mCommonColorNames.end())
@@ -307,19 +310,29 @@ std::vector<ColorHandlerConstPtr> Visualizer::generateColorHandlers(
     };
 
     std::vector<ColorHandlerConstPtr> handlers;
+
+    auto addRgb = [&]() { handlers.emplace_back(new pcl::visualization::PointCloudColorHandlerRGBField<pcl::PCLPointCloud2>(pclCloudMsg)); }; 
+    auto addNull = [&]() { handlers.emplace_back(new PointCloudColorHandlerNull(pclCloudMsg)); }; 
+    auto addRandom = [&]() { handlers.emplace_back(new pcl::visualization::PointCloudColorHandlerRandom<pcl::PCLPointCloud2>(pclCloudMsg)); }; 
+    auto addGeneric = [&](FeatureName name) { handlers.emplace_back(new pcl::visualization::PointCloudColorHandlerGenericField<pcl::PCLPointCloud2>(pclCloudMsg, name)); }; 
+
     for (const auto& name : mCommonColorNames)
     {
-        if (name == "rgb")
+        if (name == "default")
         {
-            if (hasFieldInPointCloudMsg(name))
-                handlers.emplace_back(new pcl::visualization::PointCloudColorHandlerRGBField<pcl::PCLPointCloud2>(pclCloudMsg));
-            else
-                handlers.emplace_back(new pcl::visualization::PointCloudColorHandlerRandom<pcl::PCLPointCloud2>(pclCloudMsg));
+            if (hasFieldInPointCloudMsg(name)) addGeneric(name); // add default
+            else if (hasFieldInPointCloudMsg("rgb")) addRgb();
+            else addRandom();
         }
         else if (hasFieldInPointCloudMsg(name))
-            handlers.emplace_back(new pcl::visualization::PointCloudColorHandlerGenericField<pcl::PCLPointCloud2>(pclCloudMsg, name));
+        {
+            if (name == "rgb") addRgb();
+            else addGeneric(name);
+        }
         else
-            handlers.emplace_back(new PointCloudColorHandlerNull(pclCloudMsg));
+        {
+            addNull();
+        }
     }
 
     return std::move(handlers);
