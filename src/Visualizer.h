@@ -65,12 +65,14 @@ namespace pcv
         };
     };
 
+    // This class allows using protected stuff from PCLVisualizer.
     class PclVisualizer : public pcl::visualization::PCLVisualizer
     {
     public:
         PclVisualizer(const std::string& name) : pcl::visualization::PCLVisualizer(name) {}
         void filterHandlers(const std::string &id);
         int getGeometryHandlerIndex(const std::string &id);
+        bool setColormapRangeAuto(const std::string &id);
     };
 
     class Visualizer
@@ -136,7 +138,11 @@ namespace pcv
         void keyboardEventCallback(const pcl::visualization::KeyboardEvent& event, void*);
         //void pointPickingEventCallback(const pcl::visualization::PointPickingEvent& event, void*);
         void identifyClouds(bool enabled, bool back);
+        void editColorMap(const pcl::visualization::KeyboardEvent& e);
         void printHelp() const;
+
+        void setColormapSource(const std::string& id);
+        void doOnceAfterRender();
 
         std::shared_ptr<PclVisualizer> mViewer;
         std::vector<int> mViewportIds;
@@ -151,6 +157,9 @@ namespace pcv
         int mInfoTextViewportId{ -1 };
         int mIdentifiedCloudIdx{ -1 };
         std::string mColormapSourceId;
+        int mColormap{ pcl::visualization::PCL_VISUALIZER_LUT_JET_INVERSE };
+
+        bool mDidOnceAfterRender{ false };
     };
 }
 

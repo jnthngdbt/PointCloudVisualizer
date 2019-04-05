@@ -136,6 +136,8 @@ void Visualizer::render(const Bundle& bundle)
 
     prepareCloudsForRender(bundle.second);
 
+    getViewer().setBackgroundColor(0.1, 0.1, 0.1);
+
     //getViewer().registerPointPickingCallback(&Visualizer::pointPickingEventCallback, *this);
     getViewer().registerKeyboardCallback(&Visualizer::keyboardEventCallback, *this);
 
@@ -144,10 +146,11 @@ void Visualizer::render(const Bundle& bundle)
 
     const auto& firstCloudName = bundle.second.cbegin()->mName;
 
-    mColormapSourceId = firstCloudName; // initialize the lut source with the first cloud
+    setColormapSource(firstCloudName); // initialize the lut source with the first cloud
 
     while (!getViewer().wasStopped())
     {
+        // All clouds should have the same color handlers, so we can take the first.
         const auto colorIdx = getViewer().getColorHandlerIndex(firstCloudName); // if colorIdx is 0, user pressed numkey '1'
 
         std::string help = "";
@@ -156,6 +159,8 @@ void Visualizer::render(const Bundle& bundle)
         getViewer().updateText(help, 10, 10, 18, 0.5, 0.5, 0.5, infoTextId); // text, xpos, ypos, fontsize, r, g, b, id
 
         getViewer().spinOnce(100);
+
+        doOnceAfterRender();
     }
 }
 
@@ -395,11 +400,40 @@ int PclVisualizer::getGeometryHandlerIndex(const std::string &id)
     return (it->second.geometry_handler_index_);
 }
 
+// Using pcl::visualization::PCL_VISUALIZER_LUT_RANGE_AUTO is not sufficient; it
+// will set an auto range for the current colormap, but this range is persistent
+// across all colormaps. We must call UseLookupTableScalarRangeOff().
+bool PclVisualizer::setColormapRangeAuto(const std::string &id)
+{
+    auto cloudActorMap = getCloudActorMap(); // instead of style_->getCloudActorMap() in base class, where our id never exists...
+    auto it = cloudActorMap->find (id);
+
+    if (it == cloudActorMap->end())
+    {
+        pcl::console::print_error ("[setColormapRangeAuto] Could not find any PointCloud datasets with id <%s>!\n", id.c_str ());
+        return (false);
+    }
+
+    // Get the actor pointer
+    vtkLODActor* actor = vtkLODActor::SafeDownCast (it->second.actor);
+    if (!actor)
+        return (false);
+
+    // This is what we want: stop using a range for the lookup table.
+    actor->GetMapper ()->UseLookupTableScalarRangeOff ();
+
+    return true;
+}
+
 void Visualizer::keyboardEventCallback(const pcl::visualization::KeyboardEvent& event, void*)
 {
     if ((event.getKeySym() == "i" || event.getKeySym() == "I") && event.keyDown())
     {
         identifyClouds(!event.isCtrlPressed(), event.isShiftPressed());
+    }
+    if ((event.getKeySym() == "m" || event.getKeySym() == "M") && event.keyDown())
+    {
+        editColorMap(event);
     }
     else if ((event.getKeySym() == "h" || event.getKeySym() == "H") && event.keyDown())
     {
@@ -446,12 +480,53 @@ void Visualizer::identifyClouds(bool enabled, bool back)
             getViewer().addText(cloud.mName, 0, 0, textId, getViewportId(cloud.mViewport));
 
             // Set this cloud as the data source for the lookup table (when pressing 'u').
-            mColormapSourceId = cloud.mName;
+            setColormapSource(cloud.mName);
         }
 
         getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getOpacity(), cloud.mName);
         //getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, isIdentificationDisabled || isHighlighted ? cloud.mSize : 1, cloud.mName);
         ++i;
+    }
+}
+
+void Visualizer::editColorMap(const pcl::visualization::KeyboardEvent& e)
+{
+    if (e.isCtrlPressed()) // edit colormap range
+    {
+        if (e.isShiftPressed())
+        {
+            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_LUT_RANGE, pcl::visualization::PCL_VISUALIZER_LUT_RANGE_AUTO, mColormapSourceId);
+            getViewer().setColormapRangeAuto(mColormapSourceId);
+        }
+        else // set colormap range by asking user inputs
+        {
+            double lutMin, lutMax;
+            std::cout << "-----------------------" << std::endl;
+            std::cout << "Enter colormap range MIN value: ";
+            std::cin >> lutMin;
+            std::cout << "Enter colormap range MAX value: ";
+            std::cin >> lutMax;
+            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_LUT_RANGE, lutMin, lutMax, mColormapSourceId); // does range values check
+            std::cout << "-----------------------" << std::endl;
+        }
+    }
+    else // loop through available colormaps
+    {
+        const int ci[] = { 0, 1, 2, 3, 4, 5, 7 }; // 6 is not a colormap (range auto) (to see available colormaps, search for PCL_VISUALIZER_LUT_JET)
+        const auto colormapIt = std::find(std::cbegin(ci), std::cend(ci), mColormap);
+
+        if (e.isShiftPressed()) // go backwards
+            if (colormapIt == std::cbegin(ci))
+                mColormap = *(std::end(ci) - 1);
+            else
+                mColormap = *(colormapIt - 1);
+        else // go forward
+            if (colormapIt >= std::cend(ci) - 1)
+                mColormap = *std::cbegin(ci);
+            else
+                mColormap = *(colormapIt + 1);
+
+        getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_LUT, mColormap, mColormapSourceId);
     }
 }
 
@@ -465,10 +540,34 @@ void Visualizer::printHelp() const
         " ---------------------------------------------------------\n"
         "\n"
         "          i, I   : loop through clouds identification\n"
-        "  SHIFT + i, I   : go back in clouds identification loop\n"
+        "  SHIFT + i, I   : loop through clouds identification backwards\n"
         "   CTRL + i, I   : exit clouds identification loop\n"
         "\n"
+        "                  m, M : loop through colormaps \n"
+        "          SHIFT + m, M : loop through colormaps backwards \n"
+        "   CTRL +         m, M : prompts user input in the console the enter min and max values for the colormap range \n"
+        "   CTRL + SHIFT + m, M : use automatic min and max values for the colormap range \n"
+        "\n"
     );
+}
+
+void Visualizer::setColormapSource(const std::string& id)
+{
+    mColormapSourceId = id;
+    getViewer().setLookUpTableID(mColormapSourceId);
+}
+
+void Visualizer::doOnceAfterRender()
+{
+    if (!mDidOnceAfterRender)
+    {
+        for (const auto& cloud : getCurrentBundle().second)
+        {
+            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_LUT, mColormap, cloud.mName);
+        }
+
+        mDidOnceAfterRender = true;
+    }
 }
 
 int Visualizer::getViewportId(ViewportIdx viewport) const
