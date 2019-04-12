@@ -88,9 +88,9 @@ namespace pcv
         const std::vector<double>* deviationMapPointToPlane,
         const std::vector<double>* deviationMapPointToPoint)
     {
-        addCloud(alignedSource, "source-aligned", 0).setColor(0.5, 0.5, 0.5);
         addCloud(*pRegistration->getInputSource(), "source", 0).setColor(0.5, 0.5, 0.5).setOpacity(0.2);
         addCloud(*pRegistration->getInputTarget(), "target", 0).setColor(1.0, 0.0, 0.0);
+        addCloud(alignedSource, "source-aligned", 0).setColor(0.5, 0.5, 0.5);
 
         // Add the correspondences cloud.
 
@@ -145,6 +145,21 @@ namespace pcv
         }
 
         corrCloud.addFeature(distance, "distance");
+
+        // Find a decent default feature.
+
+        auto trySettingDefaultFeature = [&](const FeatureName& name)
+        {
+            if (!corrCloud.hasFeature(name))
+                return false;
+            
+            corrCloud.setDefaultFeature(name);
+            return true;
+        };
+
+        if (!trySettingDefaultFeature("point2plane-deviation"))
+            if (!trySettingDefaultFeature("point2point-deviation"))
+                trySettingDefaultFeature("distance");
 
         return *this;
     }
