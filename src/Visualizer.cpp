@@ -28,6 +28,11 @@ void Visualizer::initBundlesFromFiles(const FileNames& fileNames)
 
     for (const auto& fileName : fileNames)
     {
+        const auto ext = boost::filesystem::path(fileName).extension().string();
+
+        if (ext != ".pcd")
+            continue;
+
         const auto name = boost::filesystem::path(fileName).stem().string();
 
         std::stringstream ss(name);
