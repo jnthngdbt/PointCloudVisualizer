@@ -15,10 +15,17 @@ using namespace pcv;
 
 Visualizer::Visualizer(const FileNames& fileNames)
 {
+
     initBundlesFromFiles(fileNames);
 
     if (mBundles.size() > 0)
-        render(getCurrentBundle());
+    {
+        while (mSwitchToBundleIdx >= 0)
+        {
+            switchBundle();
+            render(getCurrentBundle());
+        }
+    }
 }
 
 void Visualizer::initBundlesFromFiles(const FileNames& fileNames)
@@ -166,6 +173,20 @@ void Visualizer::render(const Bundle& bundle)
         getViewer().spinOnce(100);
 
         doOnceAfterRender();
+
+        if (mSwitchToBundleIdx >= 0)
+        {
+            getViewer().close();
+        }
+    }
+}
+
+void Visualizer::switchBundle()
+{
+    if (mSwitchToBundleIdx >= 0)
+    {
+        mCurrentBundleIdx = mSwitchToBundleIdx;
+        mSwitchToBundleIdx = -1;
     }
 }
 
@@ -444,6 +465,16 @@ void Visualizer::keyboardEventCallback(const pcl::visualization::KeyboardEvent& 
     {
         // (built-in help will be printed)
         printHelp(); // add custom help
+    }
+    else if ((event.getKeySym() == "Left") && event.keyDown())
+    {
+        if (mCurrentBundleIdx > 0)
+            mSwitchToBundleIdx = mCurrentBundleIdx - 1;
+    }
+    else if ((event.getKeySym() == "Right") && event.keyDown())
+    {
+        if (mCurrentBundleIdx < mBundles.size() - 1)
+            mSwitchToBundleIdx = mCurrentBundleIdx + 1;
     }
 }
 

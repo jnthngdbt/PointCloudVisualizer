@@ -144,11 +144,14 @@ namespace pcv
         void setColormapSource(const std::string& id);
         void doOnceAfterRender();
 
+        void switchBundle();
+
         std::shared_ptr<PclVisualizer> mViewer;
         std::vector<int> mViewportIds;
 
         BundlesMap mBundles;
         int mCurrentBundleIdx{ 0 };
+        int mSwitchToBundleIdx{ 0 };
 
         std::vector<std::string> mCommonColorNames;
         std::vector<std::string> mCommonGeoNames;
