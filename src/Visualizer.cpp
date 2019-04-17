@@ -15,6 +15,8 @@ using namespace pcv;
 
 Visualizer::Visualizer(const FileName& fileName)
 {
+    mCamParamsForBundleSwitch.fovy = -1.0; // put invalid value to detect that it is uninitialized
+
     generateBundles(fileName);
 
     if (mBundles.size() > 0)
@@ -143,6 +145,9 @@ void Visualizer::initViewer(const Bundle& bundle)
 {
     mViewer.reset(new PclVisualizer(bundle.first + " - " + bundle.second.front().mTimeStamp));
 
+    if (mCamParamsForBundleSwitch.fovy > 0.0) // only use it if initialized
+        mViewer->setCameraParameters(mCamParamsForBundleSwitch);
+
     int nbRows{ 1 };
     int nbCols{ 0 };
     for (const auto& info : bundle.second)
@@ -214,6 +219,11 @@ void Visualizer::render(const Bundle& bundle)
 
         if (mSwitchToBundleIdx >= 0)
         {
+            // Save camera parameters for next bundle window.
+            std::vector<pcl::visualization::Camera> cameras;
+            mViewer->getCameras(cameras);
+            mCamParamsForBundleSwitch = cameras.front();
+
             getViewer().close();
         }
     }

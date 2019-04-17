@@ -155,6 +155,7 @@ namespace pcv
         Bundles mBundles;
         int mCurrentBundleIdx{ 0 };
         int mSwitchToBundleIdx{ 0 };
+        pcl::visualization::Camera mCamParamsForBundleSwitch;
 
         std::vector<std::string> mCommonColorNames;
         std::vector<std::string> mCommonGeoNames;
