@@ -15,7 +15,7 @@
 namespace pcv
 {
     using FeatureName = std::string;
-    using FileNames = std::vector<std::string>;
+    using FileName = std::string;
     using ViewportIdx = int;
 
     using GeometryHandlerConstPtr = pcl::visualization::PointCloudGeometryHandler<pcl::PCLPointCloud2>::ConstPtr;
@@ -78,27 +78,30 @@ namespace pcv
     class Visualizer
     {
     public:
-        Visualizer(const FileNames& fileNames);
+        Visualizer(const FileName& fileName);
 
         PclVisualizer& getViewer();
 
     private:
-        class Cloud
+        struct Cloud
         {
-        public:
-            Cloud(const std::string& filename, const std::string& cloudname, int viewport = 0);
-
+            std::string mFullName;
+            std::string mFileName;
+            std::string mTimeStamp;
+            std::string mBundleName;
+            std::string mCloudName;
+            int mViewport{ 0 };
             pcl::PCLPointCloud2::Ptr mPointCloudMessage;
-            std::string mName;
-            int mViewport{ -1 };
         };
+        using Clouds = std::vector<Cloud>;
 
-        using BundleClouds = std::vector<Cloud>;
         using BundleName = std::string;
-        using Bundle = std::pair<BundleName, BundleClouds>;
-        using BundlesMap = std::vector<Bundle>;
+        using Bundle = std::pair<BundleName, Clouds>;
+        using Bundles = std::vector<Bundle>;
 
-        void initBundlesFromFiles(const FileNames& fileNames);
+        void generateBundles(const FileName& fileName);
+
+        void addCloudToBundle(const Cloud& newCloud);
 
         void initViewer(const Bundle& bundle);
 
@@ -120,17 +123,17 @@ namespace pcv
         /// @param[in] names: array of the ordered features to put first in the features list
         void setFeaturesOrder(const std::vector<FeatureName>& names);
 
-        void prepareCloudsForRender(const BundleClouds& clouds);
+        void prepareCloudsForRender(const Clouds& clouds);
 
         const Bundle& getCurrentBundle() const;
-        Bundle& getBundle(BundleName name);
+        Bundle& getCurrentBundle();
 
         void logError(const std::string& msg) const { std::cout << "[VISUALIZER][ERROR]" << msg << std::endl; }
         void logWarning(const std::string& msg) const { std::cout << "[VISUALIZER][WARNING]" << msg << std::endl; }
 
         std::vector<ColorHandlerConstPtr> generateColorHandlers(const pcl::PCLPointCloud2::Ptr pclCloudMsg) const;
         std::vector<GeometryHandlerConstPtr> generateGeometryHandlers(const pcl::PCLPointCloud2::Ptr pclCloudMsg) const;
-        void generateCommonHandlersLists(const BundleClouds& clouds);
+        void generateCommonHandlersLists(const Clouds& clouds);
 
         int getViewportId(ViewportIdx viewport) const;
 
@@ -149,7 +152,7 @@ namespace pcv
         std::shared_ptr<PclVisualizer> mViewer;
         std::vector<int> mViewportIds;
 
-        BundlesMap mBundles;
+        Bundles mBundles;
         int mCurrentBundleIdx{ 0 };
         int mSwitchToBundleIdx{ 0 };
 
