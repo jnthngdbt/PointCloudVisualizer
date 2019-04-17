@@ -17,7 +17,7 @@ int main(int argc, char* argv[])
     for(int i = 1; i < argc; i++)
         files.push_back(argv[i]);
 
-    Visualizer app(files);
+    Visualizer app(files.back()); // take last file (probably most recent)
 
     return 0;
 }

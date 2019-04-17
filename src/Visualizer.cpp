@@ -13,10 +13,9 @@
 
 using namespace pcv;
 
-Visualizer::Visualizer(const FileNames& fileNames)
+Visualizer::Visualizer(const FileName& fileName)
 {
-
-    initBundlesFromFiles(fileNames);
+    generateBundles(fileName);
 
     if (mBundles.size() > 0)
     {
@@ -28,21 +27,27 @@ Visualizer::Visualizer(const FileNames& fileNames)
     }
 }
 
-void Visualizer::initBundlesFromFiles(const FileNames& fileNames)
+void Visualizer::generateBundles(const FileName& rootFileName)
 {
-    const int nbFiles = fileNames.size();
-    mBundles.reserve(nbFiles);
+    const auto folder = boost::filesystem::path(rootFileName).parent_path();
+    const auto filesIt = boost::make_iterator_range(boost::filesystem::directory_iterator(folder), {});
 
-    for (const auto& fileName : fileNames)
+    BundleName currentBundleName = "";
+
+    for (auto& it : filesIt)
     {
-        const auto ext = boost::filesystem::path(fileName).extension().string();
+        Cloud newCloud;
+
+        newCloud.mFullName = it.path().string();
+
+        const auto ext = boost::filesystem::path(newCloud.mFullName).extension().string();
 
         if (ext != ".pcd")
             continue;
 
-        const auto name = boost::filesystem::path(fileName).stem().string();
+        newCloud.mFileName = boost::filesystem::path(newCloud.mFullName).stem().string();
 
-        std::stringstream ss(name);
+        std::stringstream ss(newCloud.mFileName);
         std::string substr;
 
         auto getTokenFromDelim = [&](char c)
@@ -59,44 +64,89 @@ void Visualizer::initBundlesFromFiles(const FileNames& fileNames)
         auto assertValidFile = [&](bool test)
         {
             if (!test)
-                logWarning("[Visualizer] file " + name + " is not a valid visualizer file name. Skipping.");
+                logWarning("[Visualizer] file " + newCloud.mFileName + " is not a valid visualizer file name. Skipping.");
 
             return test;
         };
 
         if (!assertValidFile(getToken() == "visualizer")) continue;
 
-        // Skip timestamp "YYYYMMDD.hhmmss.sss".
-        if (!assertValidFile(getToken().size() == 8)) continue; // date
-        if (!assertValidFile(getToken().size() == 6)) continue; // time
-        if (!assertValidFile(getToken().size() == 3)) continue; // ms
+        const std::string date = getToken();
+        if (!assertValidFile(date.size() == 8)) continue;
 
-        const std::string bundleName = getToken();
+        const std::string time = getToken();
+        if (!assertValidFile(time.size() == 6)) continue;
+
+        const std::string ms = getToken();
+        if (!assertValidFile(ms.size() == 3)) continue;
+
+        newCloud.mTimeStamp = date + "." + time + "." + ms;
+
+        newCloud.mBundleName = getToken();
 
         // Get viewport index from "?-view".
-        const int viewport = std::stoi(getTokenFromDelim('-'));
+        newCloud.mViewport = std::stoi(getTokenFromDelim('-'));
         getToken(); // skip the "view"
 
-        const std::string cloudName = getToken();
+        newCloud.mCloudName = getToken();
 
-        // Initialize the cloud.
-        BundleClouds& clouds = getBundle(bundleName).second;
-        clouds.reserve(nbFiles);
-        clouds.emplace_back(fileName, cloudName, viewport);
+        // Add this cloud to the bundle array.
+        addCloudToBundle(newCloud);
+
+        // Make the app start with the bundle of the input file.
+        if (newCloud.mFullName == rootFileName)
+            mSwitchToBundleIdx = mBundles.size() - 1;
+    }
+}
+
+void Visualizer::addCloudToBundle(const Cloud& newCloud)
+{
+    auto hasCloudName = [](const Clouds& clouds, const std::string& cloudName)
+    {
+        int count = std::count_if(clouds.begin(), clouds.end(),
+            [&cloudName](const Cloud& c) { return c.mCloudName == cloudName; });
+        return count > 0;
+    };
+
+    auto& bundles = mBundles;
+    auto createNewBundle = [&bundles](const Cloud& newCloud)
+    {
+        bundles.push_back(std::make_pair(newCloud.mBundleName, Clouds(1, newCloud)));
+    };
+
+    if (mBundles.size() == 0)
+    {
+        createNewBundle(newCloud);
+    }
+    else
+    {
+        auto& currentBundle = mBundles.back();
+        const auto& currentBundleName = currentBundle.first;
+        auto& currentBundleClouds = currentBundle.second;
+
+        if (newCloud.mBundleName != currentBundleName)
+        {
+            createNewBundle(newCloud);
+        }
+        else if (hasCloudName(currentBundleClouds, newCloud.mCloudName))
+        {
+            createNewBundle(newCloud);
+        }
+        else
+        {
+            currentBundleClouds.push_back(newCloud);
+        }
     }
 }
 
 void Visualizer::initViewer(const Bundle& bundle)
 {
-    mViewer.reset(new PclVisualizer(bundle.first));
-
-    //    getViewer().removeAllPointClouds();
-    //    getViewer().removeAllShapes();
+    mViewer.reset(new PclVisualizer(bundle.first + " - " + bundle.second.front().mTimeStamp));
 
     int nbRows{ 1 };
     int nbCols{ 0 };
-    for (const auto& cloud : bundle.second)
-        nbCols = std::max(cloud.mViewport + 1, nbCols);
+    for (const auto& info : bundle.second)
+        nbCols = std::max(info.mViewport + 1, nbCols);
 
     mViewportIds.resize(nbRows * nbCols);
     const float sizeX = 1.0 / nbCols;
@@ -116,37 +166,25 @@ void Visualizer::initViewer(const Bundle& bundle)
     }
 }
 
-Visualizer::Cloud::Cloud(const std::string& filename, const std::string& cloudname, int viewport) : 
-    mPointCloudMessage(new pcl::PCLPointCloud2()),
-    mName(cloudname),
-    mViewport(viewport)
-{
-    pcl::io::loadPCDFile(filename, *mPointCloudMessage);
-};
-
 const Visualizer::Bundle& Visualizer::getCurrentBundle() const
 {
     assert(mBundles.size() > mCurrentBundleIdx);
     return mBundles[mCurrentBundleIdx];
 }
 
-Visualizer::Bundle& Visualizer::getBundle(BundleName name)
+Visualizer::Bundle& Visualizer::getCurrentBundle()
 {
-    const auto bundle = std::find_if(mBundles.begin(), mBundles.end(), 
-        [&name](const Bundle& b) { return b.first == name; });
-
-    if (bundle != mBundles.end()) // exists
-        return *bundle;
-
-    mBundles.push_back(std::make_pair(name, BundleClouds()));
-    return mBundles.back();
+    assert(mBundles.size() > mCurrentBundleIdx);
+    return mBundles[mCurrentBundleIdx];
 }
 
 void Visualizer::render(const Bundle& bundle)
 {
+    const auto& clouds = bundle.second;
+
     initViewer(bundle);
 
-    prepareCloudsForRender(bundle.second);
+    prepareCloudsForRender(clouds);
 
     getViewer().setBackgroundColor(0.1, 0.1, 0.1);
 
@@ -156,7 +194,7 @@ void Visualizer::render(const Bundle& bundle)
     const std::string infoTextId = "infoTextId";
     getViewer().addText("", 10, 10, infoTextId, mInfoTextViewportId);
 
-    const auto& firstCloudName = bundle.second.cbegin()->mName;
+    const auto& firstCloudName = clouds.cbegin()->mCloudName;
 
     setColormapSource(firstCloudName); // initialize the lut source with the first cloud
 
@@ -183,14 +221,26 @@ void Visualizer::render(const Bundle& bundle)
 
 void Visualizer::switchBundle()
 {
+    // Clear loaded clouds.
+    for (auto& cloud : getCurrentBundle().second)
+        cloud.mPointCloudMessage.reset();
+
+    // Make the switch.
     if (mSwitchToBundleIdx >= 0)
     {
         mCurrentBundleIdx = mSwitchToBundleIdx;
         mSwitchToBundleIdx = -1;
     }
+
+    // Load bundle clouds.
+    for (auto& cloud : getCurrentBundle().second)
+    {
+        cloud.mPointCloudMessage.reset(new pcl::PCLPointCloud2());
+        pcl::io::loadPCDFile(cloud.mFullName, *cloud.mPointCloudMessage);
+    }
 }
 
-void Visualizer::prepareCloudsForRender(const BundleClouds& clouds)
+void Visualizer::prepareCloudsForRender(const Clouds& clouds)
 {
     generateCommonHandlersLists(clouds);
 
@@ -201,11 +251,11 @@ void Visualizer::prepareCloudsForRender(const BundleClouds& clouds)
 
         if (colorHandlers.size() == 0 || geometryHandlers.size() == 0)
         {
-            logError("[render] Something went wrong. No color or geometry handler. Won't add cloud [" + cloud.mName + "].");
+            logError("[render] Something went wrong. No color or geometry handler. Won't add cloud [" + cloud.mCloudName + "].");
             continue;
         }
 
-        getViewer().removePointCloud(cloud.mName, getViewportId(cloud.mViewport));
+        getViewer().removePointCloud(cloud.mCloudName, getViewportId(cloud.mViewport));
 
         // Add color handlers.
         for (const auto& color : colorHandlers)
@@ -216,7 +266,7 @@ void Visualizer::prepareCloudsForRender(const BundleClouds& clouds)
                 color,
                 Eigen::Vector4f(0, 0, 0, 0),
                 Eigen::Quaternion<float>(0, 0, 0, 0),
-                cloud.mName,
+                cloud.mCloudName,
                 getViewportId(cloud.mViewport));
         }
 
@@ -231,11 +281,11 @@ void Visualizer::prepareCloudsForRender(const BundleClouds& clouds)
                 geometry,
                 Eigen::Vector4f(0, 0, 0, 0),
                 Eigen::Quaternion<float>(0, 0, 0, 0),
-                cloud.mName,
+                cloud.mCloudName,
                 getViewportId(cloud.mViewport));
         }
 
-        getViewer().filterHandlers(cloud.mName);
+        getViewer().filterHandlers(cloud.mCloudName);
     }
 }
 
@@ -276,7 +326,7 @@ PclVisualizer& Visualizer::getViewer()
     return *mViewer; 
 }
 
-void Visualizer::generateCommonHandlersLists(const BundleClouds& clouds)
+void Visualizer::generateCommonHandlersLists(const Clouds& clouds)
 {
     mCommonColorNames.clear();
     mCommonGeoNames.clear();
@@ -513,13 +563,13 @@ void Visualizer::identifyClouds(bool enabled, bool back)
 
         if (isHighlighted)
         {
-            getViewer().addText(cloud.mName, 0, 0, textId, getViewportId(cloud.mViewport));
+            getViewer().addText(cloud.mCloudName, 0, 0, textId, getViewportId(cloud.mViewport));
 
             // Set this cloud as the data source for the lookup table (when pressing 'u').
-            setColormapSource(cloud.mName);
+            setColormapSource(cloud.mCloudName);
         }
 
-        getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getOpacity(), cloud.mName);
+        getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getOpacity(), cloud.mCloudName);
         //getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, isIdentificationDisabled || isHighlighted ? cloud.mSize : 1, cloud.mName);
         ++i;
     }
@@ -599,7 +649,7 @@ void Visualizer::doOnceAfterRender()
     {
         for (const auto& cloud : getCurrentBundle().second)
         {
-            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_LUT, mColormap, cloud.mName);
+            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_LUT, mColormap, cloud.mCloudName);
         }
 
         mDidOnceAfterRender = true;
