@@ -27,6 +27,11 @@ Visualizer::Visualizer(const FileName& fileName)
             render(getCurrentBundle());
         }
     }
+    else
+    {
+        std::cout << "[Visualizer] No valid visualizer PCD file was found with input '" + fileName + "'.";
+        getchar();
+    }
 }
 
 void Visualizer::generateBundles(const FileName& inputFileOrFolder)
