@@ -29,10 +29,15 @@ Visualizer::Visualizer(const FileName& fileName)
     }
 }
 
-void Visualizer::generateBundles(const FileName& rootFileName)
+void Visualizer::generateBundles(const FileName& inputFileOrFolder)
 {
-    const auto folder = boost::filesystem::path(rootFileName).parent_path();
-    const auto filesIt = boost::make_iterator_range(boost::filesystem::directory_iterator(folder), {});
+    namespace fs = boost::filesystem;
+
+    const auto fileOrFolderPath = fs::path(inputFileOrFolder);
+    const bool isInputDir = fs::is_directory(fileOrFolderPath);
+
+    const auto folder = isInputDir ? fileOrFolderPath : fs::path(fileOrFolderPath).parent_path();
+    const auto filesIt = boost::make_iterator_range(fs::directory_iterator(folder), {});
 
     BundleName currentBundleName = "";
 
@@ -42,12 +47,12 @@ void Visualizer::generateBundles(const FileName& rootFileName)
 
         newCloud.mFullName = it.path().string();
 
-        const auto ext = boost::filesystem::path(newCloud.mFullName).extension().string();
+        const auto ext = fs::path(newCloud.mFullName).extension().string();
 
         if (ext != ".pcd")
             continue;
 
-        newCloud.mFileName = boost::filesystem::path(newCloud.mFullName).stem().string();
+        newCloud.mFileName = fs::path(newCloud.mFullName).stem().string();
 
         std::stringstream ss(newCloud.mFileName);
         std::string substr;
@@ -96,9 +101,12 @@ void Visualizer::generateBundles(const FileName& rootFileName)
         addCloudToBundle(newCloud);
 
         // Make the app start with the bundle of the input file.
-        if (newCloud.mFullName == rootFileName)
+        if (!isInputDir && (newCloud.mFullName == inputFileOrFolder))
             mSwitchToBundleIdx = mBundles.size() - 1;
     }
+
+    if (isInputDir)
+        mSwitchToBundleIdx = mBundles.size() - 1; // start with most recent
 }
 
 void Visualizer::addCloudToBundle(const Cloud& newCloud)
