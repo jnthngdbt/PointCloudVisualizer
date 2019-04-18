@@ -79,6 +79,7 @@ namespace pcv
     {
     public:
         Visualizer(const FileName& fileName);
+        Visualizer(const std::vector<FileName>& fileName) : Visualizer(fileName.back()) {};
 
         PclVisualizer& getViewer();
 
