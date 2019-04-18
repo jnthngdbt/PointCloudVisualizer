@@ -106,7 +106,7 @@ void Visualizer::generateBundles(const FileName& inputFileOrFolder)
         addCloudToBundle(newCloud);
 
         // Make the app start with the bundle of the input file.
-        if (!isInputDir && (newCloud.mFullName == inputFileOrFolder))
+        if (!isInputDir && (newCloud.mFileName == fileOrFolderPath.stem().string()))
             mSwitchToBundleIdx = mBundles.size() - 1;
     }
 
