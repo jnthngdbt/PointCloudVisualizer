@@ -1,0 +1,220 @@
+@echo off
+
+if exist ".\bin\Release\VisualizerApp.exe" (
+    del .\package\VisualizerApp\VisualizerApp\*.* /F /Q
+
+    xcopy ".\bin\Release\VisualizerApp.exe" .\package\VisualizerApp\ /Y
+
+    xcopy "%PCL_ROOT%\bin\pcl_common_release.dll" .\package\VisualizerApp\ /Y
+    xcopy "%PCL_ROOT%\bin\pcl_io_ply_release.dll" .\package\VisualizerApp\ /Y
+    xcopy "%PCL_ROOT%\bin\pcl_io_release.dll" .\package\VisualizerApp\ /Y
+    xcopy "%PCL_ROOT%\bin\pcl_kdtree_release.dll" .\package\VisualizerApp\ /Y
+    xcopy "%PCL_ROOT%\bin\pcl_visualization_release.dll" .\package\VisualizerApp\ /Y
+
+    xcopy "%OPENNI2_REDIST64%OpenNI2.dll" .\package\VisualizerApp\ /Y
+
+) else (
+    echo ".\bin\Release\VisualizerApp.exe" has not been built yet!
+)
+
+REM ======================== ALL DLL ========================
+
+REM xcopy "%PCL_ROOT%\bin\pcl_common_debug.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_common_release.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_features_debug.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_features_release.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_filters_debug.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_filters_release.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_io_debug.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_io_ply_debug.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_io_ply_release.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_io_release.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_kdtree_debug.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_kdtree_release.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_keypoints_debug.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_keypoints_release.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_ml_debug.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_ml_release.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_octree_debug.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_octree_release.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_outofcore_debug.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_outofcore_release.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_people_debug.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_people_release.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_recognition_debug.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_recognition_release.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_registration_debug.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_registration_release.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_sample_consensus_debug.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_sample_consensus_release.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_search_debug.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_search_release.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_segmentation_debug.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_segmentation_release.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_stereo_debug.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_stereo_release.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_surface_debug.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_surface_release.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_tracking_debug.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_tracking_release.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_visualization_debug.dll" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_visualization_release.dll" .\package\VisualizerApp\
+
+REM xcopy "%OPENNI2_REDIST64%\OpenNI2.dll" .\package\VisualizerApp\
+
+REM ======================== ALL EXE ========================
+
+REM xcopy "%PCL_ROOT%\bin\pcl_add_gaussian_noise_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_add_gaussian_noise_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_boundary_estimation_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_boundary_estimation_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_cluster_extraction_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_cluster_extraction_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_compute_cloud_error_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_compute_cloud_error_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_compute_hausdorff_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_compute_hausdorff_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_compute_hull_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_compute_hull_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_concatenate_points_pcd_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_concatenate_points_pcd_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_convert_pcd_ascii_binary_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_convert_pcd_ascii_binary_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_converter_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_converter_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_crf_segmentation_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_crf_segmentation_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_crop_to_hull_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_crop_to_hull_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_demean_cloud_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_demean_cloud_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_elch_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_elch_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_extract_feature_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_extract_feature_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_fast_bilateral_filter_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_fast_bilateral_filter_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_fpfh_estimation_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_fpfh_estimation_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_generate_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_generate_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_gp3_surface_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_gp3_surface_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_grid_min_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_grid_min_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_hdl_grabber_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_hdl_grabber_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_hdl_viewer_simple_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_hdl_viewer_simple_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_icp2d_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_icp2d_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_icp_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_icp_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_linemod_detection_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_linemod_detection_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_local_max_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_local_max_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_lum_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_lum_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_marching_cubes_reconstruction_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_marching_cubes_reconstruction_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_match_linemod_template_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_match_linemod_template_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_mesh2pcd_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_mesh2pcd_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_mesh_sampling_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_mesh_sampling_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_mls_smoothing_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_mls_smoothing_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_morph_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_morph_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_ndt2d_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_ndt2d_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_ndt3d_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_ndt3d_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_normal_estimation_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_normal_estimation_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_obj2pcd_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_obj2pcd_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_obj2ply_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_obj2ply_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_obj2vtk_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_obj2vtk_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_obj_rec_ransac_accepted_hypotheses_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_obj_rec_ransac_accepted_hypotheses_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_obj_rec_ransac_hash_table_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_obj_rec_ransac_hash_table_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_obj_rec_ransac_model_opps_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_obj_rec_ransac_model_opps_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_obj_rec_ransac_orr_octree_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_obj_rec_ransac_orr_octree_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_obj_rec_ransac_orr_octree_zprojection_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_obj_rec_ransac_orr_octree_zprojection_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_obj_rec_ransac_result_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_obj_rec_ransac_result_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_obj_rec_ransac_scene_opps_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_obj_rec_ransac_scene_opps_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_octree_viewer_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_octree_viewer_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_openni2_viewer_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_openni2_viewer_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_organized_pcd_to_png_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_organized_pcd_to_png_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_outlier_removal_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_outlier_removal_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_outofcore_print_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_outofcore_print_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_outofcore_process_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_outofcore_process_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_outofcore_viewer_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_outofcore_viewer_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_passthrough_filter_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_passthrough_filter_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_pcd2ply_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_pcd2ply_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_pcd2png_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_pcd2png_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_pcd2vtk_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_pcd2vtk_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_pcd_change_viewpoint_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_pcd_change_viewpoint_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_pcd_convert_NaN_nan_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_pcd_convert_NaN_nan_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_pcd_image_viewer_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_pcd_image_viewer_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_pcd_introduce_nan_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_pcd_introduce_nan_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_pclzf2pcd_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_pclzf2pcd_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_plane_projection_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_plane_projection_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_ply2obj_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_ply2obj_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_ply2pcd_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_ply2pcd_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_ply2ply_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_ply2ply_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_ply2raw_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_ply2raw_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_ply2vtk_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_ply2vtk_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_plyheader_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_plyheader_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_png2pcd_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_png2pcd_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_poisson_reconstruction_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_poisson_reconstruction_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_progressive_morphological_filter_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_progressive_morphological_filter_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_radius_filter_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_radius_filter_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_registration_visualizer_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_registration_visualizer_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_sac_segmentation_plane_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_sac_segmentation_plane_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_spin_estimation_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_spin_estimation_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_tiff2pcd_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_tiff2pcd_release.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_timed_trigger_test_debug.exe" .\package\VisualizerApp\
+REM xcopy "%PCL_ROOT%\bin\pcl_timed_trigger_test_release.exe" .\package\VisualizerApp\
