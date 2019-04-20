@@ -360,8 +360,7 @@ Cloud& Cloud::setDefaultFeature(const FeatureName& name)
 
 void Cloud::save(const std::string& filename) const
 {
-    std::ofstream f;
-    f.open(filename);
+    std::stringstream f;
 
     // header
     f << "# .PCD v.7 - Point Cloud Data file format" << std::endl;
@@ -391,22 +390,40 @@ void Cloud::save(const std::string& filename) const
     f << "HEIGHT 1" << std::endl;
     f << "VIEWPOINT 0 0 0 1 0 0 0" << std::endl;
     f << "POINTS " << getNbPoints() << std::endl;
-    f << "DATA ascii" << std::endl;
+    f << "DATA binary" << std::endl;
 
-    for (int i = 0; i < getNbPoints(); ++i)
+    // Open the file and write in it.
+    auto pFile = fopen(filename.c_str(), "wb");
+    if (pFile != NULL)
     {
-        for (const auto& feature : mFeatures)
-        {
-            // TODO should make sure that all features have same amount of points
-            if (feature.first == "rgb")
-                f << static_cast<uint32_t>(feature.second[i]) << " ";
-            else
-                f << feature.second[i] << " ";
-        }
-        f << std::endl;
-    }
+        // Write header.
+        const auto& header = f.str();
+        fwrite(header.c_str(), sizeof(char), header.size(), pFile);
 
-    f.close();
+        // Write data. (for now, writing one datum at a time, could be optimized)
+        for (int i = 0; i < getNbPoints(); ++i)
+        {
+            for (const auto& feature : mFeatures)
+            {
+                if (feature.first == "rgb")
+                {
+                    const auto v = static_cast<uint32_t>(feature.second[i]);
+                    fwrite((unsigned char*)(&v), sizeof(v), 1, pFile);
+                }
+                else
+                {
+                    const auto v = feature.second[i];
+                    fwrite((unsigned char*)(&v), sizeof(v), 1, pFile);
+                }
+            }
+        }
+
+        fclose(pFile);
+    }
+    else
+    {
+        logError("[save] could not open file " + filename + " to write in binary format.");
+    }
 }
 
 Space::Space(const Feature& a, const Feature& b, const Feature& c) : 
