@@ -160,12 +160,18 @@ Cloud& Cloud::addFeature(const FeatureData& data, const FeatureName& name, Viewp
 {
     // assert size if > 0
 
+    const bool isNewCloud = getNbFeatures() == 0;
+
     if (hasFeature(name))
         getFeatureData(name) = data; // overwrite
     else
         mFeatures.emplace_back(name, data);
 
-    setViewport(viewport);
+    if (isNewCloud) 
+        addCloudCommon(viewport);
+    else
+        setViewport(viewport);
+
     return *this;
 }
 
