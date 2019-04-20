@@ -96,10 +96,6 @@ void Visualizer::generateBundles(const FileName& inputFileOrFolder)
 
         newCloud.mBundleName = getToken();
 
-        // Get viewport index from "?-view".
-        newCloud.mViewport = std::stoi(getTokenFromDelim('-'));
-        getToken(); // skip the "view"
-
         newCloud.mCloudName = getToken();
 
         // Load additionnal data from file header.

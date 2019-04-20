@@ -133,7 +133,7 @@ void VisualizerData::clearSavedData(int lastHrsToKeep)
 
 std::string VisualizerData::getCloudFilename(const Cloud& cloud, const std::string& cloudName) const
 {
-    return sFolder + sFilePrefix + cloud.mTimestamp + "." + mName +  "." + std::to_string(cloud.mViewport) + "-view." + cloudName + ".pcd";
+    return sFolder + sFilePrefix + cloud.mTimestamp + "." + mName +  "." + cloudName + ".pcd";
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
