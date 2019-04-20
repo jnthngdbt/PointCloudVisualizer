@@ -362,8 +362,13 @@ void Cloud::save(const std::string& filename) const
 {
     std::stringstream f;
 
-    // header
     f << "# .PCD v.7 - Point Cloud Data file format" << std::endl;
+
+    // Add visualizer specific data in comment.
+    f << "# visualizer cloud opacity " << mOpacity << std::endl;
+    f << "# visualizer cloud size " << mSize << std::endl;
+    f << "# visualizer cloud viewport " << mViewport << std::endl;
+
     f << "VERSION .7" << std::endl;
 
     f << "FIELDS";

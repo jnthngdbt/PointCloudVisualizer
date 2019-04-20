@@ -102,6 +102,9 @@ void Visualizer::generateBundles(const FileName& inputFileOrFolder)
 
         newCloud.mCloudName = getToken();
 
+        // Load additionnal data from file header.
+        newCloud.parseFileHeader();
+
         // Add this cloud to the bundle array.
         addCloudToBundle(newCloud);
 
@@ -112,6 +115,37 @@ void Visualizer::generateBundles(const FileName& inputFileOrFolder)
 
     if (isInputDir)
         mSwitchToBundleIdx = mBundles.size() - 1; // start with most recent
+}
+
+void Visualizer::Cloud::parseFileHeader()
+{
+    auto isVisualizerProperty = [](const std::string& line)
+    {
+        const std::string prefix = "# visualizer cloud ";
+        if (line.size() <= prefix.size()) return false;
+        if (line.substr(0, prefix.size()) != prefix) return false;
+        return true;
+    };
+
+    std::ifstream infile(mFullName);
+
+    std::string line = "#";
+    while (std::getline(infile, line) && line[0] == '#')
+    {
+        if (isVisualizerProperty(line))
+        {
+            std::istringstream iss(line);
+            std::string word;
+            iss >> word >> word >> word >> word; // # visualizer cloud <property>
+
+            if (word == "size")
+                iss >> mSize;
+            else if (word == "opacity")
+                iss >> mOpacity;
+            else if (word == "viewport")
+                iss >> mViewport;
+        }
+    }
 }
 
 void Visualizer::addCloudToBundle(const Cloud& newCloud)
@@ -293,8 +327,8 @@ void Visualizer::prepareCloudsForRender(const Clouds& clouds)
                 getViewportId(cloud.mViewport));
         }
 
-        //////////getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, cloud.mSize, cloud.mName);
-        //////////getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, cloud.mOpacity, cloud.mName);
+        getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, cloud.mSize, cloud.mCloudName);
+        getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, cloud.mOpacity, cloud.mCloudName);
 
         // Add geometry handlers (spaces).
         for (const auto& geometry : geometryHandlers)
@@ -579,7 +613,7 @@ void Visualizer::identifyClouds(bool enabled, bool back)
 
         auto getOpacity = [&]()
         {
-            if (isIdentificationDisabled) return 1.0; // cloud.mOpacity;
+            if (isIdentificationDisabled) return cloud.mOpacity;
             if (isHighlighted) return 1.0;
             return 0.01;
         };
@@ -593,7 +627,7 @@ void Visualizer::identifyClouds(bool enabled, bool back)
         }
 
         getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getOpacity(), cloud.mCloudName);
-        //getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, isIdentificationDisabled || isHighlighted ? cloud.mSize : 1, cloud.mName);
+        getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, isIdentificationDisabled || isHighlighted ? cloud.mSize : 1, cloud.mCloudName);
         ++i;
     }
 }

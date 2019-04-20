@@ -86,12 +86,18 @@ namespace pcv
     private:
         struct Cloud
         {
+            void parseFileHeader();
+
             std::string mFullName;
             std::string mFileName;
             std::string mTimeStamp;
             std::string mBundleName;
             std::string mCloudName;
+
             int mViewport{ 0 };
+            int mSize{ 1 };
+            double mOpacity{ 1.0 };
+
             pcl::PCLPointCloud2::Ptr mPointCloudMessage;
         };
         using Clouds = std::vector<Cloud>;
