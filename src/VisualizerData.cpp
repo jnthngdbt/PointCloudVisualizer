@@ -10,6 +10,7 @@
 #include <boost/filesystem.hpp>
 
 #include <pcl/io/pcd_io.h>
+#include <pcl/io/ply_io.h>
 
 using namespace pcv;
 
@@ -59,17 +60,22 @@ const FileNames& VisualizerData::render()
             continue;
         }
 
-        // Some color and geometry handlers only work with PointCloud2 objects, 
-        // and the best way to create them is by reading a file. That is nice, because
-        // we want to save the file anyway, because allows to save in a single cloud
-        // multiple custom features.
-        pcl::PCLPointCloud2::Ptr pclCloudMsg(new pcl::PCLPointCloud2());
         if (CreateDirectoryA(sFolder.c_str(), NULL) || (ERROR_ALREADY_EXISTS == GetLastError())) // WARNING: Windows only. With c++17, use std::filesystem::create_directory.
         {
             const std::string fileName = getCloudFilename(cloud, name);
             mFileNames.push_back(fileName);
             cloud.save(fileName);
+
+#ifdef SAVE_PLY
+            pcl::PCLPointCloud2::Ptr pclCloudMsg(new pcl::PCLPointCloud2());
             pcl::io::loadPCDFile(fileName, *pclCloudMsg);
+            pcl::io::savePLYFile(
+                fileName.substr(0, fileName.size() - 4) + ".ply", 
+                *pclCloudMsg,
+                Eigen::Vector4f::Zero(),
+                Eigen::Quaternionf::Identity(),
+                true); // binary
+#endif
         }
         else
             logError("Could not create folder '" + sFolder + "', undefined behavior will follow.");

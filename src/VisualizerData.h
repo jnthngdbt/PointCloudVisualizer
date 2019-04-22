@@ -12,6 +12,8 @@
 
 #include <flann/flann.h>
 
+//#define SAVE_PLY
+
 void logError(const std::string& msg);
 
 namespace pcv
