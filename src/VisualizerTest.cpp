@@ -94,7 +94,6 @@ int main()
     }
 
     std::cout << *cloudModel << std::endl;
-    pcl::io::savePCDFile("cloud.pcd", *cloudModel);
 
     auto testAddingFeaturesAndClouds = [&]()
     {

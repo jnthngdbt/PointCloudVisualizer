@@ -10,6 +10,7 @@
 #include <boost/filesystem.hpp>
 
 #include <pcl/io/pcd_io.h>
+#include <pcl/io/ply_io.h>
 
 using namespace pcv;
 
@@ -59,18 +60,23 @@ const FileNames& VisualizerData::render()
             continue;
         }
 
-        // Some color and geometry handlers only work with PointCloud2 objects, 
-        // and the best way to create them is by reading a file. That is nice, because
-        // we want to save the file anyway, because allows to save in a single cloud
-        // multiple custom features.
-        pcl::PCLPointCloud2::Ptr pclCloudMsg(new pcl::PCLPointCloud2());
         boost::filesystem::create_directory(sFolder);
         if (boost::filesystem::exists(sFolder))
         {
             const std::string fileName = getCloudFilename(cloud, name);
             mFileNames.push_back(fileName);
             cloud.save(fileName);
+
+#ifdef SAVE_PLY
+            pcl::PCLPointCloud2::Ptr pclCloudMsg(new pcl::PCLPointCloud2());
             pcl::io::loadPCDFile(fileName, *pclCloudMsg);
+            pcl::io::savePLYFile(
+                fileName.substr(0, fileName.size() - 4) + ".ply", 
+                *pclCloudMsg,
+                Eigen::Vector4f::Zero(),
+                Eigen::Quaternionf::Identity(),
+                true); // binary
+#endif
         }
         else
             logError("Could not create folder '" + sFolder + "', no visualizer data will be generated.");
@@ -149,7 +155,7 @@ void VisualizerData::saveSectionTitleFile(const std::string& title)
 
 std::string VisualizerData::getCloudFilename(const Cloud& cloud, const std::string& cloudName) const
 {
-    return sFolder + sFilePrefix + cloud.mTimestamp + "." + mName +  "." + std::to_string(cloud.mViewport) + "-view." + cloudName + ".pcd";
+    return sFolder + sFilePrefix + cloud.mTimestamp + "." + mName +  "." + cloudName + ".pcd";
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -182,12 +188,17 @@ Cloud& Cloud::addFeature(const FeatureData& data, const FeatureName& name, Viewp
     }
     else
     {
+        const bool isNewCloud = getNbFeatures() == 0;
+
         if (hasFeature(name))
             getFeatureData(name) = data; // overwrite
         else
             mFeatures.emplace_back(name, data);
 
-        setViewport(viewport);
+        if (isNewCloud) 
+            addCloudCommon(viewport);
+        else
+            setViewport(viewport);
     }
 
     return *this;
@@ -383,11 +394,15 @@ Cloud& Cloud::setDefaultFeature(const FeatureName& name)
 
 void Cloud::save(const std::string& filename) const
 {
-    std::ofstream f;
-    f.open(filename);
+    std::stringstream f;
 
-    // header
     f << "# .PCD v.7 - Point Cloud Data file format" << std::endl;
+
+    // Add visualizer specific data in comment.
+    f << "# visualizer cloud opacity " << mOpacity << std::endl;
+    f << "# visualizer cloud size " << mSize << std::endl;
+    f << "# visualizer cloud viewport " << mViewport << std::endl;
+
     f << "VERSION .7" << std::endl;
 
     f << "FIELDS";
@@ -414,21 +429,40 @@ void Cloud::save(const std::string& filename) const
     f << "HEIGHT 1" << std::endl;
     f << "VIEWPOINT 0 0 0 1 0 0 0" << std::endl;
     f << "POINTS " << getNbPoints() << std::endl;
-    f << "DATA ascii" << std::endl;
+    f << "DATA binary" << std::endl;
 
-    for (int i = 0; i < getNbPoints(); ++i)
+    // Open the file and write in it.
+    auto pFile = fopen(filename.c_str(), "wb");
+    if (pFile != NULL)
     {
-        for (const auto& feature : mFeatures)
-        {
-            if (feature.first == "rgb")
-                f << static_cast<uint32_t>(feature.second[i]) << " ";
-            else
-                f << feature.second[i] << " ";
-        }
-        f << std::endl;
-    }
+        // Write header.
+        const auto& header = f.str();
+        fwrite(header.c_str(), sizeof(char), header.size(), pFile);
 
-    f.close();
+        // Write data. (for now, writing one datum at a time, could be optimized)
+        for (int i = 0; i < getNbPoints(); ++i)
+        {
+            for (const auto& feature : mFeatures)
+            {
+                if (feature.first == "rgb")
+                {
+                    const auto v = static_cast<uint32_t>(feature.second[i]);
+                    fwrite((unsigned char*)(&v), sizeof(v), 1, pFile);
+                }
+                else
+                {
+                    const auto v = feature.second[i];
+                    fwrite((unsigned char*)(&v), sizeof(v), 1, pFile);
+                }
+            }
+        }
+
+        fclose(pFile);
+    }
+    else
+    {
+        logError("[save] could not open file " + filename + " to write in binary format.");
+    }
 }
 
 Space::Space(const Feature& a, const Feature& b, const Feature& c) : 
