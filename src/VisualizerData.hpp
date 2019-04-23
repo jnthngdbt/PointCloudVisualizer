@@ -82,57 +82,73 @@ namespace pcv
 
     template <typename PointSource, typename PointTarget>
     VisualizerRegistration& VisualizerRegistration::init(
-        pcl::Registration<PointSource, PointTarget>* pRegistration, 
+        pcl::Registration<PointSource, PointTarget>* pRegistration,
         const pcl::PointCloud<PointSource>& alignedSource,
         const pcl::Correspondences& correspondences,
-        const std::vector<double>* deviationMapPointToPlane,
-        const std::vector<double>* deviationMapPointToPoint)
+        const std::vector<double>* deviationMap,
+        const std::vector<float>* weightMap)
     {
-        addCloud(*pRegistration->getInputSource(), "source", 0).setColor(0.5, 0.5, 0.5).setOpacity(0.2);
+        addCloud(*pRegistration->getInputSource(), "source", 0).setColor(0.2, 0.2, 0.2).setOpacity(0.2);
         addCloud(*pRegistration->getInputTarget(), "target", 0).setColor(1.0, 0.0, 0.0);
         addCloud(alignedSource, "source-aligned", 0).setColor(0.5, 0.5, 0.5);
 
         // Add the correspondences cloud.
 
-        auto getCorrespondencesIndices = [&](bool fromSourceOrTarget)
+        auto getCorrespondencesIndices = [&](bool useSourceIndices)
         {
             std::vector<int> indices;
             indices.reserve(correspondences.size());
 
             for (const auto& c : correspondences)
-                indices.emplace_back(fromSourceOrTarget ? c.index_query : c.index_match);
+                indices.emplace_back(useSourceIndices ? c.index_query : c.index_match);
 
             return std::move(indices);
         };
 
-        auto& corrCloud = addCloud(alignedSource, getCorrespondencesIndices(1), "correspondences", 1);
+        auto& corrCloud = addCloud(alignedSource, getCorrespondencesIndices(true), "correspondences", 1);
 
         const int Nc = correspondences.size();
 
-        // Add deviation maps features, if any.
-
-        auto addDeviationMap = [&](const std::vector<double>& deviationMap, std::string metricName)
+        // Add deviation map if any.
+        if (deviationMap)
         {
-            if (deviationMap.size() != Nc)
-                logError("[VisualizerRegistration::init] " + metricName + " deviation map size mismatches.");
+            if (deviationMap->size() != Nc)
+                logError("[VisualizerRegistration::init] deviation map size mismatches.");
             else
             {
                 FeatureData deviationAbs; deviationAbs.reserve(Nc);
-                for (const auto d : deviationMap)
-                {
+                for (const auto d : *deviationMap)
                     deviationAbs.push_back(std::abs(d));
+
+                corrCloud.addFeature(*deviationMap, "deviation");
+                corrCloud.addFeature(deviationAbs, "distance");
+
+                if (weightMap)
+                {
+                    const auto& w = *weightMap;
+
+                    FeatureData deviationWeighted; deviationWeighted.reserve(Nc);
+                    FeatureData deviationWeightedAbs; deviationWeightedAbs.reserve(Nc);
+                    for (auto i = 0; i < Nc; ++i)
+                    {
+                        deviationWeighted.push_back(w[i] * (*deviationMap)[i]);
+                        deviationWeightedAbs.push_back(w[i] * deviationAbs[i]);
+                    }
+
+                    corrCloud.addFeature(deviationWeighted, "deviation-weighted");
+                    corrCloud.addFeature(deviationWeightedAbs, "distance-weighted");
                 }
-
-                corrCloud.addFeature(deviationMap, metricName + "-deviation");
-                corrCloud.addFeature(deviationAbs, metricName + "-distance");
             }
-        };
+        }
 
-        if (deviationMapPointToPoint)
-            addDeviationMap(*deviationMapPointToPoint, "point2point");
-
-        if (deviationMapPointToPlane)
-            addDeviationMap(*deviationMapPointToPlane, "point2plane");
+        // Add weight map if any.
+        if (weightMap)
+        {
+            if (weightMap->size() != Nc)
+                logError("[VisualizerRegistration::init] weight map size mismatches.");
+            else
+                corrCloud.addFeature(*weightMap, "weight");
+        }
 
         // Add correspondences features.
 
@@ -144,7 +160,7 @@ namespace pcv
             distance.push_back(d);
         }
 
-        corrCloud.addFeature(distance, "distance");
+        corrCloud.addFeature(distance, "correspondence-distance");
 
         // Find a decent default feature.
 
@@ -157,9 +173,8 @@ namespace pcv
             return true;
         };
 
-        if (!trySettingDefaultFeature("point2plane-deviation"))
-            if (!trySettingDefaultFeature("point2point-deviation"))
-                trySettingDefaultFeature("distance");
+        if (!trySettingDefaultFeature("deviation"))
+            trySettingDefaultFeature("correspondence-distance");
 
         return *this;
     }

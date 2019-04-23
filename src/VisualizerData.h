@@ -269,8 +269,8 @@ namespace pcv
             pcl::Registration<PointSource, PointTarget>* pRegistration, 
             const pcl::PointCloud<PointSource>& alignedSource, 
             const pcl::Correspondences& correspondences,
-            const std::vector<double>* deviationMapPointToPlane = nullptr,
-            const std::vector<double>* deviationMapPointToPoint = nullptr);
+            const std::vector<double>* deviationMap = nullptr,
+            const std::vector<float>* weightMap = nullptr);
     };
 }
 
