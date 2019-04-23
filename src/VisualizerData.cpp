@@ -64,7 +64,8 @@ const FileNames& VisualizerData::render()
         // we want to save the file anyway, because allows to save in a single cloud
         // multiple custom features.
         pcl::PCLPointCloud2::Ptr pclCloudMsg(new pcl::PCLPointCloud2());
-        if (CreateDirectoryA(sFolder.c_str(), NULL) || (ERROR_ALREADY_EXISTS == GetLastError())) // WARNING: Windows only. With c++17, use std::filesystem::create_directory.
+        boost::filesystem::create_directory(sFolder);
+        if (boost::filesystem::exists(sFolder))
         {
             const std::string fileName = getCloudFilename(cloud, name);
             mFileNames.push_back(fileName);
@@ -72,7 +73,7 @@ const FileNames& VisualizerData::render()
             pcl::io::loadPCDFile(fileName, *pclCloudMsg);
         }
         else
-            logError("Could not create folder '" + sFolder + "', undefined behavior will follow.");
+            logError("Could not create folder '" + sFolder + "', no visualizer data will be generated.");
     }
 
     return mFileNames;
