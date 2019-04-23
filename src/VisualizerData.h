@@ -242,6 +242,10 @@ namespace pcv
         /// @param[in] lastHrsToKeep: files older than this value (hrs) will be deleted
         static void clearSavedData(int lastHrsToKeep);
 
+        /// Saves an empty file in format "visualizer.yyyymmdd.hhmmss.ss.TITLE.hpcd".
+        /// @param[in] title: the section title, will be in the file name
+        static void saveSectionTitleFile(const std::string& title);
+
         static std::string createTimestampString(int hrsBack = 0);
         std::string getCloudFilename(const Cloud& cloud, const std::string& cloudName) const;
 

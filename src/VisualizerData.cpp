@@ -131,6 +131,21 @@ void VisualizerData::clearSavedData(int lastHrsToKeep)
     }
 }
 
+void VisualizerData::saveSectionTitleFile(const std::string& title)
+{
+    namespace fs = boost::filesystem;
+
+    if (!fs::exists(fs::path(sFolder)))
+        return;
+
+    const std::string timestamp = VisualizerData::createTimestampString();
+    const std::string filename = sFolder + sFilePrefix + timestamp + ".title-file." + title + ".hpcd";
+
+    std::ofstream f;
+    f.open(filename);
+    f.close();
+}
+
 std::string VisualizerData::getCloudFilename(const Cloud& cloud, const std::string& cloudName) const
 {
     return sFolder + sFilePrefix + cloud.mTimestamp + "." + mName +  "." + std::to_string(cloud.mViewport) + "-view." + cloudName + ".pcd";
