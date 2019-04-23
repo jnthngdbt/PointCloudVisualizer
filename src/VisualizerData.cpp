@@ -174,14 +174,22 @@ Cloud& Cloud::setViewport(ViewportIdx viewport)
 
 Cloud& Cloud::addFeature(const FeatureData& data, const FeatureName& name, ViewportIdx viewport)
 {
-    // assert size if > 0
+    const int nbPoints = getNbPoints();
 
-    if (hasFeature(name))
-        getFeatureData(name) = data; // overwrite
+    if ((nbPoints > 0) && (nbPoints != data.size()))
+    {
+        logError("[addFeature] The size of the feature added does not match the cloud's number of points. The feature will not be added.");
+    }
     else
-        mFeatures.emplace_back(name, data);
+    {
+        if (hasFeature(name))
+            getFeatureData(name) = data; // overwrite
+        else
+            mFeatures.emplace_back(name, data);
 
-    setViewport(viewport);
+        setViewport(viewport);
+    }
+
     return *this;
 }
 
@@ -237,7 +245,6 @@ Cloud& Cloud::addCloud(const pcl::PointCloud<pcl::PrincipalCurvatures>& data, Vi
     addFeature(data, "pc1", [](const P& p) { return p.pc1; }, viewport);
     addFeature(data, "pc2", [](const P& p) { return p.pc2; }, viewport);
     addSpace("principal_curvature_x", "principal_curvature_y", "principal_curvature_z");
-    // TODO would be nice to support kind of 2d mode, to add pc1/pc2
     addCloudCommon(viewport);
     return *this;
 }
@@ -413,7 +420,6 @@ void Cloud::save(const std::string& filename) const
     {
         for (const auto& feature : mFeatures)
         {
-            // TODO should make sure that all features have same amount of points
             if (feature.first == "rgb")
                 f << static_cast<uint32_t>(feature.second[i]) << " ";
             else
