@@ -80,6 +80,12 @@ namespace pcv
         return getCloud(indexedCloudName); // calling getCloud to make sure the cloud's parent is set
     }
 
+    template <typename P1, typename P2>
+    void VisualizerData::addLine(const P1 &pt1, const P2 &pt2, const CloudName& cloudName, int viewport)
+    {
+        
+    }
+
     template <typename PointSource, typename PointTarget>
     VisualizerRegistration& VisualizerRegistration::init(
         pcl::Registration<PointSource, PointTarget>* pRegistration,

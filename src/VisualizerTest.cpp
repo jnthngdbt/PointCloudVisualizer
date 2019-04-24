@@ -242,6 +242,18 @@ int main()
         VISUALIZER_CALL(Visualizer(viewer.render()));
     };
 
+    auto testCloudTypes = [&]()
+    {
+        VISUALIZER_CALL(VisualizerData viewer("test-cloud-types"));
+
+        // TODO create and add line
+
+        VISUALIZER_CALL(viewer.addCloud(*cloudModel, "model", 0));
+        VISUALIZER_CALL(viewer.addCloud(*cloudNoisy, "scan", 1).setColor(0.0, 1.0, 0.0));
+
+        VISUALIZER_CALL(Visualizer(viewer.render()));
+    };
+
     testMultipleClouds();
     testAddingFeaturesAndClouds();
     testCustomGeometryHandler();
@@ -250,6 +262,7 @@ int main()
     testOrderingFeatures();
     testCloudRender();
     testDefaultFeature();
+    testCloudTypes();
 
     return 0;
 }

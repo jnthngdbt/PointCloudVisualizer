@@ -227,6 +227,9 @@ namespace pcv
         /// @param[in] viewport (optional): the viewport index (0 based) in which to draw
         void addBasis(const Eigen::Vector3f& u1, const Eigen::Vector3f& u2, const Eigen::Vector3f& u3, const Eigen::Vector3f& origin, const std::string& name, double scale = 1.0, ViewportIdx viewport= 0);
 
+        template <typename P1, typename P2>
+        void addLine(const P1 &pt1, const P2 &pt2, const CloudName& cloudName, int viewport);
+
         /// Get the refence of a visualizer cloud.
         /// @param[in] name: cloud name
         /// @return reference to the updated visualizer cloud (allows chainable commands)
