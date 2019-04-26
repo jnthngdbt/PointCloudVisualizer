@@ -84,6 +84,13 @@ namespace pcv
         PclVisualizer& getViewer();
 
     private:
+        struct BundleSwitchInfo
+        {
+            int mSwitchToBundleIdx{ 0 };
+            int mColorHandle{ 0 };
+            pcl::visualization::Camera mCamParams;
+        };
+
         struct Cloud
         {
             void parseFileHeader();
@@ -157,6 +164,7 @@ namespace pcv
         bool mustReinstantiateViewer();
 
         static void getBundleViewportLayout(const Bundle& bundle, int& nbRows, int& nbCols);
+        int getColorHandlerIndex();
 
         void switchBundle();
 
@@ -165,8 +173,7 @@ namespace pcv
 
         Bundles mBundles;
         int mCurrentBundleIdx{ 0 };
-        int mSwitchToBundleIdx{ 0 };
-        pcl::visualization::Camera mCamParamsForBundleSwitch;
+        BundleSwitchInfo mBundleSwitchInfo;
 
         std::vector<std::string> mCommonColorNames;
         std::vector<std::string> mCommonGeoNames;

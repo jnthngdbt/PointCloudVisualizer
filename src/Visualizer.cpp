@@ -15,13 +15,13 @@ using namespace pcv;
 
 Visualizer::Visualizer(const FileName& fileName)
 {
-    mCamParamsForBundleSwitch.fovy = -1.0; // put invalid value to detect that it is uninitialized
+    mBundleSwitchInfo.mCamParams.fovy = -1.0; // put invalid value to detect that it is uninitialized
 
     generateBundles(fileName);
 
     if (mBundles.size() > 0)
     {
-        while (mSwitchToBundleIdx >= 0)
+        while (mBundleSwitchInfo.mSwitchToBundleIdx >= 0)
         {
             switchBundle();
             render(getCurrentBundle());
@@ -106,11 +106,11 @@ void Visualizer::generateBundles(const FileName& inputFileOrFolder)
 
         // Make the app start with the bundle of the input file.
         if (!isInputDir && (newCloud.mFileName == fileOrFolderPath.stem().string()))
-            mSwitchToBundleIdx = mBundles.size() - 1;
+            mBundleSwitchInfo.mSwitchToBundleIdx = mBundles.size() - 1;
     }
 
     if (isInputDir)
-        mSwitchToBundleIdx = mBundles.size() - 1; // start with most recent
+        mBundleSwitchInfo.mSwitchToBundleIdx = mBundles.size() - 1; // start with most recent
 }
 
 void Visualizer::Cloud::parseFileHeader()
@@ -190,8 +190,8 @@ void Visualizer::initViewer(const Bundle& bundle)
     {
         mViewer.reset(new PclVisualizer(bundle.first + " - " + bundle.second.front().mTimeStamp));
 
-        if (mCamParamsForBundleSwitch.fovy > 0.0) // only use it if initialized
-            mViewer->setCameraParameters(mCamParamsForBundleSwitch);
+        if (mBundleSwitchInfo.mCamParams.fovy > 0.0) // only use it if initialized
+            mViewer->setCameraParameters(mBundleSwitchInfo.mCamParams);
 
         int nbRows{ 1 };
         int nbCols{ 0 };
@@ -233,6 +233,12 @@ Visualizer::Bundle& Visualizer::getCurrentBundle()
     return mBundles[mCurrentBundleIdx];
 }
 
+int Visualizer::getColorHandlerIndex()
+{
+    // All clouds should have the same color handlers, so we can take the first.
+    return getViewer().getColorHandlerIndex(getCurrentBundle().second.cbegin()->mCloudName); // if colorIdx is 0, user pressed numkey '1'
+}
+
 void Visualizer::render(const Bundle& bundle)
 {
     const auto& clouds = bundle.second;
@@ -249,15 +255,17 @@ void Visualizer::render(const Bundle& bundle)
     const std::string infoTextId = "infoTextId";
     getViewer().addText("", 10, 10, infoTextId, mInfoTextViewportId);
 
-    const auto& firstCloudName = clouds.cbegin()->mCloudName;
+    //setColormapSource(mColormapSourceId.empty() ? clouds.cbegin()->mCloudName : mColormapSourceId);
+    setColormapSource(clouds.cbegin()->mCloudName); // initialize the lut source with the first cloud
 
-    setColormapSource(firstCloudName); // initialize the lut source with the first cloud
+    auto colorIdx = getColorHandlerIndex();
 
-    while (!getViewer().wasStopped() && (mSwitchToBundleIdx < 0))
+    for (const auto& cloud : clouds)
+        getViewer().updateColorHandlerIndex(cloud.mCloudName, colorIdx);
+
+    while (!getViewer().wasStopped() && (mBundleSwitchInfo.mSwitchToBundleIdx < 0))
     {
-        // All clouds should have the same color handlers, so we can take the first.
-        const auto colorIdx = getViewer().getColorHandlerIndex(firstCloudName); // if colorIdx is 0, user pressed numkey '1'
-
+        colorIdx = getColorHandlerIndex();
         std::string help = "";
         help += "Colormap source: " + mColormapSourceId + "\n\r";
         help += "Color handler: " + std::to_string(colorIdx + 1) + " (" + ((colorIdx < mCommonColorNames.size()) ? mCommonColorNames[colorIdx] : "-") + ")";
@@ -272,7 +280,7 @@ void Visualizer::render(const Bundle& bundle)
             // Save camera parameters for next bundle window.
             std::vector<pcl::visualization::Camera> cameras;
             mViewer->getCameras(cameras);
-            mCamParamsForBundleSwitch = cameras.front();
+            mBundleSwitchInfo.mCamParams = cameras.front();
 
             getViewer().close();
         }
@@ -287,10 +295,10 @@ bool Visualizer::mustReinstantiateViewer()
     if (getViewer().wasStopped())
         return true;
 
-    if (mSwitchToBundleIdx >= 0)
+    if (mBundleSwitchInfo.mSwitchToBundleIdx >= 0)
     {
         const auto& currBundle = mBundles[mCurrentBundleIdx];
-        const auto& nextBundle = mBundles[mSwitchToBundleIdx];
+        const auto& nextBundle = mBundles[mBundleSwitchInfo.mSwitchToBundleIdx];
 
         int currNbRows, currNbCols;
         int nextNbRows, nextNbCols;
@@ -319,10 +327,10 @@ void Visualizer::switchBundle()
         cloud.mPointCloudMessage.reset();
 
     // Make the switch.
-    if (mSwitchToBundleIdx >= 0)
+    if (mBundleSwitchInfo.mSwitchToBundleIdx >= 0)
     {
-        mCurrentBundleIdx = mSwitchToBundleIdx;
-        mSwitchToBundleIdx = -1;
+        mCurrentBundleIdx = mBundleSwitchInfo.mSwitchToBundleIdx;
+        mBundleSwitchInfo.mSwitchToBundleIdx = -1;
     }
 
     // Load bundle clouds.
@@ -612,12 +620,12 @@ void Visualizer::keyboardEventCallback(const pcl::visualization::KeyboardEvent& 
     else if ((event.getKeySym() == "Left") && event.keyDown())
     {
         if (mCurrentBundleIdx > 0)
-            mSwitchToBundleIdx = mCurrentBundleIdx - 1;
+            mBundleSwitchInfo.mSwitchToBundleIdx = mCurrentBundleIdx - 1;
     }
     else if ((event.getKeySym() == "Right") && event.keyDown())
     {
         if (mCurrentBundleIdx < mBundles.size() - 1)
-            mSwitchToBundleIdx = mCurrentBundleIdx + 1;
+            mBundleSwitchInfo.mSwitchToBundleIdx = mCurrentBundleIdx + 1;
     }
 }
 
