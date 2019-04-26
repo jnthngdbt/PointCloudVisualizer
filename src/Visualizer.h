@@ -154,6 +154,10 @@ namespace pcv
         void setColormapSource(const std::string& id);
         void doOnceAfterRender();
 
+        bool mustReinstantiateViewer();
+
+        static void getBundleViewportLayout(const Bundle& bundle, int& nbRows, int& nbCols);
+
         void switchBundle();
 
         std::shared_ptr<PclVisualizer> mViewer;

@@ -186,31 +186,38 @@ void Visualizer::addCloudToBundle(const Cloud& newCloud)
 
 void Visualizer::initViewer(const Bundle& bundle)
 {
-    mViewer.reset(new PclVisualizer(bundle.first + " - " + bundle.second.front().mTimeStamp));
-
-    if (mCamParamsForBundleSwitch.fovy > 0.0) // only use it if initialized
-        mViewer->setCameraParameters(mCamParamsForBundleSwitch);
-
-    int nbRows{ 1 };
-    int nbCols{ 0 };
-    for (const auto& info : bundle.second)
-        nbCols = std::max(info.mViewport + 1, nbCols);
-
-    mViewportIds.resize(nbRows * nbCols);
-    const float sizeX = 1.0 / nbCols;
-    const float sizeY = 1.0 / nbRows;
-    int k = 0;
-    for (int j = 0; j < nbRows; ++j)
+    if (mustReinstantiateViewer())
     {
-        for (int i = 0; i < nbCols; ++i)
+        mViewer.reset(new PclVisualizer(bundle.first + " - " + bundle.second.front().mTimeStamp));
+
+        if (mCamParamsForBundleSwitch.fovy > 0.0) // only use it if initialized
+            mViewer->setCameraParameters(mCamParamsForBundleSwitch);
+
+        int nbRows{ 1 };
+        int nbCols{ 0 };
+        getBundleViewportLayout(bundle, nbRows, nbCols);
+
+        mViewportIds.resize(nbRows * nbCols);
+        const float sizeX = 1.0 / nbCols;
+        const float sizeY = 1.0 / nbRows;
+        int k = 0;
+        for (int j = 0; j < nbRows; ++j)
         {
-            getViewer().createViewPort(i*sizeX, 1.0 - (j + 1)*sizeY, (i + 1)*sizeX, 1.0 - j * sizeY, mViewportIds[k]);
+            for (int i = 0; i < nbCols; ++i)
+            {
+                getViewer().createViewPort(i*sizeX, 1.0 - (j + 1)*sizeY, (i + 1)*sizeX, 1.0 - j * sizeY, mViewportIds[k]);
 
-            if ((j == nbRows - 1) && (i == 0)) // last row first column (bottom left)
-                mInfoTextViewportId = mViewportIds[k];
+                if ((j == nbRows - 1) && (i == 0)) // last row first column (bottom left)
+                    mInfoTextViewportId = mViewportIds[k];
 
-            ++k;
+                ++k;
+            }
         }
+    }
+    else
+    {
+        mViewer->removeAllPointClouds();
+        mViewer->removeAllShapes();
     }
 }
 
@@ -246,7 +253,7 @@ void Visualizer::render(const Bundle& bundle)
 
     setColormapSource(firstCloudName); // initialize the lut source with the first cloud
 
-    while (!getViewer().wasStopped())
+    while (!getViewer().wasStopped() && (mSwitchToBundleIdx < 0))
     {
         // All clouds should have the same color handlers, so we can take the first.
         const auto colorIdx = getViewer().getColorHandlerIndex(firstCloudName); // if colorIdx is 0, user pressed numkey '1'
@@ -260,7 +267,7 @@ void Visualizer::render(const Bundle& bundle)
 
         doOnceAfterRender();
 
-        if (mSwitchToBundleIdx >= 0)
+        if (mustReinstantiateViewer())
         {
             // Save camera parameters for next bundle window.
             std::vector<pcl::visualization::Camera> cameras;
@@ -270,6 +277,39 @@ void Visualizer::render(const Bundle& bundle)
             getViewer().close();
         }
     }
+}
+
+bool Visualizer::mustReinstantiateViewer()
+{
+    if (!mViewer)
+        return true;
+
+    if (getViewer().wasStopped())
+        return true;
+
+    if (mSwitchToBundleIdx >= 0)
+    {
+        const auto& currBundle = mBundles[mCurrentBundleIdx];
+        const auto& nextBundle = mBundles[mSwitchToBundleIdx];
+
+        int currNbRows, currNbCols;
+        int nextNbRows, nextNbCols;
+        getBundleViewportLayout(currBundle, currNbRows, currNbCols);
+        getBundleViewportLayout(nextBundle, nextNbRows, nextNbCols);
+
+        if ((currNbRows != nextNbRows) || (currNbCols != nextNbCols))
+            return true;
+    }
+
+    return false;
+}
+
+void Visualizer::getBundleViewportLayout(const Bundle& bundle, int& nbRows, int& nbCols)
+{
+    nbRows = 1;
+    nbCols = 0;
+    for (const auto& info : bundle.second)
+        nbCols = std::max(info.mViewport + 1, nbCols);
 }
 
 void Visualizer::switchBundle()
