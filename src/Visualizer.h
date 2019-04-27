@@ -84,6 +84,13 @@ namespace pcv
         PclVisualizer& getViewer();
 
     private:
+        struct BundleSwitchInfo
+        {
+            int mSwitchToBundleIdx{ 0 };
+            int mColorHandle{ 0 };
+            pcl::visualization::Camera mCamParams;
+        };
+
         struct Cloud
         {
             void parseFileHeader();
@@ -109,8 +116,6 @@ namespace pcv
         void generateBundles(const FileName& fileName);
 
         void addCloudToBundle(const Cloud& newCloud);
-
-        void initViewer(const Bundle& bundle);
 
         /// Add to draw a 3d basis (3 RGB vectors) at a specified location.
         /// @param[in] u1: 3d vector of the x axis (red)
@@ -152,7 +157,16 @@ namespace pcv
         void printHelp() const;
 
         void setColormapSource(const std::string& id);
-        void doOnceAfterRender();
+
+        bool mustReinstantiateViewer();
+        void reinstantiateViewer();
+
+        bool mustSwitchBundle() const;
+
+        void reset();
+
+        static void getBundleViewportLayout(const Bundle& bundle, int& nbRows, int& nbCols);
+        int getColorHandlerIndex();
 
         void switchBundle();
 
@@ -161,8 +175,7 @@ namespace pcv
 
         Bundles mBundles;
         int mCurrentBundleIdx{ 0 };
-        int mSwitchToBundleIdx{ 0 };
-        pcl::visualization::Camera mCamParamsForBundleSwitch;
+        BundleSwitchInfo mBundleSwitchInfo;
 
         std::vector<std::string> mCommonColorNames;
         std::vector<std::string> mCommonGeoNames;
@@ -173,7 +186,6 @@ namespace pcv
         std::string mColormapSourceId;
         int mColormap{ pcl::visualization::PCL_VISUALIZER_LUT_JET_INVERSE };
 
-        bool mDidOnceAfterRender{ false };
     };
 }
 
