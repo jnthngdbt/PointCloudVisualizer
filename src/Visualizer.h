@@ -162,6 +162,7 @@ namespace pcv
         void doOnceAfterRender();
 
         bool mustReinstantiateViewer();
+        void reinstantiateViewer();
 
         static void getBundleViewportLayout(const Bundle& bundle, int& nbRows, int& nbCols);
         int getColorHandlerIndex();

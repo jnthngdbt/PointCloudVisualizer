@@ -184,43 +184,6 @@ void Visualizer::addCloudToBundle(const Cloud& newCloud)
     }
 }
 
-void Visualizer::initViewer(const Bundle& bundle)
-{
-    if (mustReinstantiateViewer())
-    {
-        mViewer.reset(new PclVisualizer(bundle.first + " - " + bundle.second.front().mTimeStamp));
-
-        if (mBundleSwitchInfo.mCamParams.fovy > 0.0) // only use it if initialized
-            mViewer->setCameraParameters(mBundleSwitchInfo.mCamParams);
-
-        int nbRows{ 1 };
-        int nbCols{ 0 };
-        getBundleViewportLayout(bundle, nbRows, nbCols);
-
-        mViewportIds.resize(nbRows * nbCols);
-        const float sizeX = 1.0 / nbCols;
-        const float sizeY = 1.0 / nbRows;
-        int k = 0;
-        for (int j = 0; j < nbRows; ++j)
-        {
-            for (int i = 0; i < nbCols; ++i)
-            {
-                getViewer().createViewPort(i*sizeX, 1.0 - (j + 1)*sizeY, (i + 1)*sizeX, 1.0 - j * sizeY, mViewportIds[k]);
-
-                if ((j == nbRows - 1) && (i == 0)) // last row first column (bottom left)
-                    mInfoTextViewportId = mViewportIds[k];
-
-                ++k;
-            }
-        }
-    }
-    else
-    {
-        mViewer->removeAllPointClouds();
-        mViewer->removeAllShapes();
-    }
-}
-
 const Visualizer::Bundle& Visualizer::getCurrentBundle() const
 {
     assert(mBundles.size() > mCurrentBundleIdx);
@@ -239,11 +202,39 @@ int Visualizer::getColorHandlerIndex()
     return getViewer().getColorHandlerIndex(getCurrentBundle().second.cbegin()->mCloudName); // if colorIdx is 0, user pressed numkey '1'
 }
 
+void Visualizer::reinstantiateViewer()
+{
+    const auto& bundle = getCurrentBundle();
+    mViewer.reset(new PclVisualizer(bundle.first + " - " + bundle.second.front().mTimeStamp));
+
+    if (mBundleSwitchInfo.mCamParams.fovy > 0.0) // only use it if initialized
+        mViewer->setCameraParameters(mBundleSwitchInfo.mCamParams);
+
+    int nbRows{ 1 };
+    int nbCols{ 0 };
+    getBundleViewportLayout(bundle, nbRows, nbCols);
+
+    mViewportIds.resize(nbRows * nbCols);
+    const float sizeX = 1.0 / nbCols;
+    const float sizeY = 1.0 / nbRows;
+    int k = 0;
+    for (int j = 0; j < nbRows; ++j)
+    {
+        for (int i = 0; i < nbCols; ++i)
+        {
+            getViewer().createViewPort(i*sizeX, 1.0 - (j + 1)*sizeY, (i + 1)*sizeX, 1.0 - j * sizeY, mViewportIds[k]);
+
+            if ((j == nbRows - 1) && (i == 0)) // last row first column (bottom left)
+                mInfoTextViewportId = mViewportIds[k];
+
+            ++k;
+        }
+    }
+}
+
 void Visualizer::render(const Bundle& bundle)
 {
     const auto& clouds = bundle.second;
-
-    initViewer(bundle);
 
     prepareCloudsForRender(clouds);
 
@@ -338,6 +329,17 @@ void Visualizer::switchBundle()
     {
         cloud.mPointCloudMessage.reset(new pcl::PCLPointCloud2());
         pcl::io::loadPCDFile(cloud.mFullName, *cloud.mPointCloudMessage);
+    }
+
+    // Deal with the viewer instance.
+    if (mustReinstantiateViewer())
+    {
+        reinstantiateViewer();
+    }
+    else // keep the window; only remove actors, that will be updated later
+    {
+        mViewer->removeAllPointClouds();
+        mViewer->removeAllShapes();
     }
 }
 
