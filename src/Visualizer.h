@@ -189,7 +189,6 @@ namespace pcv
         std::string mColormapSourceId;
         int mColormap{ pcl::visualization::PCL_VISUALIZER_LUT_JET_INVERSE };
 
-        bool mDidOnceAfterRender{ false };
     };
 }
 

@@ -238,7 +238,6 @@ void Visualizer::reset()
 {
     mIdentifiedCloudIdx = -1;
     mColormapSourceId = "";
-    mDidOnceAfterRender = false;
 }
 
 void Visualizer::render(const Bundle& bundle)
@@ -255,8 +254,6 @@ void Visualizer::render(const Bundle& bundle)
         getViewer().updateText(help, 10, 10, 18, 0.5, 0.5, 0.5, infoTextId); // text, xpos, ypos, fontsize, r, g, b, id
 
         getViewer().spinOnce(100);
-
-        doOnceAfterRender();
 
         if (mustSwitchBundle())
             mBundleSwitchInfo.mColorHandle = colorIdx;
@@ -771,19 +768,6 @@ void Visualizer::setColormapSource(const std::string& id)
 {
     mColormapSourceId = id;
     getViewer().setLookUpTableID(mColormapSourceId);
-}
-
-void Visualizer::doOnceAfterRender()
-{
-    if (!mDidOnceAfterRender)
-    {
-        for (const auto& cloud : getCurrentBundle().second)
-        {
-            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_LUT, mColormap, cloud.mCloudName);
-        }
-
-        mDidOnceAfterRender = true;
-    }
 }
 
 int Visualizer::getViewportId(ViewportIdx viewport) const
