@@ -207,9 +207,6 @@ void Visualizer::reinstantiateViewer()
     const auto& bundle = getCurrentBundle();
     mViewer.reset(new PclVisualizer(bundle.first + " - " + bundle.second.front().mTimeStamp));
 
-    if (mBundleSwitchInfo.mCamParams.fovy > 0.0) // only use it if initialized
-        mViewer->setCameraParameters(mBundleSwitchInfo.mCamParams);
-
     int nbRows{ 1 };
     int nbCols{ 0 };
     getBundleViewportLayout(bundle, nbRows, nbCols);
@@ -230,33 +227,28 @@ void Visualizer::reinstantiateViewer()
             ++k;
         }
     }
-}
-
-void Visualizer::render(const Bundle& bundle)
-{
-    const auto& clouds = bundle.second;
-
-    prepareCloudsForRender(clouds);
 
     getViewer().setBackgroundColor(0.1, 0.1, 0.1);
 
     //getViewer().registerPointPickingCallback(&Visualizer::pointPickingEventCallback, *this);
     getViewer().registerKeyboardCallback(&Visualizer::keyboardEventCallback, *this);
+}
 
+void Visualizer::reset()
+{
+    mIdentifiedCloudIdx = -1;
+    mColormapSourceId = "";
+    mDidOnceAfterRender = false;
+}
+
+void Visualizer::render(const Bundle& bundle)
+{
     const std::string infoTextId = "infoTextId";
     getViewer().addText("", 10, 10, infoTextId, mInfoTextViewportId);
 
-    //setColormapSource(mColormapSourceId.empty() ? clouds.cbegin()->mCloudName : mColormapSourceId);
-    setColormapSource(clouds.cbegin()->mCloudName); // initialize the lut source with the first cloud
-
-    auto colorIdx = getColorHandlerIndex();
-
-    for (const auto& cloud : clouds)
-        getViewer().updateColorHandlerIndex(cloud.mCloudName, colorIdx);
-
-    while (!getViewer().wasStopped() && (mBundleSwitchInfo.mSwitchToBundleIdx < 0))
+    while (!getViewer().wasStopped() && !mustSwitchBundle())
     {
-        colorIdx = getColorHandlerIndex();
+        const int colorIdx = getColorHandlerIndex();
         std::string help = "";
         help += "Colormap source: " + mColormapSourceId + "\n\r";
         help += "Color handler: " + std::to_string(colorIdx + 1) + " (" + ((colorIdx < mCommonColorNames.size()) ? mCommonColorNames[colorIdx] : "-") + ")";
@@ -265,6 +257,9 @@ void Visualizer::render(const Bundle& bundle)
         getViewer().spinOnce(100);
 
         doOnceAfterRender();
+
+        if (mustSwitchBundle())
+            mBundleSwitchInfo.mColorHandle = colorIdx;
 
         if (mustReinstantiateViewer())
         {
@@ -278,6 +273,11 @@ void Visualizer::render(const Bundle& bundle)
     }
 }
 
+bool Visualizer::mustSwitchBundle() const
+{
+    return mBundleSwitchInfo.mSwitchToBundleIdx >= 0;
+}
+
 bool Visualizer::mustReinstantiateViewer()
 {
     if (!mViewer)
@@ -286,7 +286,7 @@ bool Visualizer::mustReinstantiateViewer()
     if (getViewer().wasStopped())
         return true;
 
-    if (mBundleSwitchInfo.mSwitchToBundleIdx >= 0)
+    if (mustSwitchBundle())
     {
         const auto& currBundle = mBundles[mCurrentBundleIdx];
         const auto& nextBundle = mBundles[mBundleSwitchInfo.mSwitchToBundleIdx];
@@ -318,7 +318,7 @@ void Visualizer::switchBundle()
         cloud.mPointCloudMessage.reset();
 
     // Make the switch.
-    if (mBundleSwitchInfo.mSwitchToBundleIdx >= 0)
+    if (mustSwitchBundle())
     {
         mCurrentBundleIdx = mBundleSwitchInfo.mSwitchToBundleIdx;
         mBundleSwitchInfo.mSwitchToBundleIdx = -1;
@@ -332,15 +332,42 @@ void Visualizer::switchBundle()
     }
 
     // Deal with the viewer instance.
-    if (mustReinstantiateViewer())
+    const bool isNewWindow = mustReinstantiateViewer();
+    if (isNewWindow)
     {
+        reset();
+
         reinstantiateViewer();
+
+        // If already set, use previous camera settings.
+        if (mBundleSwitchInfo.mCamParams.fovy > 0.0) // only use it if initialized
+            mViewer->setCameraParameters(mBundleSwitchInfo.mCamParams);
     }
     else // keep the window; only remove actors, that will be updated later
     {
         mViewer->removeAllPointClouds();
         mViewer->removeAllShapes();
     }
+
+    const auto& clouds = getCurrentBundle().second;
+
+    // Create the actors (what is displayed with their properties)
+    prepareCloudsForRender(clouds);
+
+    int colorIdx{ 0 };
+    if (isNewWindow)
+    {
+        setColormapSource(clouds.cbegin()->mCloudName); // initialize the lut source with the first cloud
+        colorIdx = getColorHandlerIndex();
+    }
+    else
+    {
+        setColormapSource(mColormapSourceId);
+        colorIdx = mBundleSwitchInfo.mColorHandle;
+    }
+
+    for (const auto& cloud : clouds)
+        getViewer().updateColorHandlerIndex(cloud.mCloudName, colorIdx);
 }
 
 void Visualizer::prepareCloudsForRender(const Clouds& clouds)

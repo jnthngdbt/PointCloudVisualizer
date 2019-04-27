@@ -164,6 +164,10 @@ namespace pcv
         bool mustReinstantiateViewer();
         void reinstantiateViewer();
 
+        bool mustSwitchBundle() const;
+
+        void reset();
+
         static void getBundleViewportLayout(const Bundle& bundle, int& nbRows, int& nbCols);
         int getColorHandlerIndex();
 
