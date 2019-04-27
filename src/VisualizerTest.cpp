@@ -242,6 +242,26 @@ int main()
         VISUALIZER_CALL(Visualizer(viewer.render()));
     };
 
+    auto testBundleSwitch = [&]()
+    {
+        PointsType::Ptr cloudIterating(new PointsType());
+        Eigen::Affine3f T = Eigen::Affine3f::Identity();
+
+        const int N = 5;
+        for (int i = 0; i < N; ++i)
+        {
+            VISUALIZER_CALL(VisualizerData viewer("test-bundle-switch"));
+
+            T.translate(Eigen::Vector3f(0.05, 0, 0));
+            pcl::transformPointCloud(*cloudModel, *cloudIterating, T);
+
+            VISUALIZER_CALL(viewer.addCloud(*cloudModel, "iteration-model").render());
+            VISUALIZER_CALL(viewer.addCloud(*cloudIterating, "iteration-mover").render());
+
+            VISUALIZER_CALL(if(i == N-1) Visualizer(viewer.render()));
+        }
+    };
+
     testMultipleClouds();
     testAddingFeaturesAndClouds();
     testCustomGeometryHandler();
@@ -250,6 +270,7 @@ int main()
     testOrderingFeatures();
     testCloudRender();
     testDefaultFeature();
+    testBundleSwitch();
 
     return 0;
 }
