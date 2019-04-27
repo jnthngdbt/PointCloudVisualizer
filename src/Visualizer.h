@@ -117,8 +117,6 @@ namespace pcv
 
         void addCloudToBundle(const Cloud& newCloud);
 
-        void initViewer(const Bundle& bundle);
-
         /// Add to draw a 3d basis (3 RGB vectors) at a specified location.
         /// @param[in] u1: 3d vector of the x axis (red)
         /// @param[in] u2: 3d vector of the y axis (green)
@@ -159,7 +157,6 @@ namespace pcv
         void printHelp() const;
 
         void setColormapSource(const std::string& id);
-        void doOnceAfterRender();
 
         bool mustReinstantiateViewer();
         void reinstantiateViewer();
