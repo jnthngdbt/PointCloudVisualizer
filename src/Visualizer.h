@@ -104,6 +104,7 @@ namespace pcv
             int mViewport{ 0 };
             int mSize{ 1 };
             double mOpacity{ 1.0 };
+            std::string mType{ "points" };
 
             pcl::PCLPointCloud2::Ptr mPointCloudMessage;
         };
