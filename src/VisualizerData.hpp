@@ -81,9 +81,54 @@ namespace pcv
     }
 
     template <typename P1, typename P2>
-    void VisualizerData::addLine(const P1 &pt1, const P2 &pt2, const CloudName& cloudName, int viewport)
+    Cloud& VisualizerData::addLine(const P1 &pt1, const P2 &pt2, const CloudName& cloudName, int viewport)
     {
-        
+        return getCloud(cloudName).addLine(pt1, pt2, viewport);
+    }
+
+    template <typename P1, typename P2>
+    Cloud& Cloud::addLine(const P1 &pt1, const P2 &pt2, int viewport)
+    {
+        const std::vector < std::string > requiredLineFeatures = { "x", "y", "z", "x2", "y2", "z2" };
+
+        auto addLineFeatures = [&]()
+        {
+            getFeatureData("x").emplace_back(pt1.x);
+            getFeatureData("y").emplace_back(pt1.y);
+            getFeatureData("z").emplace_back(pt1.z);
+            getFeatureData("x2").emplace_back(pt2.x);
+            getFeatureData("y2").emplace_back(pt2.y);
+            getFeatureData("z2").emplace_back(pt2.z);
+        };
+
+        const bool isNewCloud = getNbFeatures() == 0;
+
+        if (isNewCloud)
+        {
+            // Create empty line features.
+            for (const auto& requiredLineFeature : requiredLineFeatures)
+                addFeature(FeatureData(), requiredLineFeature);
+
+            addLineFeatures();
+            addSpace("x", "y", "z");
+            addSpace("x2", "y2", "z2");
+            addCloudCommon(viewport);
+        }
+        else
+        {
+            if (getNbFeatures() != requiredLineFeatures.size())
+                logError("[addLine] it is only possible to add a line to a cloud containing only lines");
+
+            for (const auto& requiredLineFeature : requiredLineFeatures)
+                if (!hasFeature(requiredLineFeature))
+                    logError("[addLine] a lines cloud must have feature " + requiredLineFeature);
+
+            addLineFeatures();
+            setViewport(viewport);
+        }
+
+        mType = "lines";
+        return *this;
     }
 
     template <typename PointSource, typename PointTarget>

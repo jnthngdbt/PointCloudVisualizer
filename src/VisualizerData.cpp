@@ -402,6 +402,7 @@ void Cloud::save(const std::string& filename) const
     f << "# visualizer cloud opacity " << mOpacity << std::endl;
     f << "# visualizer cloud size " << mSize << std::endl;
     f << "# visualizer cloud viewport " << mViewport << std::endl;
+    f << "# visualizer cloud type " << mType << std::endl;
 
     f << "VERSION .7" << std::endl;
 
