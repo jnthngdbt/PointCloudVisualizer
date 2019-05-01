@@ -404,20 +404,31 @@ void Visualizer::prepareCloudsForRender(const Clouds& clouds)
             pcl::fromPCLPointCloud2(*cloud.mPointCloudMessage, *lines);
 
             const int nbLines = lines->size();
+
+            pcl::PointCloud<pcl::PointXYZ>::Ptr source(new pcl::PointCloud<pcl::PointXYZ>);
+            pcl::copyPointCloud(*lines, *source);
+
+            pcl::PointCloud<pcl::PointXYZ>::Ptr target(new pcl::PointCloud<pcl::PointXYZ>(nbLines, 1));
+            pcl::Correspondences correspondences;
+            correspondences.reserve(nbLines);
             for (int i = 0; i < nbLines; ++i)
             {
-                const auto& p = lines->at(i);
-                const auto& lineId = cloud.mCloudName + "-" + std::to_string(i);
-                getViewer().addLine(pcl::PointXYZ(p.x, p.y, p.z), pcl::PointXYZ(p.x2, p.y2, p.z2), lineId, cloud.mViewport);
-
-                const auto r = (p.rgb >> 16) & 0xFF;
-                const auto g = (p.rgb >> 8) & 0xFF;
-                const auto b = (p.rgb) & 0xFF;
-
-                getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_LINE_WIDTH, cloud.mSize, lineId);
-                getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, cloud.mOpacity, lineId);
-                getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, r / 255., g / 255., b / 255., lineId);
+                target->points[i].x = lines->points[i].x2;
+                target->points[i].y = lines->points[i].y2;
+                target->points[i].z = lines->points[i].z2;
+                correspondences.emplace_back(i, i, 1);
             }
+
+            getViewer().addCorrespondences<pcl::PointXYZ>(source, target, correspondences, cloud.mCloudName, cloud.mViewport);
+
+            const auto rgb = lines->front().rgb;
+            const auto r = (rgb >> 16) & 0xFF;
+            const auto g = (rgb >> 8) & 0xFF;
+            const auto b = (rgb) & 0xFF;
+
+            getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_LINE_WIDTH, cloud.mSize, cloud.mCloudName);
+            getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, cloud.mOpacity, cloud.mCloudName);
+            getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, r / 255., g / 255., b / 255., cloud.mCloudName);
         }
         else // points
         {

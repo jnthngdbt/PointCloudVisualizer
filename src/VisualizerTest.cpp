@@ -274,7 +274,7 @@ int main()
             const auto& p = cloudModel->at(i);
             const auto& q = cloudMoved->at(i);
 
-            VISUALIZER_CALL(viewer.addLine(p, q, "lines").setColor(0.0, 1.0, 0.0).setOpacity(0.5));
+            VISUALIZER_CALL(viewer.addLine(p, q, "lines").setColor(0.0, 1.0, 0.0).setOpacity(0.1));
         }
 
         VISUALIZER_CALL(Visualizer(viewer.render()));
