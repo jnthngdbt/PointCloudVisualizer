@@ -63,6 +63,15 @@ namespace pcv
     }
 
     template<typename T>
+    Cloud& VisualizerData::addCorrespondences(const pcl::PointCloud<T>& source, const pcl::PointCloud<T>& target, const pcl::Correspondences& correspondences, const CloudName& name, ViewportIdx viewport)
+    {
+        for (const auto& c : correspondences)
+            addLine(source[c.index_query], target[c.index_match], name, viewport);
+
+        return getCloud(name);
+    }
+
+    template<typename T>
     Cloud& Cloud::addCloudIndexed(const pcl::PointCloud<T>& data, int i, const CloudName& name, ViewportIdx viewport)
     {
         if (i < 0 || i >= getNbPoints())
@@ -171,10 +180,11 @@ namespace pcv
             return std::move(indices);
         };
 
-        auto& corrCloud = addCloud(alignedSource, getCorrespondencesIndices(true), "correspondences", 1).setSize(5);
+        auto& corrCloud = addCloud(alignedSource, getCorrespondencesIndices(true), "correspondences-cloud", 1).setSize(5);
         addCloud(*pRegistration->getInputSource(), "source", 0).setSize(2).setColor(0.5, 0.5, 0.5).setOpacity(0.2);
         addCloud(*pRegistration->getInputTarget(), "target", 0).setSize(2).setColor(1.0, 0.0, 0.0);
         addCloud(alignedSource, "source-aligned", 0).setSize(2).setColor(0.5, 0.5, 0.5);
+        addCorrespondences(alignedSource, *pRegistration->getInputTarget(), correspondences, "correspondences", 0).setColor(0.8, 0.8, 0.8).setOpacity(0.5);
 
         addCloud(*pRegistration->getInputSource(), "source-before", 2).setSize(2);
         addCloud(alignedSource, "source-after", 2).setSize(2);
