@@ -48,6 +48,21 @@ namespace pcv
     }
 
     template<typename T>
+    Cloud& VisualizerData::addCloudCorrespondences(const pcl::PointCloud<T>& source, const pcl::PointCloud<T>& target, const pcl::Correspondences& correspondences, const CloudName& name, ViewportIdx viewport)
+    {
+        pcl::PointCloud<T> cloud;
+        pcl::ConstCloudIterator<T> sourceIt (source, correspondences, true);
+
+        while (sourceIt.isValid())
+        {
+            cloud.push_back(*sourceIt);
+            ++sourceIt;
+        }
+
+        return getCloud(name).addCloud(cloud, viewport);
+    }
+
+    template<typename T>
     Cloud& Cloud::addCloudIndexed(const pcl::PointCloud<T>& data, int i, const CloudName& name, ViewportIdx viewport)
     {
         if (i < 0 || i >= getNbPoints())
@@ -145,12 +160,6 @@ namespace pcv
         const std::vector<double>* deviationMap,
         const std::vector<float>* weightMap)
     {
-        addCloud(*pRegistration->getInputSource(), "source", 0).setColor(0.2, 0.2, 0.2).setOpacity(0.2);
-        addCloud(*pRegistration->getInputTarget(), "target", 0).setColor(1.0, 0.0, 0.0);
-        addCloud(alignedSource, "source-aligned", 0).setColor(0.5, 0.5, 0.5);
-
-        // Add the correspondences cloud.
-
         auto getCorrespondencesIndices = [&](bool useSourceIndices)
         {
             std::vector<int> indices;
@@ -162,7 +171,13 @@ namespace pcv
             return std::move(indices);
         };
 
-        auto& corrCloud = addCloud(alignedSource, getCorrespondencesIndices(true), "correspondences", 1);
+        auto& corrCloud = addCloud(alignedSource, getCorrespondencesIndices(true), "correspondences", 1).setSize(5);
+        addCloud(*pRegistration->getInputSource(), "source", 0).setSize(2).setColor(0.5, 0.5, 0.5).setOpacity(0.2);
+        addCloud(*pRegistration->getInputTarget(), "target", 0).setSize(2).setColor(1.0, 0.0, 0.0);
+        addCloud(alignedSource, "source-aligned", 0).setSize(2).setColor(0.5, 0.5, 0.5);
+
+        addCloud(*pRegistration->getInputSource(), "source-before", 2).setSize(2);
+        addCloud(alignedSource, "source-after", 2).setSize(2);
 
         const int Nc = correspondences.size();
 

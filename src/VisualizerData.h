@@ -182,6 +182,16 @@ namespace pcv
         template<typename T>
         Cloud& addCloud(const pcl::PointCloud<T>& data, const std::vector<int>& indices, const CloudName& name, ViewportIdx viewport = -1);
 
+        /// Add a correspondences point cloud.
+        /// @param[in] source: registration source point cloud
+        /// @param[in] target: registration target point cloud
+        /// @param[in] correspondences: correspondences matching source points to target points
+        /// @param[in] name: cloud name
+        /// @param[in] viewport (optional): the viewport index (0 based) in which to render
+        /// @return reference to the updated visualizer cloud (allows chainable commands)
+        template<typename T>
+        Cloud& addCloudCorrespondences(const pcl::PointCloud<T>& source, const pcl::PointCloud<T>& target, const pcl::Correspondences& correspondences, const CloudName& name, ViewportIdx viewport = -1);
+
         /// Add a point cloud to render associated with a specific point of the current cloud (each point has its own point cloud)
         /// @param[in] data: PCL point cloud
         /// @param[in] parentCloudName: the name of the parent point cloud, whose points will contain the indexed clouds
