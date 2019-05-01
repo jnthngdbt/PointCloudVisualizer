@@ -112,6 +112,13 @@ namespace pcv
         /// @return reference to the updated visualizer cloud (allows chainable commands)
         Cloud& addSpace(const FeatureName& a, const FeatureName& b, const FeatureName& c);
 
+        /// Add to draw a line from 2 points.
+        /// @param[in] pt1: coordinates of point 1
+        /// @param[in] pt2: coordinates of point 2
+        /// @param[in] viewport (optional): the viewport index (0 based) in which to draw
+        template <typename P1, typename P2>
+        Cloud& addLine(const P1 &pt1, const P2 &pt2, int viewport);
+
         Cloud& setViewport(ViewportIdx viewport);
         Cloud& setSize(int size) { mSize = size; return *this; };
         Cloud& setOpacity(double opacity) { mOpacity = opacity; return *this; };
@@ -134,6 +141,8 @@ namespace pcv
 
         void setParent(VisualizerData* visualizerPtr) { mVisualizerPtr = visualizerPtr; }
 
+        enum class EType {ePoints, eLines};
+
         int mViewport{ 0 };
         int mSize{ 1 };
         double mOpacity{ 1.0 };
@@ -141,9 +150,11 @@ namespace pcv
         std::map<int, CloudsMap> mIndexedClouds;
         std::vector<Feature> mFeatures; // using vector instead of [unordered_]map to keep order of insertion
         std::string mTimestamp;
+        EType mType{ EType::ePoints };
     private:
         void addCloudCommon(ViewportIdx viewport);
         void createTimestamp();
+        static float packRgb(int r, int g, int b) { return static_cast<float>((r << 16) + (g << 8) + (b)); }
 
         VisualizerData* mVisualizerPtr{ nullptr };
     };
@@ -236,6 +247,14 @@ namespace pcv
         /// @param[in] scale (optional): the scale applied to the basis vectors (defaults to 1.0)
         /// @param[in] viewport (optional): the viewport index (0 based) in which to draw
         void addBasis(const Eigen::Vector3f& u1, const Eigen::Vector3f& u2, const Eigen::Vector3f& u3, const Eigen::Vector3f& origin, const std::string& name, double scale = 1.0, ViewportIdx viewport= 0);
+
+        /// Add to draw a line from 2 points.
+        /// @param[in] pt1: coordinates of point 1
+        /// @param[in] pt2: coordinates of point 2
+        /// @param[in] cloudName: the name of the point cloud to which the space is defined
+        /// @param[in] viewport (optional): the viewport index (0 based) in which to draw
+        template <typename P1, typename P2>
+        Cloud& addLine(const P1 &pt1, const P2 &pt2, const CloudName& cloudName, int viewport = -1);
 
         /// Get the refence of a visualizer cloud.
         /// @param[in] name: cloud name

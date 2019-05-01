@@ -56,7 +56,7 @@ int main()
     // Transformed cloud.
     PointsType::Ptr cloudMoved (new PointsType());
     Eigen::Affine3f T = Eigen::Affine3f::Identity();
-    T.translate(Eigen::Vector3f(0.05, 0, 0));
+    T.translate(Eigen::Vector3f(0.05, 0.05, 0.05));
     pcl::transformPointCloud(*cloudModel, *cloudMoved, T);
 
     // Normals.
@@ -262,6 +262,24 @@ int main()
         }
     };
 
+    auto testCloudTypes = [&]()
+    {
+        VISUALIZER_CALL(VisualizerData viewer("test-cloud-types"));
+
+        VISUALIZER_CALL(viewer.addCloud(*cloudModel, "source").setColor(0.5, 0.5, 0.5));
+        VISUALIZER_CALL(viewer.addCloud(*cloudMoved, "target").setColor(1.0, 0.0, 0.0));
+
+        for (int i = 0; i < N; ++i)
+        {
+            const auto& p = cloudModel->at(i);
+            const auto& q = cloudMoved->at(i);
+
+            VISUALIZER_CALL(viewer.addLine(p, q, "lines").setColor(0.0, 1.0, 0.0).setOpacity(0.1));
+        }
+
+        VISUALIZER_CALL(Visualizer(viewer.render()));
+    };
+
     testMultipleClouds();
     testAddingFeaturesAndClouds();
     testCustomGeometryHandler();
@@ -271,6 +289,7 @@ int main()
     testCloudRender();
     testDefaultFeature();
     testBundleSwitch();
+    testCloudTypes();
 
     return 0;
 }

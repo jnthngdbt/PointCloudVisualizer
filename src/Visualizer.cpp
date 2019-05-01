@@ -13,6 +13,27 @@
 
 using namespace pcv;
 
+struct PointLine
+{
+    float x;
+    float y;
+    float z;
+    float x2;
+    float y2;
+    float z2;
+    uint32_t rgb;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW   // make sure new allocators are aligned
+} EIGEN_ALIGN16;                      // enforce SSE padding for correct memory alignment
+
+POINT_CLOUD_REGISTER_POINT_STRUCT(PointLine,
+(float, x, x)
+(float, y, y)
+(float, z, z)
+(float, x2, x2)
+(float, y2, y2)
+(float, z2, z2)
+(uint32_t, rgb, rgb))
+
 Visualizer::Visualizer(const FileName& fileName)
 {
     mBundleSwitchInfo.mCamParams.fovy = -1.0; // put invalid value to detect that it is uninitialized
@@ -140,6 +161,15 @@ void Visualizer::Cloud::parseFileHeader()
                 iss >> mOpacity;
             else if (word == "viewport")
                 iss >> mViewport;
+            else if (word == "type")
+            {
+                std::string type;
+                iss >> type;
+                if (type == "lines")
+                    mType = EType::eLines;
+                else
+                    mType = EType::ePoints;
+            }
         }
     }
 }
@@ -373,46 +403,83 @@ void Visualizer::prepareCloudsForRender(const Clouds& clouds)
 
     for (auto& cloud : clouds)
     {
-        const auto colorHandlers = generateColorHandlers(cloud.mPointCloudMessage);
-        const auto geometryHandlers = generateGeometryHandlers(cloud.mPointCloudMessage);
-
-        if (colorHandlers.size() == 0 || geometryHandlers.size() == 0)
+        if (cloud.mType == Cloud::EType::eLines)
         {
-            logError("[render] Something went wrong. No color or geometry handler. Won't add cloud [" + cloud.mCloudName + "].");
-            continue;
+            getViewer().removeShape(cloud.mCloudName, getViewportId(cloud.mViewport));
+
+            pcl::PointCloud<PointLine>::Ptr lines(new pcl::PointCloud<PointLine>);
+            pcl::fromPCLPointCloud2(*cloud.mPointCloudMessage, *lines);
+
+            const int nbLines = lines->size();
+
+            pcl::PointCloud<pcl::PointXYZ>::Ptr source(new pcl::PointCloud<pcl::PointXYZ>);
+            pcl::copyPointCloud(*lines, *source);
+
+            pcl::PointCloud<pcl::PointXYZ>::Ptr target(new pcl::PointCloud<pcl::PointXYZ>(nbLines, 1));
+            pcl::Correspondences correspondences;
+            correspondences.reserve(nbLines);
+            for (int i = 0; i < nbLines; ++i)
+            {
+                target->points[i].x = lines->points[i].x2;
+                target->points[i].y = lines->points[i].y2;
+                target->points[i].z = lines->points[i].z2;
+                correspondences.emplace_back(i, i, 1);
+            }
+
+            getViewer().addCorrespondences<pcl::PointXYZ>(source, target, correspondences, cloud.mCloudName, getViewportId(cloud.mViewport));
+
+            const auto rgb = lines->front().rgb;
+            const auto r = (rgb >> 16) & 0xFF;
+            const auto g = (rgb >> 8) & 0xFF;
+            const auto b = (rgb) & 0xFF;
+
+            getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_LINE_WIDTH, cloud.mSize, cloud.mCloudName);
+            getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, cloud.mOpacity, cloud.mCloudName);
+            getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, r / 255., g / 255., b / 255., cloud.mCloudName);
         }
-
-        getViewer().removePointCloud(cloud.mCloudName, getViewportId(cloud.mViewport));
-
-        // Add color handlers.
-        for (const auto& color : colorHandlers)
+        else // points
         {
-            getViewer().addPointCloud(
-                cloud.mPointCloudMessage,
-                geometryHandlers[0], // will be duplicate
-                color,
-                Eigen::Vector4f(0, 0, 0, 0),
-                Eigen::Quaternion<float>(0, 0, 0, 0),
-                cloud.mCloudName,
-                getViewportId(cloud.mViewport));
+            const auto colorHandlers = generateColorHandlers(cloud.mPointCloudMessage);
+            const auto geometryHandlers = generateGeometryHandlers(cloud.mPointCloudMessage);
+
+            if (colorHandlers.size() == 0 || geometryHandlers.size() == 0)
+            {
+                logError("[render] Something went wrong. No color or geometry handler. Won't add cloud [" + cloud.mCloudName + "].");
+                continue;
+            }
+
+            getViewer().removePointCloud(cloud.mCloudName, getViewportId(cloud.mViewport));
+
+            // Add color handlers.
+            for (const auto& color : colorHandlers)
+            {
+                getViewer().addPointCloud(
+                    cloud.mPointCloudMessage,
+                    geometryHandlers[0], // will be duplicate
+                    color,
+                    Eigen::Vector4f(0, 0, 0, 0),
+                    Eigen::Quaternion<float>(0, 0, 0, 0),
+                    cloud.mCloudName,
+                    getViewportId(cloud.mViewport));
+            }
+
+            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, cloud.mSize, cloud.mCloudName);
+            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, cloud.mOpacity, cloud.mCloudName);
+
+            // Add geometry handlers (spaces).
+            for (const auto& geometry : geometryHandlers)
+            {
+                getViewer().addPointCloud(
+                    cloud.mPointCloudMessage,
+                    geometry,
+                    Eigen::Vector4f(0, 0, 0, 0),
+                    Eigen::Quaternion<float>(0, 0, 0, 0),
+                    cloud.mCloudName,
+                    getViewportId(cloud.mViewport));
+            }
+
+            getViewer().filterHandlers(cloud.mCloudName);
         }
-
-        getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, cloud.mSize, cloud.mCloudName);
-        getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, cloud.mOpacity, cloud.mCloudName);
-
-        // Add geometry handlers (spaces).
-        for (const auto& geometry : geometryHandlers)
-        {
-            getViewer().addPointCloud(
-                cloud.mPointCloudMessage,
-                geometry,
-                Eigen::Vector4f(0, 0, 0, 0),
-                Eigen::Quaternion<float>(0, 0, 0, 0),
-                cloud.mCloudName,
-                getViewportId(cloud.mViewport));
-        }
-
-        getViewer().filterHandlers(cloud.mCloudName);
     }
 }
 
@@ -467,6 +534,9 @@ void Visualizer::generateCommonHandlersLists(const Clouds& clouds)
 
     for (const auto& cloud : clouds)
     {
+        if (cloud.mType != Cloud::EType::ePoints)
+            continue;
+
         // Color names.
         for (const auto& feature : cloud.mPointCloudMessage->fields)
         {
@@ -688,6 +758,12 @@ void Visualizer::identifyClouds(bool enabled, bool back)
             return 0.01;
         };
 
+        auto getSize = [&]()
+        {
+            if (isIdentificationDisabled || isHighlighted) return cloud.mSize;
+            return 1;
+        };
+
         if (isHighlighted)
         {
             getViewer().addText(cloud.mCloudName, 0, 0, textId, getViewportId(cloud.mViewport));
@@ -696,8 +772,17 @@ void Visualizer::identifyClouds(bool enabled, bool back)
             setColormapSource(cloud.mCloudName);
         }
 
-        getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getOpacity(), cloud.mCloudName);
-        getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, isIdentificationDisabled || isHighlighted ? cloud.mSize : 1, cloud.mCloudName);
+        if (cloud.mType == Cloud::EType::ePoints)
+        {
+            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getOpacity(), cloud.mCloudName);
+            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, getSize(), cloud.mCloudName);
+        }
+        else // shape
+        {
+            getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getOpacity(), cloud.mCloudName);
+            getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_LINE_WIDTH, getSize(), cloud.mCloudName);
+        }
+
         ++i;
     }
 }
