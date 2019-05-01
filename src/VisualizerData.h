@@ -152,6 +152,7 @@ namespace pcv
     private:
         void addCloudCommon(ViewportIdx viewport);
         void createTimestamp();
+        static float packRgb(int r, int g, int b) { return static_cast<float>((r << 16) + (g << 8) + (b)); }
 
         VisualizerData* mVisualizerPtr{ nullptr };
     };

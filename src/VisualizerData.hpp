@@ -89,7 +89,7 @@ namespace pcv
     template <typename P1, typename P2>
     Cloud& Cloud::addLine(const P1 &pt1, const P2 &pt2, int viewport)
     {
-        const std::vector < std::string > requiredLineFeatures = { "x", "y", "z", "x2", "y2", "z2" };
+        const std::vector < std::string > requiredLineFeatures = { "x", "y", "z", "x2", "y2", "z2", "rgb" };
 
         auto addLineFeatures = [&]()
         {
@@ -99,6 +99,12 @@ namespace pcv
             getFeatureData("x2").emplace_back(pt2.x);
             getFeatureData("y2").emplace_back(pt2.y);
             getFeatureData("z2").emplace_back(pt2.z);
+
+            if (hasFeature("rgb")) // propagate RGB
+            {
+                auto& rgb = getFeatureData("rgb");
+                rgb.emplace_back(packRgb(128, 128, 128)); // defaults to gray color
+            }
         };
 
         const bool isNewCloud = getNbFeatures() == 0;

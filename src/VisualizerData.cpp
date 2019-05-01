@@ -332,7 +332,7 @@ Cloud& Cloud::setColor(float r, float g, float b)
         const auto ri = static_cast<uint8_t>(r * 255);
         const auto gi = static_cast<uint8_t>(g * 255);
         const auto bi = static_cast<uint8_t>(b * 255);
-        const auto rgb = static_cast<float>((ri << 16) + (gi << 8) + (bi));
+        const auto rgb = packRgb(ri, gi, bi);
         addFeature(std::vector<float>(N, rgb), "rgb");
     }
 
