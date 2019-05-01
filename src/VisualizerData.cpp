@@ -394,6 +394,16 @@ Cloud& Cloud::setDefaultFeature(const FeatureName& name)
 
 void Cloud::save(const std::string& filename) const
 {
+    auto getTypeString = [](EType type)
+    {
+        switch (type)
+        {
+        case EType::eLines: return "lines"; break;
+        case EType::ePoints: // fallthrough
+        default: return "points";
+        }
+    };
+
     std::stringstream f;
 
     f << "# .PCD v.7 - Point Cloud Data file format" << std::endl;
@@ -402,7 +412,7 @@ void Cloud::save(const std::string& filename) const
     f << "# visualizer cloud opacity " << mOpacity << std::endl;
     f << "# visualizer cloud size " << mSize << std::endl;
     f << "# visualizer cloud viewport " << mViewport << std::endl;
-    f << "# visualizer cloud type " << mType << std::endl;
+    f << "# visualizer cloud type " << getTypeString(mType) << std::endl;
 
     f << "VERSION .7" << std::endl;
 

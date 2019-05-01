@@ -162,7 +162,14 @@ void Visualizer::Cloud::parseFileHeader()
             else if (word == "viewport")
                 iss >> mViewport;
             else if (word == "type")
-                iss >> mType;
+            {
+                std::string type;
+                iss >> type;
+                if (type == "lines")
+                    mType = EType::eLines;
+                else
+                    mType = EType::ePoints;
+            }
         }
     }
 }
@@ -396,7 +403,7 @@ void Visualizer::prepareCloudsForRender(const Clouds& clouds)
 
     for (auto& cloud : clouds)
     {
-        if (cloud.mType == "lines")
+        if (cloud.mType == Cloud::EType::eLines)
         {
             getViewer().removeShape(cloud.mCloudName, getViewportId(cloud.mViewport));
 
@@ -527,7 +534,7 @@ void Visualizer::generateCommonHandlersLists(const Clouds& clouds)
 
     for (const auto& cloud : clouds)
     {
-        if (cloud.mType != "points")
+        if (cloud.mType != Cloud::EType::ePoints)
             continue;
 
         // Color names.
@@ -751,6 +758,12 @@ void Visualizer::identifyClouds(bool enabled, bool back)
             return 0.01;
         };
 
+        auto getSize = [&]()
+        {
+            if (isIdentificationDisabled || isHighlighted) return cloud.mSize;
+            return 1;
+        };
+
         if (isHighlighted)
         {
             getViewer().addText(cloud.mCloudName, 0, 0, textId, getViewportId(cloud.mViewport));
@@ -759,8 +772,17 @@ void Visualizer::identifyClouds(bool enabled, bool back)
             setColormapSource(cloud.mCloudName);
         }
 
-        getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getOpacity(), cloud.mCloudName);
-        getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, isIdentificationDisabled || isHighlighted ? cloud.mSize : 1, cloud.mCloudName);
+        if (cloud.mType == Cloud::EType::ePoints)
+        {
+            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getOpacity(), cloud.mCloudName);
+            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, getSize(), cloud.mCloudName);
+        }
+        else // shape
+        {
+            getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getOpacity(), cloud.mCloudName);
+            getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_LINE_WIDTH, getSize(), cloud.mCloudName);
+        }
+
         ++i;
     }
 }

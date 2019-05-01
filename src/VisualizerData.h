@@ -141,6 +141,8 @@ namespace pcv
 
         void setParent(VisualizerData* visualizerPtr) { mVisualizerPtr = visualizerPtr; }
 
+        enum class EType {ePoints, eLines};
+
         int mViewport{ 0 };
         int mSize{ 1 };
         double mOpacity{ 1.0 };
@@ -148,7 +150,7 @@ namespace pcv
         std::map<int, CloudsMap> mIndexedClouds;
         std::vector<Feature> mFeatures; // using vector instead of [unordered_]map to keep order of insertion
         std::string mTimestamp;
-        std::string mType{ "points" };
+        EType mType{ EType::ePoints };
     private:
         void addCloudCommon(ViewportIdx viewport);
         void createTimestamp();

@@ -93,6 +93,8 @@ namespace pcv
 
         struct Cloud
         {
+            enum class EType {ePoints, eLines};
+
             void parseFileHeader();
 
             std::string mFullName;
@@ -104,7 +106,7 @@ namespace pcv
             int mViewport{ 0 };
             int mSize{ 1 };
             double mOpacity{ 1.0 };
-            std::string mType{ "points" };
+            EType mType{ EType::ePoints };
 
             pcl::PCLPointCloud2::Ptr mPointCloudMessage;
         };

@@ -148,7 +148,7 @@ namespace pcv
             setViewport(viewport);
         }
 
-        mType = "lines";
+        mType = EType::eLines;
         return *this;
     }
 
