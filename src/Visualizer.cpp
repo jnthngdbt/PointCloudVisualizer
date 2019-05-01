@@ -723,6 +723,35 @@ void Visualizer::keyboardEventCallback(const pcl::visualization::KeyboardEvent& 
         if (mCurrentBundleIdx < mBundles.size() - 1)
             mBundleSwitchInfo.mSwitchToBundleIdx = mCurrentBundleIdx + 1;
     }
+    else if ((event.getKeySym() == "Up") && event.keyDown())
+    {
+        if (event.isCtrlPressed())
+            changeCurrentCloudOpacity(0.05);
+    }
+    else if ((event.getKeySym() == "Down") && event.keyDown())
+    {
+        if (event.isCtrlPressed())
+            changeCurrentCloudOpacity(-0.05);
+    }
+}
+
+void Visualizer::changeCurrentCloudOpacity(double opacityDelta)
+{
+    if (mIdentifiedCloudIdx >= 0)
+    {
+        auto& cloud = getCurrentBundle().second[mIdentifiedCloudIdx];
+        cloud.mOpacity += opacityDelta;
+
+        if (cloud.mOpacity > 1.0)
+            cloud.mOpacity -= 1.0;
+        else if (cloud.mOpacity < 0.0)
+            cloud.mOpacity += 1.0;
+
+        if (cloud.mType == Cloud::EType::ePoints)
+            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, cloud.mOpacity, cloud.mCloudName);
+        else // shape
+            getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, cloud.mOpacity, cloud.mCloudName);
+    }
 }
 
 void Visualizer::identifyClouds(bool enabled, bool back)
@@ -753,8 +782,7 @@ void Visualizer::identifyClouds(bool enabled, bool back)
 
         auto getOpacity = [&]()
         {
-            if (isIdentificationDisabled) return cloud.mOpacity;
-            if (isHighlighted) return 1.0;
+            if (isIdentificationDisabled || isHighlighted) return cloud.mOpacity;
             return 0.01;
         };
 
@@ -845,6 +873,11 @@ void Visualizer::printHelp() const
         "          SHIFT + m, M : loop through colormaps backwards \n"
         "   CTRL +         m, M : prompts user input in the console the enter min and max values for the colormap range \n"
         "   CTRL + SHIFT + m, M : use automatic min and max values for the colormap range \n"
+        "\n"
+        " In IDENTIFICATION mode:"
+        "\n"
+        "   CTRL + Up   : increase opacity of selected cloud \n"
+        "   CTRL + Down : decrease opacity of selected cloud \n"
         "\n"
     );
 }

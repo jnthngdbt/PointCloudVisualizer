@@ -158,6 +158,7 @@ namespace pcv
         void identifyClouds(bool enabled, bool back);
         void editColorMap(const pcl::visualization::KeyboardEvent& e);
         void printHelp() const;
+        void changeCurrentCloudOpacity(double opacityDelta);
 
         void setColormapSource(const std::string& id);
 
@@ -188,7 +189,6 @@ namespace pcv
         int mIdentifiedCloudIdx{ -1 };
         std::string mColormapSourceId;
         int mColormap{ pcl::visualization::PCL_VISUALIZER_LUT_JET_INVERSE };
-
     };
 }
 
