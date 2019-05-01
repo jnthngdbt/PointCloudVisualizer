@@ -419,7 +419,7 @@ void Visualizer::prepareCloudsForRender(const Clouds& clouds)
                 correspondences.emplace_back(i, i, 1);
             }
 
-            getViewer().addCorrespondences<pcl::PointXYZ>(source, target, correspondences, cloud.mCloudName, cloud.mViewport);
+            getViewer().addCorrespondences<pcl::PointXYZ>(source, target, correspondences, cloud.mCloudName, getViewportId(cloud.mViewport));
 
             const auto rgb = lines->front().rgb;
             const auto r = (rgb >> 16) & 0xFF;
