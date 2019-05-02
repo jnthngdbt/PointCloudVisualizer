@@ -188,7 +188,7 @@ namespace pcv
         int mInfoTextViewportId{ -1 };
         int mIdentifiedCloudIdx{ -1 };
         std::string mColormapSourceId;
-        int mColormap{ pcl::visualization::PCL_VISUALIZER_LUT_JET_INVERSE };
+        int mColormap{ pcl::visualization::PCL_VISUALIZER_LUT_VIRIDIS };
     };
 }
 

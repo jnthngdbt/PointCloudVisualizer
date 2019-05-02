@@ -463,9 +463,6 @@ void Visualizer::prepareCloudsForRender(const Clouds& clouds)
                     getViewportId(cloud.mViewport));
             }
 
-            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, cloud.mSize, cloud.mCloudName);
-            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, cloud.mOpacity, cloud.mCloudName);
-
             // Add geometry handlers (spaces).
             for (const auto& geometry : geometryHandlers)
             {
@@ -479,6 +476,11 @@ void Visualizer::prepareCloudsForRender(const Clouds& clouds)
             }
 
             getViewer().filterHandlers(cloud.mCloudName);
+
+            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, cloud.mSize, cloud.mCloudName);
+            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, cloud.mOpacity, cloud.mCloudName);
+            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_LUT, mColormap, cloud.mCloudName);
+            getViewer().setColormapRangeAuto(cloud.mCloudName);
         }
     }
 }

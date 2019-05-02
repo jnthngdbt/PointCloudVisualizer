@@ -255,7 +255,7 @@ int main()
             T.translate(Eigen::Vector3f(0.05, 0, 0));
             pcl::transformPointCloud(*cloudModel, *cloudIterating, T);
 
-            VISUALIZER_CALL(viewer.addCloud(*cloudModel, "iteration-model").render());
+            VISUALIZER_CALL(viewer.addCloud(*cloudModel, "iteration-model").setDefaultFeature("z").render());
             VISUALIZER_CALL(viewer.addCloud(*cloudIterating, "iteration-mover").render());
 
             VISUALIZER_CALL(if(i == N-1) Visualizer(viewer.render()));
