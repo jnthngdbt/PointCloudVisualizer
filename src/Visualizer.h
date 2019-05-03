@@ -168,7 +168,8 @@ namespace pcv
         void identifyClouds(bool enabled, bool back);
         void editColorMap(const pcl::visualization::KeyboardEvent& e);
         void printHelp() const;
-        void changeCurrentCloudOpacity(double opacityDelta);
+        void changeCurrentCloudOpacity(double delta);
+        void changeCurrentCloudSize(double delta);
 
         void setColormapSource(const std::string& id);
 

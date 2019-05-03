@@ -415,7 +415,7 @@ void Visualizer::switchBundle()
     }
 
     for (const auto& cloud : clouds)
-        getViewer().updateColorHandlerIndex(cloud.mCloudName, colorIdx);
+            getViewer().updateColorHandlerIndex(cloud.mCloudName, colorIdx);
 }
 
 void Visualizer::prepareCloudsForRender(const Clouds& clouds)
@@ -754,21 +754,25 @@ void Visualizer::keyboardEventCallback(const pcl::visualization::KeyboardEvent& 
     {
         if (event.isCtrlPressed())
             changeCurrentCloudOpacity(0.05);
+        else if (event.isAltPressed())
+            changeCurrentCloudSize(1);
     }
     else if ((event.getKeySym() == "Down") && event.keyDown())
     {
         if (event.isCtrlPressed())
             changeCurrentCloudOpacity(-0.05);
+        else if (event.isAltPressed())
+            changeCurrentCloudSize(-1);
     }
 }
 
-void Visualizer::changeCurrentCloudOpacity(double opacityDelta)
+void Visualizer::changeCurrentCloudOpacity(double delta)
 {
     if (mIdentifiedCloudIdx >= 0)
     {
         auto& cloud = getCurrentBundle().second[mIdentifiedCloudIdx];
         auto& props = getCloudRenderingProperties(cloud);
-        props.mOpacity += opacityDelta;
+        props.mOpacity += delta;
 
         if (props.mOpacity > 1.0)
             props.mOpacity -= 1.0;
@@ -779,6 +783,24 @@ void Visualizer::changeCurrentCloudOpacity(double opacityDelta)
             getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, props.mOpacity, cloud.mCloudName);
         else // shape
             getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, props.mOpacity, cloud.mCloudName);
+    }
+}
+
+void Visualizer::changeCurrentCloudSize(double delta)
+{
+    if (mIdentifiedCloudIdx >= 0)
+    {
+        auto& cloud = getCurrentBundle().second[mIdentifiedCloudIdx];
+        auto& props = getCloudRenderingProperties(cloud);
+        props.mSize += delta;
+
+        if (props.mSize < 1.0)
+            props.mSize = 1.0;
+
+        if (cloud.mType == Cloud::EType::ePoints)
+            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, props.mSize, cloud.mCloudName);
+        else // shape
+            getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_LINE_WIDTH, props.mSize, cloud.mCloudName);
     }
 }
 
