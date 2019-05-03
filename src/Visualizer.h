@@ -14,6 +14,7 @@
 
 namespace pcv
 {
+    using CloudName = std::string;
     using FeatureName = std::string;
     using FileName = std::string;
     using ViewportIdx = int;
@@ -91,6 +92,13 @@ namespace pcv
             pcl::visualization::Camera mCamParams;
         };
 
+        struct CloudRenderingProperties
+        {
+            int mSize{ 1 };
+            double mOpacity{ 1.0 };
+            int mColormap{ pcl::visualization::PCL_VISUALIZER_LUT_VIRIDIS };
+        };
+
         struct Cloud
         {
             enum class EType {ePoints, eLines};
@@ -102,11 +110,10 @@ namespace pcv
             std::string mTimeStamp;
             std::string mBundleName;
             std::string mCloudName;
-
-            int mViewport{ 0 };
-            int mSize{ 1 };
-            double mOpacity{ 1.0 };
             EType mType{ EType::ePoints };
+            int mViewport{ 0 };
+
+            CloudRenderingProperties mRenderingProperties;
 
             pcl::PCLPointCloud2::Ptr mPointCloudMessage;
         };
@@ -117,6 +124,8 @@ namespace pcv
         using Bundles = std::vector<Bundle>;
 
         void generateBundles(const FileName& fileName);
+        void setCloudRenderingProperties(const Cloud& newCloud);
+        CloudRenderingProperties& getCloudRenderingProperties(const Cloud& cloud) { return mProperties[cloud.mCloudName]; };
 
         void addCloudToBundle(const Cloud& newCloud);
 
@@ -188,7 +197,8 @@ namespace pcv
         int mInfoTextViewportId{ -1 };
         int mIdentifiedCloudIdx{ -1 };
         std::string mColormapSourceId;
-        int mColormap{ pcl::visualization::PCL_VISUALIZER_LUT_VIRIDIS };
+
+        std::map<CloudName, CloudRenderingProperties> mProperties;
     };
 }
 

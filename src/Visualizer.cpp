@@ -122,6 +122,8 @@ void Visualizer::generateBundles(const FileName& inputFileOrFolder)
         // Load additionnal data from file header.
         newCloud.parseFileHeader();
 
+        setCloudRenderingProperties(newCloud);
+
         // Add this cloud to the bundle array.
         addCloudToBundle(newCloud);
 
@@ -156,9 +158,9 @@ void Visualizer::Cloud::parseFileHeader()
             iss >> word >> word >> word >> word; // # visualizer cloud <property>
 
             if (word == "size")
-                iss >> mSize;
+                iss >> mRenderingProperties.mSize;
             else if (word == "opacity")
-                iss >> mOpacity;
+                iss >> mRenderingProperties.mOpacity;
             else if (word == "viewport")
                 iss >> mViewport;
             else if (word == "type")
@@ -171,6 +173,14 @@ void Visualizer::Cloud::parseFileHeader()
                     mType = EType::ePoints;
             }
         }
+    }
+}
+
+void Visualizer::setCloudRenderingProperties(const Cloud& newCloud)
+{
+    if (mProperties.count(newCloud.mCloudName) == 0) // new cloud name
+    {
+        mProperties[newCloud.mCloudName] = newCloud.mRenderingProperties;
     }
 }
 
@@ -433,8 +443,8 @@ void Visualizer::prepareCloudsForRender(const Clouds& clouds)
             const auto g = (rgb >> 8) & 0xFF;
             const auto b = (rgb) & 0xFF;
 
-            getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_LINE_WIDTH, cloud.mSize, cloud.mCloudName);
-            getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, cloud.mOpacity, cloud.mCloudName);
+            getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_LINE_WIDTH, getCloudRenderingProperties(cloud).mSize, cloud.mCloudName);
+            getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getCloudRenderingProperties(cloud).mOpacity, cloud.mCloudName);
             getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, r / 255., g / 255., b / 255., cloud.mCloudName);
         }
         else // points
@@ -477,9 +487,9 @@ void Visualizer::prepareCloudsForRender(const Clouds& clouds)
 
             getViewer().filterHandlers(cloud.mCloudName);
 
-            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, cloud.mSize, cloud.mCloudName);
-            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, cloud.mOpacity, cloud.mCloudName);
-            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_LUT, mColormap, cloud.mCloudName);
+            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, getCloudRenderingProperties(cloud).mSize, cloud.mCloudName);
+            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getCloudRenderingProperties(cloud).mOpacity, cloud.mCloudName);
+            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_LUT, getCloudRenderingProperties(cloud).mColormap, cloud.mCloudName);
             getViewer().setColormapRangeAuto(cloud.mCloudName);
         }
     }
@@ -742,17 +752,18 @@ void Visualizer::changeCurrentCloudOpacity(double opacityDelta)
     if (mIdentifiedCloudIdx >= 0)
     {
         auto& cloud = getCurrentBundle().second[mIdentifiedCloudIdx];
-        cloud.mOpacity += opacityDelta;
+        auto& props = getCloudRenderingProperties(cloud);
+        props.mOpacity += opacityDelta;
 
-        if (cloud.mOpacity > 1.0)
-            cloud.mOpacity -= 1.0;
-        else if (cloud.mOpacity < 0.0)
-            cloud.mOpacity += 1.0;
+        if (props.mOpacity > 1.0)
+            props.mOpacity -= 1.0;
+        else if (props.mOpacity < 0.0)
+            props.mOpacity += 1.0;
 
         if (cloud.mType == Cloud::EType::ePoints)
-            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, cloud.mOpacity, cloud.mCloudName);
+            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, props.mOpacity, cloud.mCloudName);
         else // shape
-            getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, cloud.mOpacity, cloud.mCloudName);
+            getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, props.mOpacity, cloud.mCloudName);
     }
 }
 
@@ -784,13 +795,13 @@ void Visualizer::identifyClouds(bool enabled, bool back)
 
         auto getOpacity = [&]()
         {
-            if (isIdentificationDisabled || isHighlighted) return cloud.mOpacity;
+            if (isIdentificationDisabled || isHighlighted) return getCloudRenderingProperties(cloud).mOpacity;
             return 0.01;
         };
 
         auto getSize = [&]()
         {
-            if (isIdentificationDisabled || isHighlighted) return cloud.mSize;
+            if (isIdentificationDisabled || isHighlighted) return getCloudRenderingProperties(cloud).mSize;
             return 1;
         };
 
@@ -841,20 +852,21 @@ void Visualizer::editColorMap(const pcl::visualization::KeyboardEvent& e)
     else // loop through available colormaps
     {
         const int ci[] = { 0, 1, 2, 3, 4, 5, 7 }; // 6 is not a colormap (range auto) (to see available colormaps, search for PCL_VISUALIZER_LUT_JET)
-        const auto colormapIt = std::find(std::cbegin(ci), std::cend(ci), mColormap);
+        auto& props = mProperties[mColormapSourceId];
+        const auto colormapIt = std::find(std::cbegin(ci), std::cend(ci), props.mColormap);
 
         if (e.isShiftPressed()) // go backwards
             if (colormapIt == std::cbegin(ci))
-                mColormap = *(std::end(ci) - 1);
+                props.mColormap = *(std::end(ci) - 1);
             else
-                mColormap = *(colormapIt - 1);
+                props.mColormap = *(colormapIt - 1);
         else // go forward
             if (colormapIt >= std::cend(ci) - 1)
-                mColormap = *std::cbegin(ci);
+                props.mColormap = *std::cbegin(ci);
             else
-                mColormap = *(colormapIt + 1);
+                props.mColormap = *(colormapIt + 1);
 
-        getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_LUT, mColormap, mColormapSourceId);
+        getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_LUT, props.mColormap, mColormapSourceId);
     }
 }
 
