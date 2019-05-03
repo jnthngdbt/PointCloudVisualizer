@@ -17,6 +17,8 @@
 #include "Visualizer.h"
 #include "VisualizerData.h"
 
+#define RUN_TIME_VISUALIZER(x) x // can be Visualizer(x) or x
+
 #define VISUALIZER_CALL(x) x
 
 using namespace pcv;
@@ -133,7 +135,7 @@ int main()
         VISUALIZER_CALL(viewer.addCloud(*cloudNoisy, NAME + "-1", viewport));
         viewport++;
 
-        VISUALIZER_CALL(Visualizer(viewer.render()));
+        VISUALIZER_CALL(RUN_TIME_VISUALIZER(viewer.render()));
     };
 
     auto testMultipleClouds = [&]()
@@ -144,7 +146,7 @@ int main()
         VISUALIZER_CALL(viewer.addCloud(*cloudModel, "model").addCloud(*normals).setOpacity(0.7));
         VISUALIZER_CALL(viewer.addCloud(*cloudPatch1, "patch").setColor(1, 0, 0).setSize(3));
 
-        VISUALIZER_CALL(Visualizer(viewer.render()));
+        VISUALIZER_CALL(RUN_TIME_VISUALIZER(viewer.render()));
     };
 
     auto testCustomGeometryHandler = [&]()
@@ -157,7 +159,7 @@ int main()
         VISUALIZER_CALL(viewer.addFeature(rnd2, "u3", name));
         VISUALIZER_CALL(viewer.addSpace("u1", "u2", "u3", name).addCloud(*normals));
 
-        VISUALIZER_CALL(Visualizer(viewer.render()));
+        VISUALIZER_CALL(RUN_TIME_VISUALIZER(viewer.render()));
     };
 
     auto testIndexedClouds = [&]()
@@ -191,7 +193,7 @@ int main()
             ++i;
         }
 
-        VISUALIZER_CALL(Visualizer(viewer.render()));
+        VISUALIZER_CALL(RUN_TIME_VISUALIZER(viewer.render()));
     };
 
     auto testConsistentHandlers = [&]()
@@ -202,7 +204,7 @@ int main()
         VISUALIZER_CALL(viewer.addCloud(*cloudModel, "model").addCloud(*normals).setOpacity(0.7));          // x, y, z + normals
         VISUALIZER_CALL(viewer.addCloud(*cloudPatch1, "patch").setColor(1, 0, 0).setSize(3));               // x, y, z
 
-        VISUALIZER_CALL(Visualizer(viewer.render()));
+        VISUALIZER_CALL(RUN_TIME_VISUALIZER(viewer.render()));
     };
 
     auto testOrderingFeatures = [&]()
@@ -212,7 +214,7 @@ int main()
         VISUALIZER_CALL(viewer.addCloud(*cloudModel, "cloud").addFeature(rnd, "randv").addFeature(idx, "index").addFeature(normals->points, "c", [](const pcl::Normal& p) { return p.curvature; }));
         VISUALIZER_CALL(viewer.setFeaturesOrder({"index", "c"}));
 
-        VISUALIZER_CALL(Visualizer(viewer.render()));
+        VISUALIZER_CALL(RUN_TIME_VISUALIZER(viewer.render()));
     };
 
     auto testCloudRender = [&]()
@@ -239,7 +241,7 @@ int main()
         VISUALIZER_CALL(viewer.addCloud(*cloudNoisy, "rgb", 1).setColor(0.0, 1.0, 0.0));
         VISUALIZER_CALL(viewer.addCloud(*cloudMoved, "default", 2).setDefaultFeature("z"));
 
-        VISUALIZER_CALL(Visualizer(viewer.render()));
+        VISUALIZER_CALL(RUN_TIME_VISUALIZER(viewer.render()));
     };
 
     auto testBundleSwitch = [&]()
@@ -258,7 +260,7 @@ int main()
             VISUALIZER_CALL(viewer.addCloud(*cloudModel, "iteration-model").setDefaultFeature("z").render());
             VISUALIZER_CALL(viewer.addCloud(*cloudIterating, "iteration-mover").render());
 
-            VISUALIZER_CALL(if(i == N-1) Visualizer(viewer.render()));
+            VISUALIZER_CALL(if(i == N-1) RUN_TIME_VISUALIZER(viewer.render()));
         }
     };
 
@@ -277,7 +279,7 @@ int main()
             VISUALIZER_CALL(viewer.addLine(p, q, "lines").setColor(0.0, 1.0, 0.0).setOpacity(0.1));
         }
 
-        VISUALIZER_CALL(Visualizer(viewer.render()));
+        VISUALIZER_CALL(RUN_TIME_VISUALIZER(viewer.render()));
     };
 
     auto testColormap = [&]()
@@ -288,7 +290,7 @@ int main()
         VISUALIZER_CALL(viewer.addCloud(*cloudModel, "y", 1).setDefaultFeature("y").setColormapRange(0.2, 0.8));
         VISUALIZER_CALL(viewer.addCloud(*cloudModel, "z", 2).setDefaultFeature("z"));
 
-        VISUALIZER_CALL(Visualizer(viewer.render()));
+        VISUALIZER_CALL(RUN_TIME_VISUALIZER(viewer.render()));
     };
 
     testMultipleClouds();
