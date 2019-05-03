@@ -414,6 +414,8 @@ void Visualizer::switchBundle()
         colorIdx = mBundleSwitchInfo.mColorHandle;
     }
 
+    mIdentifiedCloudIdx = -1;
+
     for (const auto& cloud : clouds)
         if (cloud.mType == Cloud::EType::ePoints)
             getViewer().updateColorHandlerIndex(cloud.mCloudName, colorIdx);
