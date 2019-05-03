@@ -280,6 +280,17 @@ int main()
         VISUALIZER_CALL(Visualizer(viewer.render()));
     };
 
+    auto testColormap = [&]()
+    {
+        VISUALIZER_CALL(VisualizerData viewer("test-colormap"));
+
+        VISUALIZER_CALL(viewer.addCloud(*cloudModel, "x", 0).setDefaultFeature("x"));
+        VISUALIZER_CALL(viewer.addCloud(*cloudModel, "y", 1).setDefaultFeature("y").setColormapRange(0.2, 0.8));
+        VISUALIZER_CALL(viewer.addCloud(*cloudModel, "z", 2).setDefaultFeature("z"));
+
+        VISUALIZER_CALL(Visualizer(viewer.render()));
+    };
+
     testMultipleClouds();
     testAddingFeaturesAndClouds();
     testCustomGeometryHandler();
@@ -290,6 +301,7 @@ int main()
     testDefaultFeature();
     testBundleSwitch();
     testCloudTypes();
+    testColormap();
 
     return 0;
 }

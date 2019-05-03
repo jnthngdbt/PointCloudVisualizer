@@ -125,6 +125,7 @@ namespace pcv
 
         Cloud& setColor(float r, float g, float b);
         Cloud& setDefaultFeature(const FeatureName& name);
+        Cloud& setColormapRange(double min, double max);
 
         int getNbPoints() const;
         int getNbFeatures() const { return static_cast<int>(mFeatures.size()); };
@@ -146,6 +147,7 @@ namespace pcv
         int mViewport{ 0 };
         int mSize{ 1 };
         double mOpacity{ 1.0 };
+        std::vector<double> mColormapRange;
         std::vector<Space> mSpaces; // using vector instead of [unordered_]map to keep order of insertion
         std::map<int, CloudsMap> mIndexedClouds;
         std::vector<Feature> mFeatures; // using vector instead of [unordered_]map to keep order of insertion

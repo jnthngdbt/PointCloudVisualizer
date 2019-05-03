@@ -172,6 +172,17 @@ void Visualizer::Cloud::parseFileHeader()
                 else
                     mType = EType::ePoints;
             }
+            else if (word == "colormap")
+            {
+                iss >> word;
+                if (word == "range")
+                {
+                    double min, max;
+                    iss >> min;
+                    iss >> max;
+                    mRenderingProperties.mColormapRange = { min, max };
+                }
+            }
         }
     }
 }
@@ -487,10 +498,14 @@ void Visualizer::prepareCloudsForRender(const Clouds& clouds)
 
             getViewer().filterHandlers(cloud.mCloudName);
 
-            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, getCloudRenderingProperties(cloud).mSize, cloud.mCloudName);
-            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getCloudRenderingProperties(cloud).mOpacity, cloud.mCloudName);
-            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_LUT, getCloudRenderingProperties(cloud).mColormap, cloud.mCloudName);
+            const auto& props = getCloudRenderingProperties(cloud);
+            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, props.mSize, cloud.mCloudName);
+            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, props.mOpacity, cloud.mCloudName);
+            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_LUT, props.mColormap, cloud.mCloudName);
             getViewer().setColormapRangeAuto(cloud.mCloudName);
+
+            if (props.mColormapRange.size() == 2)
+                getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_LUT_RANGE, props.mColormapRange[0], props.mColormapRange[1], cloud.mCloudName); // does range values check
         }
     }
 }
@@ -830,12 +845,15 @@ void Visualizer::identifyClouds(bool enabled, bool back)
 
 void Visualizer::editColorMap(const pcl::visualization::KeyboardEvent& e)
 {
+    auto& props = mProperties[mColormapSourceId];
+
     if (e.isCtrlPressed()) // edit colormap range
     {
         if (e.isShiftPressed())
         {
             getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_LUT_RANGE, pcl::visualization::PCL_VISUALIZER_LUT_RANGE_AUTO, mColormapSourceId);
             getViewer().setColormapRangeAuto(mColormapSourceId);
+            props.mColormapRange.clear();
         }
         else // set colormap range by asking user inputs
         {
@@ -846,13 +864,13 @@ void Visualizer::editColorMap(const pcl::visualization::KeyboardEvent& e)
             std::cout << "Enter colormap range MAX value: ";
             std::cin >> lutMax;
             getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_LUT_RANGE, lutMin, lutMax, mColormapSourceId); // does range values check
+            props.mColormapRange = { lutMin, lutMax };
             std::cout << "-----------------------" << std::endl;
         }
     }
     else // loop through available colormaps
     {
         const int ci[] = { 0, 1, 2, 3, 4, 5, 7 }; // 6 is not a colormap (range auto) (to see available colormaps, search for PCL_VISUALIZER_LUT_JET)
-        auto& props = mProperties[mColormapSourceId];
         const auto colormapIt = std::find(std::cbegin(ci), std::cend(ci), props.mColormap);
 
         if (e.isShiftPressed()) // go backwards

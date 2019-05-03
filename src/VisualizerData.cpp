@@ -379,7 +379,6 @@ void Cloud::render() const
     if (mVisualizerPtr) mVisualizerPtr->render();
 }
 
-
 Cloud& Cloud::setDefaultFeature(const FeatureName& name)
 {
     if (!hasFeature(name))
@@ -389,6 +388,12 @@ Cloud& Cloud::setDefaultFeature(const FeatureName& name)
     else
         addFeature(getFeatureData(name), "default");
 
+    return *this;
+}
+
+Cloud& Cloud::setColormapRange(double min, double max)
+{
+    mColormapRange = { min, max };
     return *this;
 }
 
@@ -413,6 +418,9 @@ void Cloud::save(const std::string& filename) const
     f << "# visualizer cloud size " << mSize << std::endl;
     f << "# visualizer cloud viewport " << mViewport << std::endl;
     f << "# visualizer cloud type " << getTypeString(mType) << std::endl;
+
+    if (mColormapRange.size() == 2)
+        f << "# visualizer cloud colormap range " << mColormapRange[0] << " " << mColormapRange[1] << std::endl;
 
     f << "VERSION .7" << std::endl;
 
