@@ -68,14 +68,18 @@ const FileNames& VisualizerData::render()
             cloud.save(fileName);
 
 #ifdef SAVE_PLY
-            pcl::PCLPointCloud2::Ptr pclCloudMsg(new pcl::PCLPointCloud2());
-            pcl::io::loadPCDFile(fileName, *pclCloudMsg);
-            pcl::io::savePLYFile(
-                fileName.substr(0, fileName.size() - 4) + ".ply", 
-                *pclCloudMsg,
-                Eigen::Vector4f::Zero(),
-                Eigen::Quaternionf::Identity(),
-                true); // binary
+            if (cloud.hasFeature("rgb"))
+            {
+                pcl::PointCloud<pcl::PointXYZ> pointcloud; // not the best, we lose other features, and we assume that x, y, z are present
+                pcl::io::loadPCDFile(fileName, pointcloud);
+                pcl::io::savePLYFile(fileName.substr(0, fileName.size() - 4) + ".ply", pointcloud, true); // binary
+            }
+            else
+            {
+                pcl::PCLPointCloud2::Ptr pclCloudMsg(new pcl::PCLPointCloud2()); // this would be best, but there is a bug saving a PLY with rgb feature
+                pcl::io::loadPCDFile(fileName, *pclCloudMsg);
+                pcl::io::savePLYFile(fileName.substr(0, fileName.size() - 4) + ".ply", *pclCloudMsg, Eigen::Vector4f::Zero(), Eigen::Quaternionf::Identity(), true); // binary
+            }
 #endif
         }
         else
