@@ -306,6 +306,19 @@ void Visualizer::render(const Bundle& bundle)
 
         getViewer().spinOnce(100);
 
+        // Point size can be changed with +/- in default PCL implementation. It changes point size of all clouds
+        // in the viewport where the mouse is pointing. Since it is not trivial to keep track of those changes,
+        // here is a workaround to sync the point size value for all clouds.
+        if (mIdentifiedCloudIdx == -1) // do not do this in identification mode
+        {
+            for (const auto& cloud : bundle.second)
+            {
+                double size{ 1 };
+                getViewer().getPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, size, cloud.mCloudName);
+                getCloudRenderingProperties(cloud).mSize = (int)size;
+            }
+        }
+
         if (mustSwitchBundle())
             mBundleSwitchInfo.mColorHandle = colorIdx;
 
