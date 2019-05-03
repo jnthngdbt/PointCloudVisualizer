@@ -198,9 +198,9 @@ int main()
     {
         VISUALIZER_CALL(VisualizerData viewer("test-consistent-handlers"));
 
-        VISUALIZER_CALL(viewer.addCloud(*cloudNoisy, "scan").setOpacity(0.4));                                          // x, y, z
-        VISUALIZER_CALL(viewer.addCloud(*cloudModel, "model").addCloud(*normals).setOpacity(0.7));                      // x, y, z + normals
-        VISUALIZER_CALL(viewer.addCloud(*cloudPatch1, "patch").addFeature(rnd, "randv").setColor(1, 0, 0).setSize(3));  // x, y, z, randv
+        VISUALIZER_CALL(viewer.addCloud(*cloudNoisy, "scan").addFeature(rnd, "randv").setOpacity(0.4));     // x, y, z, randv
+        VISUALIZER_CALL(viewer.addCloud(*cloudModel, "model").addCloud(*normals).setOpacity(0.7));          // x, y, z + normals
+        VISUALIZER_CALL(viewer.addCloud(*cloudPatch1, "patch").setColor(1, 0, 0).setSize(3));               // x, y, z
 
         VISUALIZER_CALL(Visualizer(viewer.render()));
     };
