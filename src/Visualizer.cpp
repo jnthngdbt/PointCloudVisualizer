@@ -256,7 +256,7 @@ int Visualizer::getColorHandlerIndex()
 void Visualizer::reinstantiateViewer()
 {
     const auto& bundle = getCurrentBundle();
-    mViewer.reset(new PclVisualizer(bundle.first + " - " + bundle.second.front().mTimeStamp));
+    mViewer.reset(new PclVisualizer("Point Cloud Visualizer")); // temp name, will be overwritten
 
     int nbRows{ 1 };
     int nbCols{ 0 };
@@ -409,6 +409,8 @@ void Visualizer::switchBundle()
         mViewer->removeAllPointClouds();
         mViewer->removeAllShapes();
     }
+
+    getViewer().setWindowName(getCurrentBundle().first + " - " + getCurrentBundle().second.front().mTimeStamp);
 
     const auto& clouds = getCurrentBundle().second;
 
