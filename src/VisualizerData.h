@@ -165,6 +165,7 @@ namespace pcv
     {
     public:
         VisualizerData(const std::string& name);
+        ~VisualizerData() { render(); } // force render (saving files) at destruction
 
         static const std::string sFilePrefix;
         static const std::string sFolder;
