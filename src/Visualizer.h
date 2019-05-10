@@ -118,10 +118,16 @@ namespace pcv
 
             pcl::PCLPointCloud2::Ptr mPointCloudMessage;
         };
+
         using Clouds = std::vector<Cloud>;
 
-        using BundleName = std::string;
-        using Bundle = std::pair<BundleName, Clouds>;
+        struct Bundle
+        {
+            std::string mName;
+            Clouds mClouds;
+            int mScopeDepth{ 0 };
+        };
+
         using Bundles = std::vector<Bundle>;
 
         void generateBundles(const FileName& fileName);
@@ -152,6 +158,7 @@ namespace pcv
 
         const Bundle& getCurrentBundle() const;
         Bundle& getCurrentBundle();
+        int getNbBundles() const { return mBundles.size(); }
 
         void logError(const std::string& msg) const { std::cout << "[VISUALIZER][ERROR]" << msg << std::endl; }
         void logWarning(const std::string& msg) const { std::cout << "[VISUALIZER][WARNING]" << msg << std::endl; }
@@ -184,6 +191,7 @@ namespace pcv
         int getColorHandlerIndex();
 
         void switchBundle();
+        void printBundleStack();
 
         std::shared_ptr<PclVisualizer> mViewer;
         std::vector<int> mViewportIds;

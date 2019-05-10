@@ -40,7 +40,7 @@ Visualizer::Visualizer(const FileName& fileName)
 
     generateBundles(fileName);
 
-    if (mBundles.size() > 0)
+    if (getNbBundles() > 0)
     {
         while (mBundleSwitchInfo.mSwitchToBundleIdx >= 0)
         {
@@ -65,7 +65,7 @@ void Visualizer::generateBundles(const FileName& inputFileOrFolder)
     const auto folder = isInputDir ? fileOrFolderPath : fs::path(fileOrFolderPath).parent_path();
     const auto filesIt = boost::make_iterator_range(fs::directory_iterator(folder), {});
 
-    BundleName currentBundleName = "";
+    std::string currentBundleName = "";
 
     for (auto& it : filesIt)
     {
@@ -129,11 +129,11 @@ void Visualizer::generateBundles(const FileName& inputFileOrFolder)
 
         // Make the app start with the bundle of the input file.
         if (!isInputDir && (newCloud.mFileName == fileOrFolderPath.stem().string()))
-            mBundleSwitchInfo.mSwitchToBundleIdx = mBundles.size() - 1;
+            mBundleSwitchInfo.mSwitchToBundleIdx = getNbBundles() - 1;
     }
 
     if (isInputDir)
-        mBundleSwitchInfo.mSwitchToBundleIdx = mBundles.size() - 1; // start with most recent
+        mBundleSwitchInfo.mSwitchToBundleIdx = getNbBundles() - 1; // start with most recent
 }
 
 void Visualizer::Cloud::parseFileHeader()
@@ -207,50 +207,76 @@ void Visualizer::addCloudToBundle(const Cloud& newCloud)
     auto& bundles = mBundles;
     auto createNewBundle = [&bundles](const Cloud& newCloud)
     {
-        bundles.push_back(std::make_pair(newCloud.mBundleName, Clouds(1, newCloud)));
+        bundles.push_back({ newCloud.mBundleName, Clouds(1, newCloud) });
     };
 
-    if (mBundles.size() == 0)
+    auto getLastBundleWithName = [&bundles](const std::string& bundleName)
+    {
+        return std::find_if(bundles.rbegin(), bundles.rend(),
+            [&bundleName](const Bundle& b) { return b.mName == bundleName; });
+    };
+
+    auto bundleExists = [&bundles](const std::string& bundleName)
+    {
+        return 0 < std::count_if(bundles.begin(), bundles.end(),
+            [&bundleName](const Bundle& b) { return b.mName == bundleName; });
+    };
+
+    // Determine if creating a new bundle with the current cloud or add it
+    // to an existing bundle (current or previous).
+
+    if (getNbBundles() == 0) // no bundles yet, create a new (the first)
     {
         createNewBundle(newCloud);
     }
     else
     {
         auto& currentBundle = mBundles.back();
-        const auto& currentBundleName = currentBundle.first;
-        auto& currentBundleClouds = currentBundle.second;
 
-        if (newCloud.mBundleName != currentBundleName)
+        if (newCloud.mBundleName != currentBundle.mName) // not for the current bundle
+        {
+            if (bundleExists(newCloud.mBundleName)) // may be added to a previous bundle with same name
+            {
+                auto lastBundleIt = getLastBundleWithName(newCloud.mBundleName);
+                if (hasCloudName(lastBundleIt->mClouds, newCloud.mCloudName)) // previous bundle with this name already has this cloud, so create new bundle
+                    createNewBundle(newCloud);
+                else // this cloud does not exists in that previous bundle, add the cloud to it
+                {
+                    lastBundleIt->mClouds.push_back(newCloud);
+
+                    ////////////// TODO for (auto it = lastBundleIt; it != std::end(mBundles); )
+                }
+            }
+            else // this is a new bundle
+                createNewBundle(newCloud);
+        }
+        else if (hasCloudName(currentBundle.mClouds, newCloud.mCloudName)) // current bundle already has this cloud, must be a new bundle
         {
             createNewBundle(newCloud);
         }
-        else if (hasCloudName(currentBundleClouds, newCloud.mCloudName))
+        else // add the cloud to current bundle
         {
-            createNewBundle(newCloud);
-        }
-        else
-        {
-            currentBundleClouds.push_back(newCloud);
+            currentBundle.mClouds.push_back(newCloud);
         }
     }
 }
 
 const Visualizer::Bundle& Visualizer::getCurrentBundle() const
 {
-    assert(mBundles.size() > mCurrentBundleIdx);
+    assert(getNbBundles() > mCurrentBundleIdx);
     return mBundles[mCurrentBundleIdx];
 }
 
 Visualizer::Bundle& Visualizer::getCurrentBundle()
 {
-    assert(mBundles.size() > mCurrentBundleIdx);
+    assert(getNbBundles() > mCurrentBundleIdx);
     return mBundles[mCurrentBundleIdx];
 }
 
 int Visualizer::getColorHandlerIndex()
 {
     // All clouds should have the same color handlers, so we can take the first.
-    return getViewer().getColorHandlerIndex(getCurrentBundle().second.cbegin()->mCloudName); // if colorIdx is 0, user pressed numkey '1'
+    return getViewer().getColorHandlerIndex(getCurrentBundle().mClouds.cbegin()->mCloudName); // if colorIdx is 0, user pressed numkey '1'
 }
 
 void Visualizer::reinstantiateViewer()
@@ -311,7 +337,7 @@ void Visualizer::render(const Bundle& bundle)
         // here is a workaround to sync the point size value for all clouds.
         if (mIdentifiedCloudIdx == -1) // do not do this in identification mode
         {
-            for (const auto& cloud : bundle.second)
+            for (const auto& cloud : bundle.mClouds)
             {
                 double size{ 1 };
                 getViewer().getPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, size, cloud.mCloudName);
@@ -368,14 +394,14 @@ void Visualizer::getBundleViewportLayout(const Bundle& bundle, int& nbRows, int&
 {
     nbRows = 1;
     nbCols = 0;
-    for (const auto& info : bundle.second)
+    for (const auto& info : bundle.mClouds)
         nbCols = std::max(info.mViewport + 1, nbCols);
 }
 
 void Visualizer::switchBundle()
 {
     // Clear loaded clouds.
-    for (auto& cloud : getCurrentBundle().second)
+    for (auto& cloud : getCurrentBundle().mClouds)
         cloud.mPointCloudMessage.reset();
 
     // Make the switch.
@@ -386,11 +412,13 @@ void Visualizer::switchBundle()
     }
 
     // Load bundle clouds.
-    for (auto& cloud : getCurrentBundle().second)
+    for (auto& cloud : getCurrentBundle().mClouds)
     {
         cloud.mPointCloudMessage.reset(new pcl::PCLPointCloud2());
         pcl::io::loadPCDFile(cloud.mFullName, *cloud.mPointCloudMessage);
     }
+
+    printBundleStack();
 
     // Deal with the viewer instance.
     const bool isNewWindow = mustReinstantiateViewer();
@@ -410,9 +438,9 @@ void Visualizer::switchBundle()
         mViewer->removeAllShapes();
     }
 
-    getViewer().setWindowName(getCurrentBundle().first + " - " + getCurrentBundle().second.front().mTimeStamp);
+    getViewer().setWindowName(getCurrentBundle().mName + " - " + getCurrentBundle().mClouds.front().mTimeStamp);
 
-    const auto& clouds = getCurrentBundle().second;
+    const auto& clouds = getCurrentBundle().mClouds;
 
     // Create the actors (what is displayed with their properties)
     prepareCloudsForRender(clouds);
@@ -434,6 +462,32 @@ void Visualizer::switchBundle()
     for (const auto& cloud : clouds)
         if (cloud.mType == Cloud::EType::ePoints)
             getViewer().updateColorHandlerIndex(cloud.mCloudName, colorIdx);
+}
+
+void Visualizer::printBundleStack()
+{
+    const int stackDepth = 8;
+
+    const int iBundleStart = std::max(0, mCurrentBundleIdx - stackDepth);
+    const int iBundleEnd = std::min(mCurrentBundleIdx + stackDepth, getNbBundles() - 1);
+
+    std::cout << std::endl;
+
+    if (iBundleStart > 0) 
+        std::cout << "    ... (" << iBundleStart << ")" << std::endl;
+
+    for (auto i = iBundleStart; i <= iBundleEnd; ++i)
+    {
+        std::cout << std::string(mBundles[i].mScopeDepth, ' '); // scope depth offset
+
+        const bool isCurrentBundle = i == mCurrentBundleIdx;
+        std::cout << (isCurrentBundle ? " -> " : "    ") << mBundles[i].mName << std::endl;
+    }
+
+    if (iBundleEnd < getNbBundles() - 1)
+        std::cout << "    ... (" << getNbBundles() - 1 - iBundleEnd << ")" << std::endl;
+
+    std::cout << std::endl;
 }
 
 void Visualizer::prepareCloudsForRender(const Clouds& clouds)
@@ -765,7 +819,7 @@ void Visualizer::keyboardEventCallback(const pcl::visualization::KeyboardEvent& 
     }
     else if ((event.getKeySym() == "Right") && event.keyDown())
     {
-        if (mCurrentBundleIdx < mBundles.size() - 1)
+        if (mCurrentBundleIdx < getNbBundles() - 1)
             mBundleSwitchInfo.mSwitchToBundleIdx = mCurrentBundleIdx + 1;
     }
     else if ((event.getKeySym() == "Up") && event.keyDown())
@@ -788,7 +842,7 @@ void Visualizer::changeCurrentCloudOpacity(double delta)
 {
     if (mIdentifiedCloudIdx >= 0)
     {
-        auto& cloud = getCurrentBundle().second[mIdentifiedCloudIdx];
+        auto& cloud = getCurrentBundle().mClouds[mIdentifiedCloudIdx];
         auto& props = getCloudRenderingProperties(cloud);
         props.mOpacity += delta;
 
@@ -808,7 +862,7 @@ void Visualizer::changeCurrentCloudSize(double delta)
 {
     if (mIdentifiedCloudIdx >= 0)
     {
-        auto& cloud = getCurrentBundle().second[mIdentifiedCloudIdx];
+        auto& cloud = getCurrentBundle().mClouds[mIdentifiedCloudIdx];
         auto& props = getCloudRenderingProperties(cloud);
         props.mSize += delta;
 
@@ -824,7 +878,7 @@ void Visualizer::changeCurrentCloudSize(double delta)
 
 void Visualizer::identifyClouds(bool enabled, bool back)
 {
-    const auto& clouds = getCurrentBundle().second;
+    const auto& clouds = getCurrentBundle().mClouds;
     const int nbClouds = clouds.size();
 
     if (nbClouds <= 0) return; // early exit
