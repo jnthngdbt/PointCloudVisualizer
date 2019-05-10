@@ -118,10 +118,15 @@ namespace pcv
 
             pcl::PCLPointCloud2::Ptr mPointCloudMessage;
         };
+
         using Clouds = std::vector<Cloud>;
 
-        using BundleName = std::string;
-        using Bundle = std::pair<BundleName, Clouds>;
+        struct Bundle
+        {
+            std::string mName;
+            Clouds mClouds;
+        };
+
         using Bundles = std::vector<Bundle>;
 
         void generateBundles(const FileName& fileName);
