@@ -40,7 +40,7 @@ Visualizer::Visualizer(const FileName& fileName)
 
     generateBundles(fileName);
 
-    if (mBundles.size() > 0)
+    if (getNbBundles() > 0)
     {
         while (mBundleSwitchInfo.mSwitchToBundleIdx >= 0)
         {
@@ -129,11 +129,11 @@ void Visualizer::generateBundles(const FileName& inputFileOrFolder)
 
         // Make the app start with the bundle of the input file.
         if (!isInputDir && (newCloud.mFileName == fileOrFolderPath.stem().string()))
-            mBundleSwitchInfo.mSwitchToBundleIdx = mBundles.size() - 1;
+            mBundleSwitchInfo.mSwitchToBundleIdx = getNbBundles() - 1;
     }
 
     if (isInputDir)
-        mBundleSwitchInfo.mSwitchToBundleIdx = mBundles.size() - 1; // start with most recent
+        mBundleSwitchInfo.mSwitchToBundleIdx = getNbBundles() - 1; // start with most recent
 }
 
 void Visualizer::Cloud::parseFileHeader()
@@ -225,7 +225,7 @@ void Visualizer::addCloudToBundle(const Cloud& newCloud)
     // Determine if creating a new bundle with the current cloud or add it
     // to an existing bundle (current or previous).
 
-    if (mBundles.size() == 0) // no bundles yet, create a new (the first)
+    if (getNbBundles() == 0) // no bundles yet, create a new (the first)
     {
         createNewBundle(newCloud);
     }
@@ -261,13 +261,13 @@ void Visualizer::addCloudToBundle(const Cloud& newCloud)
 
 const Visualizer::Bundle& Visualizer::getCurrentBundle() const
 {
-    assert(mBundles.size() > mCurrentBundleIdx);
+    assert(getNbBundles() > mCurrentBundleIdx);
     return mBundles[mCurrentBundleIdx];
 }
 
 Visualizer::Bundle& Visualizer::getCurrentBundle()
 {
-    assert(mBundles.size() > mCurrentBundleIdx);
+    assert(getNbBundles() > mCurrentBundleIdx);
     return mBundles[mCurrentBundleIdx];
 }
 
@@ -416,6 +416,8 @@ void Visualizer::switchBundle()
         pcl::io::loadPCDFile(cloud.mFullName, *cloud.mPointCloudMessage);
     }
 
+    printBundleStack();
+
     // Deal with the viewer instance.
     const bool isNewWindow = mustReinstantiateViewer();
     if (isNewWindow)
@@ -458,6 +460,30 @@ void Visualizer::switchBundle()
     for (const auto& cloud : clouds)
         if (cloud.mType == Cloud::EType::ePoints)
             getViewer().updateColorHandlerIndex(cloud.mCloudName, colorIdx);
+}
+
+void Visualizer::printBundleStack()
+{
+    const int stackDepth = 5;
+
+    const int iBundleStart = std::max(0, mCurrentBundleIdx - stackDepth);
+    const int iBundleEnd = std::min(mCurrentBundleIdx + stackDepth, getNbBundles() - 1);
+
+    std::cout << std::endl;
+
+    if (iBundleStart > 0) 
+        std::cout << "    ... (" << iBundleStart << ")" << std::endl;
+
+    for (auto i = iBundleStart; i <= iBundleEnd; ++i)
+    {
+        const bool isCurrentBundle = i == mCurrentBundleIdx;
+        std::cout << (isCurrentBundle ? " -> " : "    ") << mBundles[i].first << std::endl;
+    }
+
+    if (iBundleEnd < getNbBundles() - 1)
+        std::cout << "    ... (" << getNbBundles() - 1 - iBundleEnd << ")" << std::endl;
+
+    std::cout << std::endl;
 }
 
 void Visualizer::prepareCloudsForRender(const Clouds& clouds)
@@ -789,7 +815,7 @@ void Visualizer::keyboardEventCallback(const pcl::visualization::KeyboardEvent& 
     }
     else if ((event.getKeySym() == "Right") && event.keyDown())
     {
-        if (mCurrentBundleIdx < mBundles.size() - 1)
+        if (mCurrentBundleIdx < getNbBundles() - 1)
             mBundleSwitchInfo.mSwitchToBundleIdx = mCurrentBundleIdx + 1;
     }
     else if ((event.getKeySym() == "Up") && event.keyDown())

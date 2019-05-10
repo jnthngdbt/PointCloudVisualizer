@@ -152,6 +152,7 @@ namespace pcv
 
         const Bundle& getCurrentBundle() const;
         Bundle& getCurrentBundle();
+        int getNbBundles() const { return mBundles.size(); }
 
         void logError(const std::string& msg) const { std::cout << "[VISUALIZER][ERROR]" << msg << std::endl; }
         void logWarning(const std::string& msg) const { std::cout << "[VISUALIZER][WARNING]" << msg << std::endl; }
@@ -184,6 +185,7 @@ namespace pcv
         int getColorHandlerIndex();
 
         void switchBundle();
+        void printBundleStack();
 
         std::shared_ptr<PclVisualizer> mViewer;
         std::vector<int> mViewportIds;
