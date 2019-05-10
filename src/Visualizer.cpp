@@ -210,7 +210,22 @@ void Visualizer::addCloudToBundle(const Cloud& newCloud)
         bundles.push_back(std::make_pair(newCloud.mBundleName, Clouds(1, newCloud)));
     };
 
-    if (mBundles.size() == 0)
+    auto getLastBundleWithName = [&bundles](const std::string& bundleName)
+    {
+        return std::find_if(bundles.rbegin(), bundles.rend(),
+            [&bundleName](const Bundle& b) { return b.first == bundleName; });
+    };
+
+    auto bundleExists = [&bundles](const std::string& bundleName)
+    {
+        return 0 < std::count_if(bundles.begin(), bundles.end(),
+            [&bundleName](const Bundle& b) { return b.first == bundleName; });
+    };
+
+    // Determine if creating a new bundle with the current cloud or add it
+    // to an existing bundle (current or previous).
+
+    if (mBundles.size() == 0) // no bundles yet, create a new (the first)
     {
         createNewBundle(newCloud);
     }
@@ -220,15 +235,24 @@ void Visualizer::addCloudToBundle(const Cloud& newCloud)
         const auto& currentBundleName = currentBundle.first;
         auto& currentBundleClouds = currentBundle.second;
 
-        if (newCloud.mBundleName != currentBundleName)
+        if (newCloud.mBundleName != currentBundleName) // not for the current bundle
+        {
+            if (bundleExists(newCloud.mBundleName)) // may be added to a previous bundle with same name
+            {
+                auto& lastBundle = *getLastBundleWithName(newCloud.mBundleName);
+                if (hasCloudName(lastBundle.second, newCloud.mBundleName)) // previous bundle with this name already has this cloud, so create new bundle
+                    createNewBundle(newCloud);
+                else // this cloud does not exists in that previous bundle, add the cloud to it
+                    lastBundle.second.push_back(newCloud);
+            }
+            else // this is a new bundle
+                createNewBundle(newCloud);
+        }
+        else if (hasCloudName(currentBundleClouds, newCloud.mCloudName)) // current bundle already has this cloud, must be a new bundle
         {
             createNewBundle(newCloud);
         }
-        else if (hasCloudName(currentBundleClouds, newCloud.mCloudName))
-        {
-            createNewBundle(newCloud);
-        }
-        else
+        else // add the cloud to current bundle
         {
             currentBundleClouds.push_back(newCloud);
         }

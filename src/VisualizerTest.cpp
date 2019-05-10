@@ -2,7 +2,6 @@
 
 #include <math.h>
 #include <stdlib.h>
-
 #include <string>
 #include <vector>
 
@@ -17,7 +16,7 @@
 #include "Visualizer.h"
 #include "VisualizerData.h"
 
-#define RUN_TIME_VISUALIZER(x) x // can be Visualizer(x) or x
+#define RUN_TIME_VISUALIZER(x) // can be 'Visualizer(x)' or nothing
 
 #define VISUALIZER_CALL(x) x
 
@@ -46,7 +45,7 @@ PointsType::Ptr makeCloud()
 
 int main()
 {
-    VISUALIZER_CALL(VisualizerData::clearSavedData(24));
+    VISUALIZER_CALL(VisualizerData::clearSavedData(3));
 
     PointsType::Ptr cloudModel = makeCloud();
 
@@ -293,6 +292,20 @@ int main()
         VISUALIZER_CALL(RUN_TIME_VISUALIZER(viewer.render()));
     };
 
+    auto testBundleStack = [&]()
+    {
+        VISUALIZER_CALL(VisualizerData("test-bundle-stack-0").addCloud(*cloudModel, "a"));
+        VISUALIZER_CALL(VisualizerData("test-bundle-stack-0").addCloud(*cloudModel, "b"));
+            VISUALIZER_CALL(VisualizerData("test-bundle-stack-1").addCloud(*cloudModel, "a"));
+            VISUALIZER_CALL(VisualizerData("test-bundle-stack-1").addCloud(*cloudModel, "b"));
+                VISUALIZER_CALL(VisualizerData("test-bundle-stack-2").addCloud(*cloudModel, "a"));
+            VISUALIZER_CALL(VisualizerData("test-bundle-stack-1").addCloud(*cloudModel, "c"));
+            VISUALIZER_CALL(VisualizerData("test-bundle-stack-1").addCloud(*cloudModel, "d"));
+        VISUALIZER_CALL(VisualizerData("test-bundle-stack-0").addCloud(*cloudModel, "c"));
+
+        VISUALIZER_CALL(RUN_TIME_VISUALIZER(viewer.render()));
+    };
+
     testMultipleClouds();
     testAddingFeaturesAndClouds();
     testCustomGeometryHandler();
@@ -304,6 +317,7 @@ int main()
     testBundleSwitch();
     testCloudTypes();
     testColormap();
+    testBundleStack();
 
     return 0;
 }
