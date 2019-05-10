@@ -237,11 +237,15 @@ void Visualizer::addCloudToBundle(const Cloud& newCloud)
         {
             if (bundleExists(newCloud.mBundleName)) // may be added to a previous bundle with same name
             {
-                auto& lastBundle = *getLastBundleWithName(newCloud.mBundleName);
-                if (hasCloudName(lastBundle.mClouds, newCloud.mCloudName)) // previous bundle with this name already has this cloud, so create new bundle
+                auto lastBundleIt = getLastBundleWithName(newCloud.mBundleName);
+                if (hasCloudName(lastBundleIt->mClouds, newCloud.mCloudName)) // previous bundle with this name already has this cloud, so create new bundle
                     createNewBundle(newCloud);
                 else // this cloud does not exists in that previous bundle, add the cloud to it
-                    lastBundle.mClouds.push_back(newCloud);
+                {
+                    lastBundleIt->mClouds.push_back(newCloud);
+
+                    ////////////// TODO for (auto it = lastBundleIt; it != std::end(mBundles); )
+                }
             }
             else // this is a new bundle
                 createNewBundle(newCloud);
@@ -462,7 +466,7 @@ void Visualizer::switchBundle()
 
 void Visualizer::printBundleStack()
 {
-    const int stackDepth = 5;
+    const int stackDepth = 8;
 
     const int iBundleStart = std::max(0, mCurrentBundleIdx - stackDepth);
     const int iBundleEnd = std::min(mCurrentBundleIdx + stackDepth, getNbBundles() - 1);
@@ -474,6 +478,8 @@ void Visualizer::printBundleStack()
 
     for (auto i = iBundleStart; i <= iBundleEnd; ++i)
     {
+        std::cout << std::string(mBundles[i].mScopeDepth, ' '); // scope depth offset
+
         const bool isCurrentBundle = i == mCurrentBundleIdx;
         std::cout << (isCurrentBundle ? " -> " : "    ") << mBundles[i].mName << std::endl;
     }

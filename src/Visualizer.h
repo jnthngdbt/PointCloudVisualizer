@@ -125,6 +125,7 @@ namespace pcv
         {
             std::string mName;
             Clouds mClouds;
+            int mScopeDepth{ 0 };
         };
 
         using Bundles = std::vector<Bundle>;
