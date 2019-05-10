@@ -235,20 +235,19 @@ void Visualizer::addCloudToBundle(const Cloud& newCloud)
 
         if (newCloud.mBundleName != currentBundle.mName) // not for the current bundle
         {
-            if (bundleExists(newCloud.mBundleName)) // may be added to a previous bundle with same name
+            // Manage scope depth.
+            if (bundleExists(newCloud.mBundleName))
             {
                 auto lastBundleIt = getLastBundleWithName(newCloud.mBundleName);
-                if (hasCloudName(lastBundleIt->mClouds, newCloud.mCloudName)) // previous bundle with this name already has this cloud, so create new bundle
-                    createNewBundle(newCloud);
-                else // this cloud does not exists in that previous bundle, add the cloud to it
-                {
-                    lastBundleIt->mClouds.push_back(newCloud);
 
-                    ////////////// TODO for (auto it = lastBundleIt; it != std::end(mBundles); )
+                if (!hasCloudName(lastBundleIt->mClouds, newCloud.mCloudName))
+                {
+                    for (auto it = mBundles.rbegin(); it != lastBundleIt; it++)
+                        it->mScopeDepth++;
                 }
             }
-            else // this is a new bundle
-                createNewBundle(newCloud);
+
+            createNewBundle(newCloud);
         }
         else if (hasCloudName(currentBundle.mClouds, newCloud.mCloudName)) // current bundle already has this cloud, must be a new bundle
         {
@@ -471,21 +470,22 @@ void Visualizer::printBundleStack()
     const int iBundleStart = std::max(0, mCurrentBundleIdx - stackDepth);
     const int iBundleEnd = std::min(mCurrentBundleIdx + stackDepth, getNbBundles() - 1);
 
+    const std::string indentation = "    ";
+
     std::cout << std::endl;
 
     if (iBundleStart > 0) 
-        std::cout << "    ... (" << iBundleStart << ")" << std::endl;
+        std::cout << indentation << "... (" << iBundleStart << ")" << std::endl;
 
     for (auto i = iBundleStart; i <= iBundleEnd; ++i)
     {
-        std::cout << std::string(mBundles[i].mScopeDepth, ' '); // scope depth offset
-
         const bool isCurrentBundle = i == mCurrentBundleIdx;
-        std::cout << (isCurrentBundle ? " -> " : "    ") << mBundles[i].mName << std::endl;
+        std::cout << std::string(mBundles[i].mScopeDepth * indentation.size(), ' '); // scope depth offset
+        std::cout << (isCurrentBundle ? " -> " : indentation) << mBundles[i].mName << std::endl;
     }
 
     if (iBundleEnd < getNbBundles() - 1)
-        std::cout << "    ... (" << getNbBundles() - 1 - iBundleEnd << ")" << std::endl;
+        std::cout << indentation << "... (" << getNbBundles() - 1 - iBundleEnd << ")" << std::endl;
 
     std::cout << std::endl;
 }

@@ -300,7 +300,9 @@ int main()
             VISUALIZER_CALL(VisualizerData("test-bundle-stack-1").addCloud(*cloudModel, "b"));
                 VISUALIZER_CALL(VisualizerData("test-bundle-stack-2").addCloud(*cloudModel, "a"));
             VISUALIZER_CALL(VisualizerData("test-bundle-stack-1").addCloud(*cloudModel, "c"));
+                VISUALIZER_CALL(VisualizerData("test-bundle-stack-2").addCloud(*cloudModel, "a"));
             VISUALIZER_CALL(VisualizerData("test-bundle-stack-1").addCloud(*cloudModel, "d"));
+            VISUALIZER_CALL(VisualizerData("test-bundle-stack-1").addCloud(*cloudModel, "e"));
         VISUALIZER_CALL(VisualizerData("test-bundle-stack-0").addCloud(*cloudModel, "c"));
 
         VISUALIZER_CALL(RUN_TIME_VISUALIZER(viewer.render()));
