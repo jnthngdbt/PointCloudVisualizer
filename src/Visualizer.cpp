@@ -34,6 +34,23 @@ POINT_CLOUD_REGISTER_POINT_STRUCT(PointLine,
 (float, z2, z2)
 (uint32_t, rgb, rgb))
 
+struct PointSphere
+{
+    float x;
+    float y;
+    float z;
+    float r;
+    uint32_t rgb;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW   // make sure new allocators are aligned
+} EIGEN_ALIGN16;                      // enforce SSE padding for correct memory alignment
+
+POINT_CLOUD_REGISTER_POINT_STRUCT(PointSphere,
+(float, x, x)
+(float, y, y)
+(float, z, z)
+(float, r, r)
+(uint32_t, rgb, rgb))
+
 Visualizer::Visualizer(const FileName& fileName)
 {
     mBundleSwitchInfo.mCamParams.fovy = -1.0; // put invalid value to detect that it is uninitialized
@@ -169,6 +186,8 @@ void Visualizer::Cloud::parseFileHeader()
                 iss >> type;
                 if (type == "lines")
                     mType = EType::eLines;
+                if (type == "sphere")
+                    mType = EType::eSphere;
                 else
                     mType = EType::ePoints;
             }
@@ -528,6 +547,28 @@ void Visualizer::prepareCloudsForRender(const Clouds& clouds)
 
             getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_LINE_WIDTH, getCloudRenderingProperties(cloud).mSize, cloud.mCloudName);
             getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getCloudRenderingProperties(cloud).mOpacity, cloud.mCloudName);
+            getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, r / 255., g / 255., b / 255., cloud.mCloudName);
+        }
+        else if (cloud.mType == Cloud::EType::eSphere)
+        {
+            getViewer().removeShape(cloud.mCloudName, getViewportId(cloud.mViewport));
+
+            pcl::PointCloud<PointSphere>::Ptr spheres(new pcl::PointCloud<PointSphere>);
+            pcl::fromPCLPointCloud2(*cloud.mPointCloudMessage, *spheres);
+
+            if (spheres->size() != 1)
+                logError("A 'sphere' cloud should only contain one sphere.");
+
+            const auto& p = spheres->at(0);
+            getViewer().addSphere(pcl::PointXYZ(p.x, p.y, p.z), p.r, cloud.mCloudName, getViewportId(cloud.mViewport));
+
+            const auto rgb = p.rgb;
+            const auto r = (rgb >> 16) & 0xFF;
+            const auto g = (rgb >> 8) & 0xFF;
+            const auto b = (rgb) & 0xFF;
+
+            getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getCloudRenderingProperties(cloud).mOpacity, cloud.mCloudName);
+            getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_REPRESENTATION, pcl::visualization::PCL_VISUALIZER_REPRESENTATION_SURFACE, cloud.mCloudName);
             getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, r / 255., g / 255., b / 255., cloud.mCloudName);
         }
         else // points

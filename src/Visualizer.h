@@ -102,7 +102,7 @@ namespace pcv
 
         struct Cloud
         {
-            enum class EType {ePoints, eLines};
+            enum class EType {ePoints, eLines, eSphere};
 
             void parseFileHeader();
 
