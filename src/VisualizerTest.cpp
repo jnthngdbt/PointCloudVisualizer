@@ -278,6 +278,8 @@ int main()
             VISUALIZER_CALL(viewer.addLine(p, q, "lines").setColor(0.0, 1.0, 0.0).setOpacity(0.1));
         }
 
+        VISUALIZER_CALL(viewer.addSphere(pcl::PointXYZ(0.4, 0.6, 1.2), 0.1, "some-sphere").setColor(1.0, 1.0, 0.0).setOpacity(0.5));
+
         VISUALIZER_CALL(RUN_TIME_VISUALIZER(viewer.render()));
     };
 

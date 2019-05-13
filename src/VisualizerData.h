@@ -117,7 +117,14 @@ namespace pcv
         /// @param[in] pt2: coordinates of point 2
         /// @param[in] viewport (optional): the viewport index (0 based) in which to draw
         template <typename P1, typename P2>
-        Cloud& addLine(const P1 &pt1, const P2 &pt2, int viewport);
+        Cloud& addLine(const P1 &pt1, const P2 &pt2, int viewport = -1);
+
+        /// Add a sphere.
+        /// @param[in] p: sphere position
+        /// @param[in] radius: sphere radius
+        /// @param[in] viewport (optional): the viewport index (0 based) in which to draw
+        template <typename Point>
+        Cloud& addSphere(const Point& p, double radius, int viewport = -1);
 
         Cloud& setViewport(ViewportIdx viewport);
         Cloud& setSize(int size) { mSize = size; return *this; };
@@ -142,7 +149,7 @@ namespace pcv
 
         void setParent(VisualizerData* visualizerPtr) { mVisualizerPtr = visualizerPtr; }
 
-        enum class EType {ePoints, eLines};
+        enum class EType {ePoints, eLines, eSphere};
 
         int mViewport{ 0 };
         int mSize{ 1 };
@@ -268,6 +275,14 @@ namespace pcv
         /// @param[in] viewport (optional): the viewport index (0 based) in which to draw
         template <typename P1, typename P2>
         Cloud& addLine(const P1 &pt1, const P2 &pt2, const CloudName& cloudName, int viewport = -1);
+
+        /// Add a sphere.
+        /// @param[in] p: sphere position
+        /// @param[in] radius: sphere radius
+        /// @param[in] cloudName: the name of the point cloud to which the space is defined
+        /// @param[in] viewport (optional): the viewport index (0 based) in which to draw
+        template <typename Point>
+        Cloud& addSphere(const Point& p, double radius, const CloudName& cloudName, int viewport = -1);
 
         /// Get the refence of a visualizer cloud.
         /// @param[in] name: cloud name

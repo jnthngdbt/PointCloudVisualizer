@@ -110,6 +110,12 @@ namespace pcv
         return getCloud(cloudName).addLine(pt1, pt2, viewport);
     }
 
+    template <typename Point>
+    Cloud& VisualizerData::addSphere(const Point& p, double radius, const CloudName& cloudName, int viewport)
+    {
+        return getCloud(cloudName).addSphere(p, radius, viewport);
+    }
+
     template <typename P1, typename P2>
     Cloud& Cloud::addLine(const P1 &pt1, const P2 &pt2, int viewport)
     {
@@ -158,6 +164,23 @@ namespace pcv
         }
 
         mType = EType::eLines;
+        return *this;
+    }
+
+    template <typename Point>
+    Cloud& Cloud::addSphere(const Point& p, double radius, int viewport)
+    {
+        mFeatures.clear(); // overwrite the cloud to only contain a sphere
+
+        mFeatures.emplace_back("x", std::vector<float>(1, p.x));
+        mFeatures.emplace_back("y", std::vector<float>(1, p.y));
+        mFeatures.emplace_back("z", std::vector<float>(1, p.z));
+        mFeatures.emplace_back("r", std::vector<float>(1, radius));
+
+        addSpace("x", "y", "z");
+        addCloudCommon(viewport);
+
+        mType = EType::eSphere;
         return *this;
     }
 

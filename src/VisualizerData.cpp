@@ -408,6 +408,7 @@ void Cloud::save(const std::string& filename) const
         switch (type)
         {
         case EType::eLines: return "lines"; break;
+        case EType::eSphere: return "sphere"; break;
         case EType::ePoints: // fallthrough
         default: return "points";
         }
