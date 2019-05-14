@@ -34,6 +34,29 @@ POINT_CLOUD_REGISTER_POINT_STRUCT(PointLine,
 (float, z2, z2)
 (uint32_t, rgb, rgb))
 
+struct PointPlane
+{
+    float x;
+    float y;
+    float z;
+    float a;
+    float b;
+    float c;
+    float d;
+    uint32_t rgb;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW   // make sure new allocators are aligned
+} EIGEN_ALIGN16;                      // enforce SSE padding for correct memory alignment
+
+POINT_CLOUD_REGISTER_POINT_STRUCT(PointPlane,
+(float, x, x)
+(float, y, y)
+(float, z, z)
+(float, a, a)
+(float, b, b)
+(float, c, c)
+(float, d, d)
+(uint32_t, rgb, rgb))
+
 struct PointSphere
 {
     float x;
@@ -186,7 +209,9 @@ void Visualizer::Cloud::parseFileHeader()
                 iss >> type;
                 if (type == "lines")
                     mType = EType::eLines;
-                if (type == "sphere")
+                else if (type == "plane")
+                    mType = EType::ePlane;
+                else if (type == "sphere")
                     mType = EType::eSphere;
                 else
                     mType = EType::ePoints;
@@ -561,6 +586,30 @@ void Visualizer::prepareCloudsForRender(const Clouds& clouds)
 
             const auto& p = spheres->at(0);
             getViewer().addSphere(pcl::PointXYZ(p.x, p.y, p.z), p.r, cloud.mCloudName, getViewportId(cloud.mViewport));
+
+            const auto rgb = p.rgb;
+            const auto r = (rgb >> 16) & 0xFF;
+            const auto g = (rgb >> 8) & 0xFF;
+            const auto b = (rgb) & 0xFF;
+
+            getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getCloudRenderingProperties(cloud).mOpacity, cloud.mCloudName);
+            getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_REPRESENTATION, pcl::visualization::PCL_VISUALIZER_REPRESENTATION_SURFACE, cloud.mCloudName);
+            getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, r / 255., g / 255., b / 255., cloud.mCloudName);
+        }
+        else if (cloud.mType == Cloud::EType::ePlane)
+        {
+            getViewer().removeShape(cloud.mCloudName, getViewportId(cloud.mViewport));
+
+            pcl::PointCloud<PointPlane>::Ptr planes(new pcl::PointCloud<PointPlane>);
+            pcl::fromPCLPointCloud2(*cloud.mPointCloudMessage, *planes);
+
+            if (planes->size() != 1)
+                logError("A 'plane' cloud should only contain one plane.");
+
+            const auto& p = planes->at(0);
+            pcl::ModelCoefficients coeffs;
+            coeffs.values = { p.a, p.b, p.c, p.d };
+            getViewer().addPlane(coeffs, p.x, p.y, p.z, cloud.mCloudName, getViewportId(cloud.mViewport));
 
             const auto rgb = p.rgb;
             const auto r = (rgb >> 16) & 0xFF;
