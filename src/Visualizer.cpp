@@ -174,6 +174,10 @@ void Visualizer::generateBundles(const FileName& inputFileOrFolder)
 
     if (isInputDir)
         mBundleSwitchInfo.mSwitchToBundleIdx = getNbBundles() - 1; // start with most recent
+
+    // Override rendering properties with clouds of first bundle to be rendered.
+    for (const auto& cloud : mBundles[mBundleSwitchInfo.mSwitchToBundleIdx].mClouds)
+        mProperties[cloud.mCloudName] = cloud.mRenderingProperties;
 }
 
 void Visualizer::Cloud::parseFileHeader()
