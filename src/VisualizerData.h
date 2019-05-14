@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 
+#include <array>
 #include <map>
 #include <string>
 #include <vector>
@@ -126,6 +127,13 @@ namespace pcv
         template <typename Point>
         Cloud& addSphere(const Point& p, double radius, int viewport = -1);
 
+        /// Add a plane.
+        /// @param[in] p: plane position (kind of center)
+        /// @param[in] coeffs: plane coefficients
+        /// @param[in] viewport (optional): the viewport index (0 based) in which to draw
+        template <typename Point>
+        Cloud& addPlane(const Point& p, std::array<float, 4> coeffs, int viewport = -1);
+
         Cloud& setViewport(ViewportIdx viewport);
         Cloud& setSize(int size) { mSize = size; return *this; };
         Cloud& setOpacity(double opacity) { mOpacity = opacity; return *this; };
@@ -149,7 +157,7 @@ namespace pcv
 
         void setParent(VisualizerData* visualizerPtr) { mVisualizerPtr = visualizerPtr; }
 
-        enum class EType {ePoints, eLines, eSphere};
+        enum class EType {ePoints, eLines, ePlane, eSphere};
 
         int mViewport{ 0 };
         int mSize{ 1 };
@@ -275,6 +283,14 @@ namespace pcv
         /// @param[in] viewport (optional): the viewport index (0 based) in which to draw
         template <typename P1, typename P2>
         Cloud& addLine(const P1 &pt1, const P2 &pt2, const CloudName& cloudName, int viewport = -1);
+
+        /// Add a plane.
+        /// @param[in] p: plane position (kind of center)
+        /// @param[in] coeffs: plane coefficients
+        /// @param[in] cloudName: the name of the point cloud to which the space is defined
+        /// @param[in] viewport (optional): the viewport index (0 based) in which to draw
+        template <typename Point>
+        Cloud& addPlane(const Point& p, std::array<float, 4> coeffs, const CloudName& cloudName, int viewport = -1);
 
         /// Add a sphere.
         /// @param[in] p: sphere position

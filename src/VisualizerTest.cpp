@@ -278,7 +278,15 @@ int main()
             VISUALIZER_CALL(viewer.addLine(p, q, "lines").setColor(0.0, 1.0, 0.0).setOpacity(0.1));
         }
 
+        pcl::PointXYZ p(0.1, 0.4, 2.7);
+        Eigen::Vector3d n = Eigen::Vector3d(1, 1, 1).normalized();
+        float a = n[0];
+        float b = n[1];
+        float c = n[2];
+        float d = -(a*p.x + b*p.y + c*p.z);
+
         VISUALIZER_CALL(viewer.addSphere(pcl::PointXYZ(0.4, 0.6, 2.7), 0.1, "some-sphere").setColor(1.0, 1.0, 0.0).setOpacity(0.1));
+        VISUALIZER_CALL(viewer.addPlane(p, {a, b, c, d}, "some-plane").setColor(1.0, 0.0, 1.0).setOpacity(0.5));
 
         VISUALIZER_CALL(RUN_TIME_VISUALIZER(viewer.render()));
     };

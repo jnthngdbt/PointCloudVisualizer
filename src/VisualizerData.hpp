@@ -111,6 +111,12 @@ namespace pcv
     }
 
     template <typename Point>
+    Cloud& VisualizerData::addPlane(const Point& p, std::array<float, 4> coeffs, const CloudName& cloudName, int viewport)
+    {
+        return getCloud(cloudName).addPlane(p, coeffs, viewport);
+    }
+
+    template <typename Point>
     Cloud& VisualizerData::addSphere(const Point& p, double radius, const CloudName& cloudName, int viewport)
     {
         return getCloud(cloudName).addSphere(p, radius, viewport);
@@ -164,6 +170,26 @@ namespace pcv
         }
 
         mType = EType::eLines;
+        return *this;
+    }
+
+    template <typename Point>
+    Cloud& Cloud::addPlane(const Point& p, std::array<float, 4> coeffs, int viewport)
+    {
+        mFeatures.clear(); // overwrite the cloud to only contain a plane
+
+        mFeatures.emplace_back("x", std::vector<float>(1, p.x));
+        mFeatures.emplace_back("y", std::vector<float>(1, p.y));
+        mFeatures.emplace_back("z", std::vector<float>(1, p.z));
+        mFeatures.emplace_back("a", std::vector<float>(1, coeffs[0]));
+        mFeatures.emplace_back("b", std::vector<float>(1, coeffs[1]));
+        mFeatures.emplace_back("c", std::vector<float>(1, coeffs[2]));
+        mFeatures.emplace_back("d", std::vector<float>(1, coeffs[3]));
+
+        addSpace("x", "y", "z");
+        addCloudCommon(viewport);
+
+        mType = EType::ePlane;
         return *this;
     }
 
