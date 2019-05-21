@@ -46,6 +46,13 @@ namespace pcv
         SearchTree mSearchTree;
     };
 
+    struct Text
+    {
+        int x{ 0 };
+        int y{ 0 };
+        std::string text;
+    };
+
     class Cloud
     {
     public:
@@ -134,6 +141,8 @@ namespace pcv
         template <typename Point>
         Cloud& addPlane(const Point& p, std::array<float, 4> coeffs, int viewport = -1);
 
+        Cloud& addText(int x, int y, const std::string& text) { mTexts.push_back({ x, y, text }); };
+
         Cloud& setViewport(ViewportIdx viewport);
         Cloud& setSize(int size) { mSize = size; return *this; };
         Cloud& setOpacity(double opacity) { mOpacity = opacity; return *this; };
@@ -168,6 +177,7 @@ namespace pcv
         std::vector<Feature> mFeatures; // using vector instead of [unordered_]map to keep order of insertion
         std::string mTimestamp;
         EType mType{ EType::ePoints };
+        std::vector<Text> mTexts;
     private:
         void addCloudCommon(ViewportIdx viewport);
         void createTimestamp();
