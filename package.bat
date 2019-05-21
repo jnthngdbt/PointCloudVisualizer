@@ -13,6 +13,8 @@ if exist ".\bin\Release\VisualizerApp.exe" (
 
     xcopy "%OPENNI2_REDIST64%OpenNI2.dll" .\package\VisualizerApp\ /Y
 
+    xcopy "%PCL_ROOT%\bin\pcl_viewer_release.exe" .\package\VisualizerApp\ /Y
+
 ) else (
     echo ".\bin\Release\VisualizerApp.exe" has not been built yet!
 )
