@@ -48,15 +48,15 @@ namespace pcv
     }
 
     template<typename T>
-    Cloud& VisualizerData::addCloudCorrespondences(const pcl::PointCloud<T>& source, const pcl::PointCloud<T>& target, const pcl::Correspondences& correspondences, const CloudName& name, ViewportIdx viewport)
+    Cloud& VisualizerData::addCloudCorrespondences(const pcl::PointCloud<T>& source, const pcl::PointCloud<T>& target, const pcl::Correspondences& correspondences, bool useSource, const CloudName& name, ViewportIdx viewport)
     {
         pcl::PointCloud<T> cloud;
-        pcl::ConstCloudIterator<T> sourceIt (source, correspondences, true);
+        pcl::ConstCloudIterator<T> inputIt (useSource ? source : target, correspondences, useSource);
 
-        while (sourceIt.isValid())
+        while (inputIt.isValid())
         {
-            cloud.push_back(*sourceIt);
-            ++sourceIt;
+            cloud.push_back(*inputIt);
+            ++inputIt;
         }
 
         return getCloud(name).addCloud(cloud, viewport);
