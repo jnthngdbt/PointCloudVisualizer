@@ -316,6 +316,15 @@ int main()
         VISUALIZER_CALL(VisualizerData("test-bundle-stack-0").addCloud(*cloudModel, "c"));
     };
 
+    auto testPlot = [&]()
+    {
+        VISUALIZER_CALL(VisualizerData viewer("test-plot"));
+
+        VISUALIZER_CALL(viewer.addPlot(cloudModel->points, "cloud-x", 1.0, [](const pcl::PointXYZ& p) { return p.x; }));
+        VISUALIZER_CALL(viewer.addPlot(cloudModel->points, "cloud-y", 1.0, [](const pcl::PointXYZ& p) { return p.y; }));
+        VISUALIZER_CALL(viewer.addPlot(cloudModel->points, "cloud-z", 1.0, [](const pcl::PointXYZ& p) { return p.z; }));
+    };
+
     testMultipleClouds();
     testAddingFeaturesAndClouds();
     testCustomGeometryHandler();
@@ -328,6 +337,7 @@ int main()
     testCloudTypes();
     testColormap();
     testBundleStack();
+    testPlot();
 
     return 0;
 }
