@@ -1091,10 +1091,12 @@ void Visualizer::printHelp() const
         "   CTRL +         m, M : prompts user input in the console the enter min and max values for the colormap range \n"
         "   CTRL + SHIFT + m, M : use automatic min and max values for the colormap range \n"
         "\n"
-        " In IDENTIFICATION mode:"
+        " In IDENTIFICATION mode: \n"
         "\n"
         "   CTRL + Up   : increase opacity of selected cloud \n"
         "   CTRL + Down : decrease opacity of selected cloud \n"
+        "   ALT  + Up   : increase size of selected cloud \n"
+        "   ALT  + Down : decrease size of selected cloud \n"
         "\n"
     );
 }
