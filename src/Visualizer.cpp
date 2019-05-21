@@ -718,9 +718,6 @@ void Visualizer::generateCommonHandlersLists(const Clouds& clouds)
     mCommonColorNames.clear();
     mCommonGeoNames.clear();
 
-    // TODO remove rbg special case everywhere, add it as feature at setColor, in rendering it is set as default if not default set
-    // default becomes the new special case.
-
     // By default, we start with 'default'. If rendering a cloud
     // that does not have this feature, a 'random' color handler will be used.
     mCommonColorNames.push_back("default");
