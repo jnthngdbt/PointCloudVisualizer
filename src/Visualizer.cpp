@@ -322,8 +322,16 @@ Visualizer::Bundle& Visualizer::getCurrentBundle()
 
 int Visualizer::getColorHandlerIndex()
 {
-    // All clouds should have the same color handlers, so we can take the first.
-    return getViewer().getColorHandlerIndex(getCurrentBundle().mClouds.cbegin()->mCloudName); // if colorIdx is 0, user pressed numkey '1'
+    int colorIdx = 0;
+
+    // All clouds should have the same color handlers, so we can take the first non-shape.
+    const auto& clouds = getCurrentBundle().mClouds;
+    auto cloudIt = std::find_if(clouds.begin(), clouds.end(), [](const Cloud& cloud) { return cloud.mType == Cloud::EType::ePoints; });
+
+    if (cloudIt != clouds.end())
+        colorIdx = getViewer().getColorHandlerIndex(cloudIt->mCloudName);
+
+    return colorIdx; // if colorIdx is 0, user pressed numkey '1'
 }
 
 void Visualizer::reinstantiateViewer()
