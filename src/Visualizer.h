@@ -177,6 +177,7 @@ namespace pcv
         void printHelp() const;
         void changeCurrentCloudOpacity(double delta);
         void changeCurrentCloudSize(double delta);
+        int determineNextBundleIdx(bool isLeft);
 
         void setColormapSource(const std::string& id);
 
@@ -199,6 +200,7 @@ namespace pcv
         Bundles mBundles;
         int mCurrentBundleIdx{ 0 };
         BundleSwitchInfo mBundleSwitchInfo;
+        bool mSameBundleNavigationMode{ false };
 
         std::vector<std::string> mCommonColorNames;
         std::vector<std::string> mCommonGeoNames;

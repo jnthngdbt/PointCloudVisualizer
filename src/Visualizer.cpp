@@ -373,6 +373,7 @@ void Visualizer::render(const Bundle& bundle)
     {
         const int colorIdx = getColorHandlerIndex();
         std::string help = "";
+        if (mSameBundleNavigationMode) help += "Same bundle navigation mode \n\r";
         help += "Colormap source: " + mColormapSourceId + "\n\r";
         help += "Color handler: " + std::to_string(colorIdx + 1) + " (" + ((colorIdx < mCommonColorNames.size()) ? mCommonColorNames[colorIdx] : "-") + ")";
         getViewer().updateText(help, 10, 10, 18, 0.5, 0.5, 0.5, infoTextId); // text, xpos, ypos, fontsize, r, g, b, id
@@ -903,15 +904,17 @@ void Visualizer::keyboardEventCallback(const pcl::visualization::KeyboardEvent& 
         // (built-in help will be printed)
         printHelp(); // add custom help
     }
+    else if ((event.getKeySym() == "b" || event.getKeySym() == "B") && event.keyDown())
+    {
+        mSameBundleNavigationMode = !mSameBundleNavigationMode;
+    }
     else if ((event.getKeySym() == "Left") && event.keyDown())
     {
-        if (mCurrentBundleIdx > 0)
-            mBundleSwitchInfo.mSwitchToBundleIdx = mCurrentBundleIdx - 1;
+        mBundleSwitchInfo.mSwitchToBundleIdx = determineNextBundleIdx(true);
     }
     else if ((event.getKeySym() == "Right") && event.keyDown())
     {
-        if (mCurrentBundleIdx < getNbBundles() - 1)
-            mBundleSwitchInfo.mSwitchToBundleIdx = mCurrentBundleIdx + 1;
+        mBundleSwitchInfo.mSwitchToBundleIdx = determineNextBundleIdx(false);
     }
     else if ((event.getKeySym() == "Up") && event.keyDown())
     {
@@ -927,6 +930,35 @@ void Visualizer::keyboardEventCallback(const pcl::visualization::KeyboardEvent& 
         else if (event.isAltPressed())
             changeCurrentCloudSize(-1);
     }
+}
+
+int Visualizer::determineNextBundleIdx(bool isLeft)
+{
+    int nextBundleIdx = mBundleSwitchInfo.mSwitchToBundleIdx; // keep same by default
+
+    if (mCurrentBundleIdx > 0)
+    {
+        if (!mSameBundleNavigationMode)
+            nextBundleIdx = mCurrentBundleIdx + (isLeft ? -1 : 1);
+        else
+        {
+            const auto& bundleName = getCurrentBundle().mName;
+            const int limit = isLeft ? 0 : getNbBundles() - 1;
+            const int step = isLeft ? -1 : 1;
+            const int start = mCurrentBundleIdx + step;
+            const int end = limit + step;
+            for (int i = start; i != end; i += step)
+            {
+                if (mBundles[i].mName == bundleName)
+                {
+                    nextBundleIdx = i;
+                    break;
+                }
+            }
+        }
+    }
+
+    return nextBundleIdx;
 }
 
 void Visualizer::changeCurrentCloudOpacity(double delta)
@@ -1097,6 +1129,13 @@ void Visualizer::printHelp() const
         "   CTRL + Down : decrease opacity of selected cloud \n"
         "   ALT  + Up   : increase size of selected cloud \n"
         "   ALT  + Down : decrease size of selected cloud \n"
+        "\n"
+        " Bundles navigation: \n"
+        "\n"
+        "   Left  : switch to previous bundle \n"
+        "   Right : switch to next bundle \n"
+        "\n"
+        "   b, B  : toggle navigation only through bundles of same name as current bundle \n"
         "\n"
     );
 }
