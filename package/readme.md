@@ -1,9 +1,5 @@
 # VisualizerApp User Guide
 
-Take the latest package from this path. Copy it localy on your PC.
-
-    X:\Development team\Staff\Jonathan Godbout\VisualizerApp
-
 To test if the setup is ok, run this batch file by double clicking on it.
 
     [...]\package\VisualizerAppTest\test.bat
