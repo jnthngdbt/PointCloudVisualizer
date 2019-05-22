@@ -12,9 +12,27 @@ The VisualizerApp should launch.
 
 ## VisualizerApp.exe
 
+The simplest way to use it is to associate PCD files with VisualizerApp.exe (right-click on a PCD file > Properties > Opens with...), located there
+
+    [...]\package\VisualizerApp\VisualizerApp.exe
+
 ### Important interactive commands
 
-All commands should be displayed in the console when pressing 'h'. It first shows all original commands available in pcl_viewer_release.exe. The bottom section shows commands specific to VisualizerApp.
+All commands should be displayed in the console when pressing 'h'. It first shows all original commands available in pcl_viewer_release.exe. The bottom section shows commands specific to VisualizerApp. Following are the most important and useful.
+
+#### PCL builtin
+
+* **r**: Recenters the viewpoint to the centroid of the cloud and scales to view the entire cloud. This should be the first key pressed when you open the viewer and you see nothing.
+* **f**: When hovering over a point with the mouse, it centers the viewpoint on that point.
+* **numkeys**: Switches color handlers to color the points. Every feature is a color handler. If more than 10, combine with CTRL.
+* **l**: List color handlers in the console.
+* **o**: Toggle orthogonal/perspective view.
+* **u**: Toggle display of the colormap.
+  
+#### New with VisualizerApp
+
+* **i**: Loop through all clouds and highlight them. The highlighted cloud's name is displayed. Combine with SHIFT to go backwards. Combine with CTRL to exit.
+* **left/right arrows**: Navigate through cloud bundles, corresponding to scopes in the code.
 
 ## pcl_viewer_release.exe
 
