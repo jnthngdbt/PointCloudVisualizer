@@ -947,7 +947,12 @@ int Visualizer::determineNextBundleIdx(bool isLeft)
     if (mCurrentBundleIdx > 0)
     {
         if (!mSameBundleNavigationMode)
-            nextBundleIdx = mCurrentBundleIdx + (isLeft ? -1 : 1);
+        {
+            if (isLeft && (mCurrentBundleIdx > 0))
+                nextBundleIdx = mCurrentBundleIdx - 1;
+            else if (!isLeft && (mCurrentBundleIdx < getNbBundles() - 1))
+                nextBundleIdx = mCurrentBundleIdx + 1;
+        }
         else
         {
             const auto& bundleName = getCurrentBundle().mName;
