@@ -30,18 +30,23 @@ namespace pcv
     template<typename T, typename F>
     Cloud& VisualizerData::addPlot(const T& data, const CloudName& name, float scale, F func, ViewportIdx viewport)
     {
-        auto& cloud = getCloud(name).addFeature(data, "y", func, viewport);
-        int N = cloud.getNbPoints();
+        int N = data.size();
 
         FeatureData x(N, 0);
         for (int i = 0; i < N; ++i)
             x[i] = i * (1.0/N) * scale;
 
-        cloud.addFeature(x, "x", viewport);
-        cloud.addFeature(FeatureData(N, 0), "z", viewport);
+        return addPlot(x, data, name, [](float v) { return v; }, func, viewport);
+    }
 
+    template<typename Tx, typename Ty, typename Fx, typename Fy>
+    Cloud& VisualizerData::addPlot(const Tx& xData, const Ty& yData, const CloudName& name, Fx xFunc, Fy yFunc, ViewportIdx viewport)
+    {
+        auto& cloud = getCloud(name);
+        cloud.addFeature(xData, "x", xFunc, viewport);
+        cloud.addFeature(yData, "y", yFunc, viewport);
+        cloud.addFeature(FeatureData(cloud.getNbPoints(), 0), "z", viewport);
         cloud.addSpace("x", "y", "z");
-
         return cloud;
     }
 

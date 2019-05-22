@@ -320,9 +320,15 @@ int main()
     {
         VISUALIZER_CALL(VisualizerData viewer("test-plot"));
 
-        VISUALIZER_CALL(viewer.addPlot(cloudModel->points, "cloud-x", 1.0, [](const pcl::PointXYZ& p) { return p.x; }));
-        VISUALIZER_CALL(viewer.addPlot(cloudModel->points, "cloud-y", 1.0, [](const pcl::PointXYZ& p) { return p.y; }));
-        VISUALIZER_CALL(viewer.addPlot(cloudModel->points, "cloud-z", 1.0, [](const pcl::PointXYZ& p) { return p.z; }));
+        auto getX = [](const pcl::PointXYZ& p) { return p.x; };
+        auto getY = [](const pcl::PointXYZ& p) { return p.y; };
+        auto getZ = [](const pcl::PointXYZ& p) { return p.z; };
+
+        VISUALIZER_CALL(viewer.addPlot(cloudModel->points, "cloud-x", 1.0, getX, 0));
+        VISUALIZER_CALL(viewer.addPlot(cloudModel->points, "cloud-y", 1.0, getY, 0));
+        VISUALIZER_CALL(viewer.addPlot(cloudModel->points, "cloud-z", 1.0, getZ, 0));
+
+        VISUALIZER_CALL(viewer.addPlot(cloudModel->points, cloudModel->points, "y-vs-z", getY, getZ, 1));
     };
 
     testMultipleClouds();

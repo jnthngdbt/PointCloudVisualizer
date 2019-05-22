@@ -262,12 +262,23 @@ namespace pcv
         /// Add a plot (graph of the feature), from a generic container and a lambda specifying how to get the data from the container.
         /// @param[in] data: generic container of the feature data
         /// @param[in] name: the name of the plot point cloud
-        /// @param[in] scale: scale factor for the x; the plotted data is y, x are the indices values scaled to [0,1]
+        /// @param[in] scale: scale factor for the x; the plotted data is y, x are the indices values scaled to [0,1] on which the scale is applied
         /// @param[in] func: lamdba having as input a reference of an element of the container and that returns the feature value of that element
         /// @param[in] viewport (optional): the viewport index (0 based) in which to render
         /// @return reference to the updated visualizer cloud (allows chainable commands)
         template<typename T, typename F>
         Cloud& addPlot(const T& data, const CloudName& name, float scale, F func, ViewportIdx viewport = -1);
+
+        /// Add a plot (graph of the feature), from 2 generic containers and lambdas specifying how to get the data from the container.
+        /// @param[in] xData: generic container for the x
+        /// @param[in] yData: generic container for the y
+        /// @param[in] name: the name of the plot point cloud
+        /// @param[in] xFunc: lamdba to extract x values from the container
+        /// @param[in] yFunc: lamdba to extract y values from the container
+        /// @param[in] viewport (optional): the viewport index (0 based) in which to render
+        /// @return reference to the updated visualizer cloud (allows chainable commands)
+        template<typename Tx, typename Ty, typename Fx, typename Fy>
+        Cloud& addPlot(const Tx& xData, const Ty& yData, const CloudName& name, Fx xFunc, Fy yFunc, ViewportIdx viewport = -1);
 
         /// Define a space (in PCL terms, a geometry handler) to represent the cloud's data.
         /// @param[in] a: name of the feature to use has the first ('x') dimension
