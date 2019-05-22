@@ -944,7 +944,7 @@ int Visualizer::determineNextBundleIdx(bool isLeft)
 {
     int nextBundleIdx = mBundleSwitchInfo.mSwitchToBundleIdx; // keep same by default
 
-    if (mCurrentBundleIdx > 0)
+    if (mCurrentBundleIdx >= 0)
     {
         if (!mSameBundleNavigationMode)
         {
