@@ -9,6 +9,8 @@ if exist ".\bin\Release\VisualizerApp.exe" (
     xcopy "%PCL_ROOT%\bin\pcl_io_ply_release.dll" .\package\VisualizerApp\ /Y
     xcopy "%PCL_ROOT%\bin\pcl_io_release.dll" .\package\VisualizerApp\ /Y
     xcopy "%PCL_ROOT%\bin\pcl_kdtree_release.dll" .\package\VisualizerApp\ /Y
+    xcopy "%PCL_ROOT%\bin\pcl_octree_release.dll" .\package\VisualizerApp\ /Y
+    xcopy "%PCL_ROOT%\bin\pcl_search_release.dll" .\package\VisualizerApp\ /Y
     xcopy "%PCL_ROOT%\bin\pcl_visualization_release.dll" .\package\VisualizerApp\ /Y
 
     xcopy "%OPENNI2_REDIST64%OpenNI2.dll" .\package\VisualizerApp\ /Y
