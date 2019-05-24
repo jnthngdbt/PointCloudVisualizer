@@ -166,14 +166,24 @@ void Visualizer::generateBundles(const FileName& inputFileOrFolder)
 
         // Add this cloud to the bundle array.
         addCloudToBundle(newCloud);
-
-        // Make the app start with the bundle of the input file.
-        if (!isInputDir && (newCloud.mFileName == fileOrFolderPath.stem().string()))
-            mBundleSwitchInfo.mSwitchToBundleIdx = getNbBundles() - 1;
     }
 
-    if (isInputDir)
-        mBundleSwitchInfo.mSwitchToBundleIdx = getNbBundles() - 1; // start with most recent
+    mBundleSwitchInfo.mSwitchToBundleIdx = getNbBundles() - 1; // start with most recent
+
+    // Override start bundle with the bundle of the input file, if possible.
+    if (!isInputDir)
+    {
+        auto it = std::find_if(mBundles.begin(), mBundles.end(), [&](const Bundle& bundle)
+        {
+            for (const Cloud& cloud : bundle.mClouds)
+                if (cloud.mFileName == fileOrFolderPath.stem().string())
+                    return true;
+            return false;
+        });
+
+        if (it != mBundles.end())
+            mBundleSwitchInfo.mSwitchToBundleIdx = std::distance(mBundles.begin(), it);
+    }
 
     // Override rendering properties with clouds of first bundle to be rendered.
     for (const auto& cloud : mBundles[mBundleSwitchInfo.mSwitchToBundleIdx].mClouds)
