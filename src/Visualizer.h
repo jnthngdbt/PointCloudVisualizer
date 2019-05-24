@@ -96,7 +96,7 @@ namespace pcv
         {
             int mSize{ 1 };
             double mOpacity{ 1.0 };
-            int mColormap{ pcl::visualization::PCL_VISUALIZER_LUT_VIRIDIS };
+            int mColormap{ pcl::visualization::PCL_VISUALIZER_LUT_JET_INVERSE };
             std::vector<double> mColormapRange;
         };
 
