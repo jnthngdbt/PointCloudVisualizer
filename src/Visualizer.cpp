@@ -283,19 +283,20 @@ void Visualizer::addCloudToBundle(const Cloud& newCloud)
 
         if (newCloud.mBundleName != currentBundle.mName) // not for the current bundle
         {
-            // Manage scope depth.
             if (bundleExists(newCloud.mBundleName))
             {
                 auto lastBundleIt = getLastBundleWithName(newCloud.mBundleName);
 
-                if (!hasCloudName(lastBundleIt->mClouds, newCloud.mCloudName))
-                {
-                    for (auto it = mBundles.rbegin(); it != lastBundleIt; it++)
-                        it->mScopeDepth++;
-                }
-            }
+                if (hasCloudName(lastBundleIt->mClouds, newCloud.mCloudName)) // previous bundle with this name already has this cloud, so create new bundle
+                    createNewBundle(newCloud);
+                else // this cloud does not exists in that previous bundle, add the cloud to it
+                    lastBundleIt->mClouds.push_back(newCloud);
 
-            createNewBundle(newCloud);
+                // NOTE TODO: mScopeDepth is no longer incremented, since it interferes with the notion that a bundle may have bundles in between
+                // (we don't want multiple bundles in this case).
+            }
+            else // this is a new bundle
+                createNewBundle(newCloud);
         }
         else if (hasCloudName(currentBundle.mClouds, newCloud.mCloudName)) // current bundle already has this cloud, must be a new bundle
         {
