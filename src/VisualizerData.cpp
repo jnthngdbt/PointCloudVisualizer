@@ -16,6 +16,8 @@ using namespace pcv;
 
 const std::string VisualizerData::sFilePrefix = "visualizer.";
 const std::string VisualizerData::sFolder = "VisualizerData/";
+const std::string VisualizerData::sScopeNameSep = "~";
+thread_local std::string VisualizerData::sName = "";
 
 void logError(const std::string& msg)
 {
@@ -27,7 +29,18 @@ void logWarning(const std::string& msg)
     std::cout << "[VISUALIZER][WARNING]" << msg << std::endl;
 }
 
-VisualizerData::VisualizerData(const std::string& name) : mName(name) { }
+VisualizerData::VisualizerData(const std::string& name)
+{
+    mScopeName = name;
+    if (!sName.empty()) sName = sName + sScopeNameSep;
+    sName = sName + mScopeName;
+}
+
+VisualizerData::~VisualizerData()
+{
+    render(); // force render (saving files) at destruction
+    sName.resize(std::max(0, static_cast<int>(sName.size() - mScopeName.size() - sScopeNameSep.size())));
+}
 
 Cloud& VisualizerData::addFeature(const FeatureData& data, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport)
 {
@@ -159,7 +172,7 @@ void VisualizerData::saveSectionTitleFile(const std::string& title)
 
 std::string VisualizerData::getCloudFilename(const Cloud& cloud, const std::string& cloudName) const
 {
-    return sFolder + sFilePrefix + cloud.mTimestamp + "." + mName +  "." + cloudName + ".pcd";
+    return sFolder + sFilePrefix + cloud.mTimestamp + "." + sName +  "." + cloudName + ".pcd";
 }
 
 ///////////////////////////////////////////////////////////////////////////////////

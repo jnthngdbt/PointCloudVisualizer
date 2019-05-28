@@ -180,7 +180,7 @@ namespace pcv
     {
     public:
         VisualizerData(const std::string& name);
-        ~VisualizerData() { render(); } // force render (saving files) at destruction
+        ~VisualizerData();
 
         static const std::string sFilePrefix;
         static const std::string sFolder;
@@ -347,7 +347,9 @@ namespace pcv
         std::string getCloudFilename(const Cloud& cloud, const std::string& cloudName) const;
 
     private:
-        std::string mName;
+        static thread_local std::string sName;
+        static const std::string sScopeNameSep;
+        std::string mScopeName;
         CloudsMap mClouds;
         FileNames mFileNames;
     };

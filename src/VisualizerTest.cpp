@@ -314,6 +314,32 @@ int main()
             VISUALIZER_CALL(VisualizerData("test-bundle-stack-1").addCloud(*cloudModel, "d"));
             VISUALIZER_CALL(VisualizerData("test-bundle-stack-1").addCloud(*cloudModel, "e"));
         VISUALIZER_CALL(VisualizerData("test-bundle-stack-0").addCloud(*cloudModel, "c"));
+
+        auto stack2 = [&]()
+        {
+            VISUALIZER_CALL(VisualizerData viewer("level-2"));
+            VISUALIZER_CALL(viewer.addCloud(*cloudModel, "a"));
+            VISUALIZER_CALL(viewer.addCloud(*cloudModel, "b"));
+        };
+        auto stack1 = [&]()
+        {
+            VISUALIZER_CALL(VisualizerData viewer("level-1"));
+            VISUALIZER_CALL(viewer.addCloud(*cloudModel, "a"));
+            stack2();
+            VISUALIZER_CALL(viewer.addCloud(*cloudModel, "b"));
+            VISUALIZER_CALL(viewer.addCloud(*cloudModel, "c"));
+        };
+        auto stack0 = [&]()
+        {
+            VISUALIZER_CALL(VisualizerData viewer("level-0"));
+            VISUALIZER_CALL(viewer.addCloud(*cloudModel, "a"));
+            VISUALIZER_CALL(viewer.addCloud(*cloudModel, "b"));
+            stack1();
+            VISUALIZER_CALL(viewer.addCloud(*cloudModel, "c"));
+        };
+
+        VISUALIZER_CALL(VisualizerData viewer("test-bundle-stack-real"));
+        stack0();
     };
 
     auto testPlot = [&]()
