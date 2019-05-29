@@ -347,9 +347,9 @@ namespace pcv
         std::string getCloudFilename(const Cloud& cloud, const std::string& cloudName) const;
 
     private:
-        static thread_local std::string sName;
-        static const std::string sScopeNameSep;
-        std::string mScopeName;
+        static thread_local std::string sFullScopeName;
+        std::string mLocalScopeName;
+
         CloudsMap mClouds;
         FileNames mFileNames;
     };
