@@ -955,6 +955,11 @@ int Visualizer::determineNextBundleIdx(bool isLeft)
 {
     int nextBundleIdx = mBundleSwitchInfo.mSwitchToBundleIdx; // keep same by default
 
+    auto getBundleLocalScopeName = [](const std::string& bundleName)
+    {
+        return bundleName.substr(bundleName.find_last_of('('));
+    };
+
     if (mCurrentBundleIdx >= 0)
     {
         if (!mSameBundleNavigationMode)
@@ -973,7 +978,7 @@ int Visualizer::determineNextBundleIdx(bool isLeft)
             const int end = limit + step;
             for (int i = start; i != end; i += step)
             {
-                if (mBundles[i].mName == bundleName)
+                if (getBundleLocalScopeName(mBundles[i].mName) == getBundleLocalScopeName(bundleName))
                 {
                     nextBundleIdx = i;
                     break;
