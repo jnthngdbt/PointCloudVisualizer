@@ -552,7 +552,12 @@ void Visualizer::printBundleStack()
     {
         const bool isCurrentBundle = i == mCurrentBundleIdx;
         std::cout << std::string(mBundles[i].mScopeDepth * indentation.size(), ' '); // scope depth offset
-        std::cout << (isCurrentBundle ? " -> " : indentation) << mBundles[i].mClouds.front().mTimeStamp << " " << mBundles[i].mName << std::endl;
+        std::cout 
+            << (isCurrentBundle ? " -> " : indentation) 
+            << mBundles[i].mClouds.front().mTimeStamp << " " 
+            << mBundles[i].mName 
+            << (isCurrentBundle ? " <- " : " ")
+            << std::endl;
     }
 
     if (iBundleEnd < getNbBundles() - 1)
