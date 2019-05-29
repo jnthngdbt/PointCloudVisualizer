@@ -130,12 +130,6 @@ namespace pcv
 
         using Bundles = std::vector<Bundle>;
 
-        void generateBundles(const FileName& fileName);
-        void setCloudRenderingProperties(const Cloud& newCloud);
-        CloudRenderingProperties& getCloudRenderingProperties(const Cloud& cloud) { return mProperties[cloud.mCloudName]; };
-
-        void addCloudToBundle(const Cloud& newCloud);
-
         /// Add to draw a 3d basis (3 RGB vectors) at a specified location.
         /// @param[in] u1: 3d vector of the x axis (red)
         /// @param[in] u2: 3d vector of the y axis (green)
@@ -193,6 +187,17 @@ namespace pcv
 
         void switchBundle();
         void printBundleStack();
+
+        void generateBundles(const FileName& fileName);
+        void addCloudToBundle(const Cloud& newCloud);
+
+        static bool hasCloudNameInBundle(const Bundle& bundle, const std::string& cloudName);
+
+        std::string getBundleLocalScopeName(const std::string& bundleName) { return bundleName.substr(bundleName.find_last_of('(')); };
+
+        std::string getCloudRenderingPropertiesKey(const Cloud& cloud) { return getBundleLocalScopeName(cloud.mBundleName) + cloud.mCloudName; }
+        void setCloudRenderingProperties(const Cloud& newCloud);
+        CloudRenderingProperties& getCloudRenderingProperties(const Cloud& cloud) { return mProperties[getCloudRenderingPropertiesKey(cloud)]; };
 
         std::shared_ptr<PclVisualizer> mViewer;
         std::vector<int> mViewportIds;

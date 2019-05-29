@@ -187,7 +187,7 @@ void Visualizer::generateBundles(const FileName& inputFileOrFolder)
 
     // Override rendering properties with clouds of first bundle to be rendered.
     for (const auto& cloud : mBundles[mBundleSwitchInfo.mSwitchToBundleIdx].mClouds)
-        mProperties[cloud.mCloudName] = cloud.mRenderingProperties;
+        mProperties[getCloudRenderingPropertiesKey(cloud)] = cloud.mRenderingProperties;
 }
 
 void Visualizer::Cloud::parseFileHeader()
@@ -247,21 +247,21 @@ void Visualizer::Cloud::parseFileHeader()
 
 void Visualizer::setCloudRenderingProperties(const Cloud& newCloud)
 {
-    if (mProperties.count(newCloud.mCloudName) == 0) // new cloud name
+    if (mProperties.count(getCloudRenderingPropertiesKey(newCloud)) == 0) // new cloud name
     {
-        mProperties[newCloud.mCloudName] = newCloud.mRenderingProperties;
+        mProperties[getCloudRenderingPropertiesKey(newCloud)] = newCloud.mRenderingProperties;
     }
 }
 
+bool Visualizer::hasCloudNameInBundle(const Bundle& bundle, const std::string& cloudName)
+{
+    int count = std::count_if(bundle.mClouds.begin(), bundle.mClouds.end(),
+        [&cloudName](const Cloud& c) { return c.mCloudName == cloudName; });
+    return count > 0;
+};
+
 void Visualizer::addCloudToBundle(const Cloud& newCloud)
 {
-    auto hasCloudName = [](const Clouds& clouds, const std::string& cloudName)
-    {
-        int count = std::count_if(clouds.begin(), clouds.end(),
-            [&cloudName](const Cloud& c) { return c.mCloudName == cloudName; });
-        return count > 0;
-    };
-
     auto& bundles = mBundles;
     auto createNewBundle = [&bundles](const Cloud& newCloud)
     {
@@ -297,7 +297,7 @@ void Visualizer::addCloudToBundle(const Cloud& newCloud)
             {
                 auto lastBundleIt = getLastBundleWithName(newCloud.mBundleName);
 
-                if (hasCloudName(lastBundleIt->mClouds, newCloud.mCloudName)) // previous bundle with this name already has this cloud, so create new bundle
+                if (hasCloudNameInBundle(*lastBundleIt, newCloud.mCloudName)) // previous bundle with this name already has this cloud, so create new bundle
                     createNewBundle(newCloud);
                 else // this cloud does not exists in that previous bundle, add the cloud to it
                     lastBundleIt->mClouds.push_back(newCloud);
@@ -308,7 +308,7 @@ void Visualizer::addCloudToBundle(const Cloud& newCloud)
             else // this is a new bundle
                 createNewBundle(newCloud);
         }
-        else if (hasCloudName(currentBundle.mClouds, newCloud.mCloudName)) // current bundle already has this cloud, must be a new bundle
+        else if (hasCloudNameInBundle(currentBundle, newCloud.mCloudName)) // current bundle already has this cloud, must be a new bundle
         {
             createNewBundle(newCloud);
         }
@@ -520,7 +520,10 @@ void Visualizer::switchBundle()
     }
     else
     {
-        setColormapSource(mColormapSourceId);
+        if (hasCloudNameInBundle(getCurrentBundle(), mColormapSourceId))
+            setColormapSource(mColormapSourceId);
+        else
+            setColormapSource(clouds.cbegin()->mCloudName); // initialize the lut source with the first cloud
         colorIdx = mBundleSwitchInfo.mColorHandle;
     }
 
@@ -955,11 +958,6 @@ int Visualizer::determineNextBundleIdx(bool isLeft)
 {
     int nextBundleIdx = mBundleSwitchInfo.mSwitchToBundleIdx; // keep same by default
 
-    auto getBundleLocalScopeName = [](const std::string& bundleName)
-    {
-        return bundleName.substr(bundleName.find_last_of('('));
-    };
-
     if (mCurrentBundleIdx >= 0)
     {
         if (!mSameBundleNavigationMode)
@@ -1091,7 +1089,12 @@ void Visualizer::identifyClouds(bool enabled, bool back)
 
 void Visualizer::editColorMap(const pcl::visualization::KeyboardEvent& e)
 {
-    auto& props = mProperties[mColormapSourceId];
+    // Find colormap source cloud.
+    const auto& clouds = getCurrentBundle().mClouds;
+    const auto& colormapSourceName = mColormapSourceId;
+    auto it = std::find_if(clouds.begin(), clouds.end(), [&](const Cloud& cloud) { return cloud.mCloudName == colormapSourceName; });
+
+    auto& props = (it != clouds.end()) ? getCloudRenderingProperties(*it) : getCloudRenderingProperties(clouds.front());
 
     if (e.isCtrlPressed()) // edit colormap range
     {
