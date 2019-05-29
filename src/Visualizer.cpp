@@ -253,6 +253,30 @@ void Visualizer::setCloudRenderingProperties(const Cloud& newCloud)
     }
 }
 
+int Visualizer::getBundleNameScopeDepth(const std::string& bundleName)
+{
+    return std::count(bundleName.begin(), bundleName.end(), '(');
+}
+
+std::string Visualizer::getBundleLocalScopeName(const std::string& bundleName, int depth)
+{
+    std::string stripScopeName = bundleName;
+    std::string localScopeName = "";
+
+    depth = std::min(depth, getBundleNameScopeDepth(bundleName));
+    depth = std::max(depth, 1);
+
+    // The depth specifies the number of ()()() to keep in bundle name.
+    for (int i = 0; i < depth; ++i)
+    {
+        int pos = stripScopeName.find_last_of('(');
+        localScopeName = stripScopeName.substr(pos) + localScopeName;
+        stripScopeName.resize(pos);
+    }
+
+    return localScopeName;
+}
+
 bool Visualizer::hasCloudNameInBundle(const Bundle& bundle, const std::string& cloudName)
 {
     int count = std::count_if(bundle.mClouds.begin(), bundle.mClouds.end(),
@@ -392,10 +416,10 @@ void Visualizer::render(const Bundle& bundle)
     {
         const int colorIdx = getColorHandlerIndex();
         std::string help = "";
-        if (mSameBundleNavigationMode) help += "Same bundle navigation mode \n\r";
+        if (mSameBundleNavigationMode) help += "Bundle navigation:" + getBundleLocalScopeName(getCurrentBundle().mName, mSameBundleNavigationDepth) + "\n\r";
         help += "Colormap source: " + mColormapSourceId + "\n\r";
         help += "Color handler: " + std::to_string(colorIdx + 1) + " (" + ((colorIdx < mCommonColorNames.size()) ? mCommonColorNames[colorIdx] : "-") + ")";
-        getViewer().updateText(help, 10, 10, 18, 0.5, 0.5, 0.5, infoTextId); // text, xpos, ypos, fontsize, r, g, b, id
+        getViewer().updateText(help, 10, 10, 14, 0.5, 0.5, 0.5, infoTextId); // text, xpos, ypos, fontsize, r, g, b, id
 
         getViewer().spinOnce(100);
 
@@ -933,7 +957,12 @@ void Visualizer::keyboardEventCallback(const pcl::visualization::KeyboardEvent& 
     }
     else if ((event.getKeySym() == "b" || event.getKeySym() == "B") && event.keyDown())
     {
-        mSameBundleNavigationMode = !mSameBundleNavigationMode;
+        if (event.isCtrlPressed() && event.isShiftPressed())
+            mSameBundleNavigationDepth = std::max(mSameBundleNavigationDepth - 1, 1);
+        else if (event.isCtrlPressed())
+            mSameBundleNavigationDepth = std::min(mSameBundleNavigationDepth + 1, getBundleNameScopeDepth(getCurrentBundle().mName));
+        else if (!event.isShiftPressed())
+            mSameBundleNavigationMode = !mSameBundleNavigationMode;
     }
     else if ((event.getKeySym() == "Left") && event.keyDown())
     {
@@ -981,7 +1010,7 @@ int Visualizer::determineNextBundleIdx(bool isLeft)
             const int end = limit + step;
             for (int i = start; i != end; i += step)
             {
-                if (getBundleLocalScopeName(mBundles[i].mName) == getBundleLocalScopeName(bundleName))
+                if (getBundleLocalScopeName(mBundles[i].mName, mSameBundleNavigationDepth) == getBundleLocalScopeName(bundleName, mSameBundleNavigationDepth))
                 {
                     nextBundleIdx = i;
                     break;

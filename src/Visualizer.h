@@ -193,9 +193,10 @@ namespace pcv
 
         static bool hasCloudNameInBundle(const Bundle& bundle, const std::string& cloudName);
 
-        std::string getBundleLocalScopeName(const std::string& bundleName) { return bundleName.substr(bundleName.find_last_of('(')); };
+        static std::string getBundleLocalScopeName(const std::string& bundleName, int depth = 1);
+        static int getBundleNameScopeDepth(const std::string& bundleName);
 
-        std::string getCloudRenderingPropertiesKey(const Cloud& cloud) { return getBundleLocalScopeName(cloud.mBundleName) + cloud.mCloudName; }
+        std::string getCloudRenderingPropertiesKey(const Cloud& cloud) { return getBundleLocalScopeName(cloud.mBundleName, 1) + cloud.mCloudName; }
         void setCloudRenderingProperties(const Cloud& newCloud);
         CloudRenderingProperties& getCloudRenderingProperties(const Cloud& cloud) { return mProperties[getCloudRenderingPropertiesKey(cloud)]; };
 
@@ -205,7 +206,9 @@ namespace pcv
         Bundles mBundles;
         int mCurrentBundleIdx{ 0 };
         BundleSwitchInfo mBundleSwitchInfo;
+
         bool mSameBundleNavigationMode{ false };
+        int mSameBundleNavigationDepth{ 1 };
 
         std::vector<std::string> mCommonColorNames;
         std::vector<std::string> mCommonGeoNames;
