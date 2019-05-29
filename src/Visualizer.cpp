@@ -533,7 +533,7 @@ void Visualizer::switchBundle()
 
 void Visualizer::printBundleStack()
 {
-    const int stackDepth = 8;
+    const int stackDepth = 12;
 
     const int iBundleStart = std::max(0, mCurrentBundleIdx - stackDepth);
     const int iBundleEnd = std::min(mCurrentBundleIdx + stackDepth, getNbBundles() - 1);
@@ -549,7 +549,7 @@ void Visualizer::printBundleStack()
     {
         const bool isCurrentBundle = i == mCurrentBundleIdx;
         std::cout << std::string(mBundles[i].mScopeDepth * indentation.size(), ' '); // scope depth offset
-        std::cout << (isCurrentBundle ? " -> " : indentation) << mBundles[i].mName << std::endl;
+        std::cout << (isCurrentBundle ? " -> " : indentation) << mBundles[i].mClouds.front().mTimeStamp << " " << mBundles[i].mName << std::endl;
     }
 
     if (iBundleEnd < getNbBundles() - 1)
