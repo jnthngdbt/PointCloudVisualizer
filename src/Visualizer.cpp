@@ -415,10 +415,14 @@ void Visualizer::render(const Bundle& bundle)
     while (!getViewer().wasStopped() && !mustSwitchBundle())
     {
         const int colorIdx = getColorHandlerIndex();
+
         std::string help = "";
-        if (mSameBundleNavigationMode) help += "Bundle navigation:" + getBundleLocalScopeName(getCurrentBundle().mName, mSameBundleNavigationDepth) + "\n\r";
-        help += "Colormap source: " + mColormapSourceId + "\n\r";
-        help += "Color handler: " + std::to_string(colorIdx + 1) + " (" + ((colorIdx < mCommonColorNames.size()) ? mCommonColorNames[colorIdx] : "-") + ")";
+        if (mShowInfoText)
+        {
+            if (mSameBundleNavigationMode) help += "Bundle navigation:" + getBundleLocalScopeName(getCurrentBundle().mName, mSameBundleNavigationDepth) + "\n\r";
+            help += "Colormap source: " + mColormapSourceId + "\n\r";
+            help += "Color handler: " + std::to_string(colorIdx + 1) + " (" + ((colorIdx < mCommonColorNames.size()) ? mCommonColorNames[colorIdx] : "-") + ")";
+        }
         getViewer().updateText(help, 10, 10, 14, 0.5, 0.5, 0.5, infoTextId); // text, xpos, ypos, fontsize, r, g, b, id
 
         getViewer().spinOnce(100);
@@ -955,6 +959,10 @@ void Visualizer::keyboardEventCallback(const pcl::visualization::KeyboardEvent& 
         // (built-in help will be printed)
         printHelp(); // add custom help
     }
+    else if ((event.getKeySym() == "t" || event.getKeySym() == "T") && event.keyDown())
+    {
+        mShowInfoText = !mShowInfoText;
+    }
     else if ((event.getKeySym() == "b" || event.getKeySym() == "B") && event.keyDown())
     {
         if (event.isCtrlPressed() && event.isShiftPressed())
@@ -1201,7 +1209,11 @@ void Visualizer::printHelp() const
         "   Left  : switch to previous bundle \n"
         "   Right : switch to next bundle \n"
         "\n"
-        "   b, B  : toggle navigation only through bundles of same name as current bundle \n"
+        "                  b, B : toggle navigation only through bundles of same name as current bundle \n"
+        "   CTRL +         b, B : increase bundle name equality scope depth \n"
+        "   CTRL + SHIFT + b, B : decrease bundle name equality scope depth \n"
+        "\n"
+        "                  t, T : toggle display of the info text \n"
         "\n"
     );
 }

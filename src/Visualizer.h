@@ -218,6 +218,8 @@ namespace pcv
         int mIdentifiedCloudIdx{ -1 };
         std::string mColormapSourceId;
 
+        bool mShowInfoText{ true };
+
         std::map<CloudName, CloudRenderingProperties> mProperties;
     };
 }
