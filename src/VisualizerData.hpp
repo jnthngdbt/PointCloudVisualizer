@@ -34,7 +34,7 @@ namespace pcv
 
         FeatureData x(N, 0);
         for (int i = 0; i < N; ++i)
-            x[i] = i * (1.0/N) * scale;
+            x[i] = i * scale / N;
 
         return addPlot(x, data, name, [](float v) { return v; }, func, viewport);
     }
