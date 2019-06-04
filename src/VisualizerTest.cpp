@@ -13,6 +13,8 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/search/kdtree.h>
 
+#include <pcl/visualization/pcl_plotter.h>
+
 #include "Visualizer.h"
 #include "VisualizerData.h"
 
@@ -357,6 +359,27 @@ int main()
         VISUALIZER_CALL(viewer.addPlot(cloudModel->points, cloudModel->points, "y-vs-z", getY, getZ, 1));
     };
 
+    auto explorePlotter = [&]()
+    {
+        std::vector<double> x(N, 0.0);
+        std::vector<double> y(N, 0.0);
+        std::vector<double> z(N, 0.0);
+
+        std::transform(cloudNoisy->begin(), cloudNoisy->end(), x.begin(), [](const pcl::PointXYZ& p) { return p.x; });
+        std::transform(cloudNoisy->begin(), cloudNoisy->end(), y.begin(), [](const pcl::PointXYZ& p) { return p.y; });
+        std::transform(cloudNoisy->begin(), cloudNoisy->end(), z.begin(), [](const pcl::PointXYZ& p) { return p.z; });
+
+        pcl::visualization::PCLPlotter plotter;
+        //plotter.addFeatureHistogram(*descriptor, 308);
+
+        plotter.addPlotData(x, z, "x-z", vtkChart::LINE, {127, 0, 0, 64});
+        plotter.addPlotData(y, z, "y-z", vtkChart::LINE, {0, 0, 127, 64});
+        //plotter.setColorScheme(1); // https://vtk.org/doc/nightly/html/classvtkColorSeries.html#ad55759622bbe2e26f908696d0031edf8
+        plotter.setBackgroundColor(0.1, 0.1, 0.1);
+
+        plotter.plot();
+    };
+
     testMultipleClouds();
     testAddingFeaturesAndClouds();
     testCustomGeometryHandler();
@@ -370,6 +393,8 @@ int main()
     testColormap();
     testBundleStack();
     testPlot();
+
+    explorePlotter();
 
     return 0;
 }
