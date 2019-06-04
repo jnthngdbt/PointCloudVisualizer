@@ -27,6 +27,12 @@ namespace pcv
         return addFeature(castData, name, viewport);
     }
 
+    template<typename T>
+    Cloud& VisualizerData::addPlot(const std::vector<T>& data, const CloudName& name, float scale, ViewportIdx viewport)
+    {
+        return addPlot(data, name, scale, [](float v) { return v; }, viewport);
+    }
+
     template<typename T, typename F>
     Cloud& VisualizerData::addPlot(const T& data, const CloudName& name, float scale, F func, ViewportIdx viewport)
     {
@@ -47,6 +53,7 @@ namespace pcv
         cloud.addFeature(yData, "y", yFunc, viewport);
         cloud.addFeature(FeatureData(cloud.getNbPoints(), 0), "z", viewport);
         cloud.addSpace("x", "y", "z");
+        cloud.setDefaultFeature("y");
         return cloud;
     }
 

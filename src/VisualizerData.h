@@ -263,6 +263,15 @@ namespace pcv
         /// @param[in] data: generic container of the feature data
         /// @param[in] name: the name of the plot point cloud
         /// @param[in] scale: scale factor for the x; the plotted data is y, x are the indices values scaled to [0,1] on which the scale is applied
+        /// @param[in] viewport (optional): the viewport index (0 based) in which to render
+        /// @return reference to the updated visualizer cloud (allows chainable commands)
+        template<typename T>
+        Cloud& addPlot(const std::vector<T>& data, const CloudName& name, float scale, ViewportIdx viewport = -1);
+
+        /// Add a plot (graph of the feature), from a generic container and a lambda specifying how to get the data from the container.
+        /// @param[in] data: generic container of the feature data
+        /// @param[in] name: the name of the plot point cloud
+        /// @param[in] scale: scale factor for the x; the plotted data is y, x are the indices values scaled to [0,1] on which the scale is applied
         /// @param[in] func: lamdba having as input a reference of an element of the container and that returns the feature value of that element
         /// @param[in] viewport (optional): the viewport index (0 based) in which to render
         /// @return reference to the updated visualizer cloud (allows chainable commands)
