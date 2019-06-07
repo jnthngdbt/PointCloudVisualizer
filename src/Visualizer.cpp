@@ -669,16 +669,44 @@ void Visualizer::prepareCloudsForRender(const Clouds& clouds)
             const auto& p = planes->at(0);
             pcl::ModelCoefficients coeffs;
             coeffs.values = { p.a, p.b, p.c, p.d };
-            getViewer().addPlane(coeffs, p.x, p.y, p.z, cloud.mCloudName, getViewportId(cloud.mViewport));
+            //getViewer().addPlane(coeffs, p.x, p.y, p.z, cloud.mCloudName, getViewportId(cloud.mViewport));
+
+            ////////////////////////////////////////////////////////////////
+            ////////////////////////////////////////////////////////////////
+            pcl::PointCloud<pcl::PointXYZ>::Ptr pln(new pcl::PointCloud<pcl::PointXYZ>);
+            pln->resize(4);
+            pln->points[0] = pcl::PointXYZ(-0.8, -0.2, 0.0);
+            pln->points[1] = pcl::PointXYZ(-0.8,  0.2, 0.0);
+            pln->points[2] = pcl::PointXYZ( 0.8,  0.2, 0.0);
+            pln->points[3] = pcl::PointXYZ( 0.8, -0.2, 0.0);
+            pcl::Vertices v;
+            v.vertices.resize(5);
+            v.vertices[0] = 0;
+            v.vertices[1] = 1;
+            v.vertices[2] = 2;
+            v.vertices[3] = 3;
+            v.vertices[4] = 0;
+            std::vector<pcl::Vertices> vv(1);
+            vv[0] = v;
+            getViewer().addPolygonMesh<pcl::PointXYZ>(pln, vv, cloud.mCloudName, getViewportId(cloud.mViewport));
+            ////////////////////////////////////////////////////////////////
+            ////////////////////////////////////////////////////////////////
+
+
 
             const auto rgb = p.rgb;
             const auto r = (rgb >> 16) & 0xFF;
             const auto g = (rgb >> 8) & 0xFF;
             const auto b = (rgb) & 0xFF;
 
-            getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getCloudRenderingProperties(cloud).mOpacity, cloud.mCloudName);
-            getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_REPRESENTATION, pcl::visualization::PCL_VISUALIZER_REPRESENTATION_SURFACE, cloud.mCloudName);
-            getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, r / 255., g / 255., b / 255., cloud.mCloudName);
+            ////////////////////////////////////////////////////////////////
+            ////////////////////////////////////////////////////////////////
+
+            //getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getCloudRenderingProperties(cloud).mOpacity, cloud.mCloudName);
+            //getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_REPRESENTATION, pcl::visualization::PCL_VISUALIZER_REPRESENTATION_SURFACE, cloud.mCloudName);
+            //getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, r / 255., g / 255., b / 255., cloud.mCloudName);
+            ////////////////////////////////////////////////////////////////
+            ////////////////////////////////////////////////////////////////
         }
         else // points
         {
