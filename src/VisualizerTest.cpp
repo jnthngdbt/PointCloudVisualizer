@@ -370,12 +370,13 @@ int main()
         std::transform(cloudNoisy->begin(), cloudNoisy->end(), z.begin(), [](const pcl::PointXYZ& p) { return p.z; });
 
         pcl::visualization::PCLPlotter plotter;
-        //plotter.addFeatureHistogram(*descriptor, 308);
 
-        plotter.addPlotData(x, z, "x-z", vtkChart::LINE, {127, 0, 0, 64});
-        plotter.addPlotData(y, z, "y-z", vtkChart::LINE, {0, 0, 127, 64});
+        plotter.addPlotData(x, z, "x-z", vtkChart::LINE, {127, 0, 0, char(0.8*127)});
+        plotter.addPlotData(y, z, "y-z", vtkChart::LINE, {32, 32, 127, char(0.8*127)});
         //plotter.setColorScheme(1); // https://vtk.org/doc/nightly/html/classvtkColorSeries.html#ad55759622bbe2e26f908696d0031edf8
-        plotter.setBackgroundColor(0.1, 0.1, 0.1);
+        
+        const double grey = 0.5;
+        plotter.setBackgroundColor(grey, grey, grey);
 
         plotter.plot();
     };
