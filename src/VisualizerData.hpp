@@ -141,9 +141,9 @@ namespace pcv
     }
 
     template <typename Point>
-    Cloud& VisualizerData::addPlane(const Point& p, std::array<float, 4> coeffs, const CloudName& cloudName, int viewport)
+    Cloud& VisualizerData::addPlane(const Point& p, std::array<float, 4> coeffs, double sizeU, double sizeV, const Eigen::Vector3f& up, const CloudName& cloudName, int viewport)
     {
-        return getCloud(cloudName).addPlane(p, coeffs, viewport);
+        return getCloud(cloudName).addPlane(p, coeffs, sizeU, sizeV, up, viewport);
     }
 
     template <typename Point>
@@ -204,8 +204,13 @@ namespace pcv
     }
 
     template <typename Point>
-    Cloud& Cloud::addPlane(const Point& p, std::array<float, 4> coeffs, int viewport)
+    Cloud& Cloud::addPlane(const Point& p, std::array<float, 4> coeffs, double sizeU, double sizeV, const Eigen::Vector3f& up, int viewport)
     {
+        // Compute basis.
+        const Eigen::Vector3f n = Eigen::Vector3f(coeffs[0], coeffs[1], coeffs[2]).normalized();
+        const Eigen::Vector3f u = n.cross(up).normalized() * sizeU * 0.5;
+        const Eigen::Vector3f v = u.cross(n).normalized() * sizeV * 0.5;
+
         mFeatures.clear(); // overwrite the cloud to only contain a plane
 
         mFeatures.emplace_back("x", std::vector<float>(1, p.x));
@@ -215,8 +220,15 @@ namespace pcv
         mFeatures.emplace_back("b", std::vector<float>(1, coeffs[1]));
         mFeatures.emplace_back("c", std::vector<float>(1, coeffs[2]));
         mFeatures.emplace_back("d", std::vector<float>(1, coeffs[3]));
+        mFeatures.emplace_back("ux", std::vector<float>(1, u.x()));
+        mFeatures.emplace_back("uy", std::vector<float>(1, u.y()));
+        mFeatures.emplace_back("uz", std::vector<float>(1, u.z()));
+        mFeatures.emplace_back("vx", std::vector<float>(1, v.x()));
+        mFeatures.emplace_back("vy", std::vector<float>(1, v.y()));
+        mFeatures.emplace_back("vz", std::vector<float>(1, v.z()));
 
         addSpace("x", "y", "z");
+        addSpace("a", "b", "c"); // normal
         addCloudCommon(viewport);
 
         mType = EType::ePlane;

@@ -43,6 +43,12 @@ struct PointPlane
     float b;
     float c;
     float d;
+    float ux;
+    float uy;
+    float uz;
+    float vx;
+    float vy;
+    float vz;
     uint32_t rgb;
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW   // make sure new allocators are aligned
 } EIGEN_ALIGN16;                      // enforce SSE padding for correct memory alignment
@@ -666,47 +672,40 @@ void Visualizer::prepareCloudsForRender(const Clouds& clouds)
             if (planes->size() != 1)
                 logError("A 'plane' cloud should only contain one plane.");
 
-            const auto& p = planes->at(0);
+            // Plane coefficients.
+            const auto& plane = planes->at(0);
             pcl::ModelCoefficients coeffs;
-            coeffs.values = { p.a, p.b, p.c, p.d };
-            //getViewer().addPlane(coeffs, p.x, p.y, p.z, cloud.mCloudName, getViewportId(cloud.mViewport));
+            coeffs.values = { plane.a, plane.b, plane.c, plane.d };
 
-            ////////////////////////////////////////////////////////////////
-            ////////////////////////////////////////////////////////////////
-            pcl::PointCloud<pcl::PointXYZ>::Ptr pln(new pcl::PointCloud<pcl::PointXYZ>);
-            pln->resize(4);
-            pln->points[0] = pcl::PointXYZ(-0.8, -0.2, 0.0);
-            pln->points[1] = pcl::PointXYZ(-0.8,  0.2, 0.0);
-            pln->points[2] = pcl::PointXYZ( 0.8,  0.2, 0.0);
-            pln->points[3] = pcl::PointXYZ( 0.8, -0.2, 0.0);
-            pcl::Vertices v;
-            v.vertices.resize(5);
-            v.vertices[0] = 0;
-            v.vertices[1] = 1;
-            v.vertices[2] = 2;
-            v.vertices[3] = 3;
-            v.vertices[4] = 0;
+            // Plane 4 corners.
+            Eigen::Vector3f ctr{ plane.x, plane.y, plane.z };
+            Eigen::Vector3f u{ plane.ux, plane.uy, plane.uz };
+            Eigen::Vector3f v{ plane.vx, plane.vy, plane.vz };
+            std::array<Eigen::Vector3f, 4> planePoints { ctr - u - v, ctr - u + v, ctr + u + v, ctr + u - v };
+
+            // Plane points.
+            pcl::PointCloud<pcl::PointXYZ>::Ptr planeCloud(new pcl::PointCloud<pcl::PointXYZ>);
+            for (const auto& p : planePoints)
+                planeCloud->push_back(pcl::PointXYZ(p.x(), p.y(), p.z()));
+
+            // Connect the dots to make polygon.
+            pcl::Vertices planeVertices;
+            planeVertices.vertices.resize(5);
+            for (int i = 0; i < 4; ++i)
+                planeVertices.vertices[i] = i;
             std::vector<pcl::Vertices> vv(1);
-            vv[0] = v;
-            getViewer().addPolygonMesh<pcl::PointXYZ>(pln, vv, cloud.mCloudName, getViewportId(cloud.mViewport));
-            ////////////////////////////////////////////////////////////////
-            ////////////////////////////////////////////////////////////////
+            vv[0] = planeVertices;
 
+            // Add to viewer.
+            getViewer().addPolygonMesh<pcl::PointXYZ>(planeCloud, vv, cloud.mCloudName, getViewportId(cloud.mViewport));
 
-
-            const auto rgb = p.rgb;
+            const auto rgb = plane.rgb;
             const auto r = (rgb >> 16) & 0xFF;
             const auto g = (rgb >> 8) & 0xFF;
             const auto b = (rgb) & 0xFF;
 
-            ////////////////////////////////////////////////////////////////
-            ////////////////////////////////////////////////////////////////
-
-            //getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getCloudRenderingProperties(cloud).mOpacity, cloud.mCloudName);
-            //getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_REPRESENTATION, pcl::visualization::PCL_VISUALIZER_REPRESENTATION_SURFACE, cloud.mCloudName);
-            //getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, r / 255., g / 255., b / 255., cloud.mCloudName);
-            ////////////////////////////////////////////////////////////////
-            ////////////////////////////////////////////////////////////////
+            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getCloudRenderingProperties(cloud).mOpacity, cloud.mCloudName);
+            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, r / 255., g / 255., b / 255., cloud.mCloudName);
         }
         else // points
         {
@@ -763,6 +762,19 @@ void Visualizer::prepareCloudsForRender(const Clouds& clouds)
 void Visualizer::setFeaturesOrder(const std::vector<FeatureName>& names)
 {
     mFeaturesOrder = names;
+}
+
+bool Visualizer::isShape(const Cloud& cloud)
+{
+    switch (cloud.mType)
+    {
+    case Cloud::EType::ePoints: return false;
+    case Cloud::EType::ePlane: return false; // polygon mesh, so considered point cloud
+    case Cloud::EType::eLines: return true;
+    case Cloud::EType::eSphere: return true;
+    default: return false;
+    }
+    return false;
 }
 
 void Visualizer::addBasis(
@@ -1071,10 +1083,10 @@ void Visualizer::changeCurrentCloudOpacity(double delta)
         else if (props.mOpacity < 0.0)
             props.mOpacity += 1.0;
 
-        if (cloud.mType == Cloud::EType::ePoints)
-            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, props.mOpacity, cloud.mCloudName);
-        else // shape
+        if (isShape(cloud))
             getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, props.mOpacity, cloud.mCloudName);
+        else
+            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, props.mOpacity, cloud.mCloudName);
     }
 }
 
@@ -1089,10 +1101,10 @@ void Visualizer::changeCurrentCloudSize(double delta)
         if (props.mSize < 1.0)
             props.mSize = 1.0;
 
-        if (cloud.mType == Cloud::EType::ePoints)
-            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, props.mSize, cloud.mCloudName);
-        else // shape
+        if (isShape(cloud))
             getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_LINE_WIDTH, props.mSize, cloud.mCloudName);
+        else
+            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, props.mSize, cloud.mCloudName);
     }
 }
 
@@ -1142,15 +1154,15 @@ void Visualizer::identifyClouds(bool enabled, bool back)
             setColormapSource(cloud.mCloudName);
         }
 
-        if (cloud.mType == Cloud::EType::ePoints)
-        {
-            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getOpacity(), cloud.mCloudName);
-            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, getSize(), cloud.mCloudName);
-        }
-        else // shape
+        if (isShape(cloud))
         {
             getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getOpacity(), cloud.mCloudName);
             getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_LINE_WIDTH, getSize(), cloud.mCloudName);
+        }
+        else
+        {
+            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getOpacity(), cloud.mCloudName);
+            getViewer().setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, getSize(), cloud.mCloudName);
         }
 
         ++i;

@@ -130,9 +130,12 @@ namespace pcv
         /// Add a plane.
         /// @param[in] p: plane position (kind of center)
         /// @param[in] coeffs: plane coefficients
+        /// @param[in] sizeU: plane size along axis u (corresponds to x in plane reference frame)
+        /// @param[in] sizeV: plane size along axis v (corresponds to y in plane reference frame)
+        /// @param[in] up: plane up vector, used to determine orthogonal basis from the normal
         /// @param[in] viewport (optional): the viewport index (0 based) in which to draw
         template <typename Point>
-        Cloud& addPlane(const Point& p, std::array<float, 4> coeffs, int viewport = -1);
+        Cloud& addPlane(const Point& p, std::array<float, 4> coeffs, double sizeU, double sizeV, const Eigen::Vector3f& up, int viewport = -1);
 
         Cloud& setViewport(ViewportIdx viewport);
         Cloud& setSize(int size) { mSize = size; return *this; };
@@ -318,10 +321,13 @@ namespace pcv
         /// Add a plane.
         /// @param[in] p: plane position (kind of center)
         /// @param[in] coeffs: plane coefficients
+        /// @param[in] sizeU: plane size along axis u (corresponds to x in plane reference frame)
+        /// @param[in] sizeV: plane size along axis v (corresponds to y in plane reference frame)
+        /// @param[in] up: plane up vector, used to determine orthogonal basis from the normal
         /// @param[in] cloudName: the name of the point cloud to which the space is defined
         /// @param[in] viewport (optional): the viewport index (0 based) in which to draw
         template <typename Point>
-        Cloud& addPlane(const Point& p, std::array<float, 4> coeffs, const CloudName& cloudName, int viewport = -1);
+        Cloud& addPlane(const Point& p, std::array<float, 4> coeffs, double sizeU, double sizeV, const Eigen::Vector3f& up, const CloudName& cloudName, int viewport = -1);
 
         /// Add a sphere.
         /// @param[in] p: sphere position

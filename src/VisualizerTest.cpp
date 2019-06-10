@@ -18,7 +18,7 @@
 #include "Visualizer.h"
 #include "VisualizerData.h"
 
-#define RUN_TIME_VISUALIZER(x) // can be 'Visualizer(x)' or nothing
+#define RUN_TIME_VISUALIZER(x) Visualizer(x) // can be 'Visualizer(x)' or nothing
 
 #define VISUALIZER_CALL(x) x
 
@@ -280,15 +280,20 @@ int main()
             VISUALIZER_CALL(viewer.addLine(p, q, "lines").setColor(0.0, 1.0, 0.0).setOpacity(0.1));
         }
 
-        pcl::PointXYZ p(0.1, 0.4, 2.7);
-        Eigen::Vector3d n = Eigen::Vector3d(1, 1, 1).normalized();
-        float a = n[0];
-        float b = n[1];
-        float c = n[2];
-        float d = -(a*p.x + b*p.y + c*p.z);
+        auto addPlane = [&](const pcl::PointXYZ& center, const Eigen::Vector3d& normal, const std::string& name)
+        {
+            float a = normal[0];
+            float b = normal[1];
+            float c = normal[2];
+            float d = -(a*center.x + b*center.y + c*center.z);
+
+            VISUALIZER_CALL(viewer.addPlane(center, { a, b, c, d }, 1, 2, {0, 1, 1}, name).setColor(1.0, 0.0, 1.0).setOpacity(0.5));
+        };
+
+        addPlane({ 0.1, 0.4, 2.7 }, Eigen::Vector3d(1, 1, 1).normalized(), "plane-arbitrary");
+        addPlane({ 0, 0, 0 }, { 0, 0, 1 }, "plane-origin");
 
         VISUALIZER_CALL(viewer.addSphere(pcl::PointXYZ(0.4, 0.6, 2.7), 0.1, "some-sphere").setColor(1.0, 1.0, 0.0).setOpacity(0.1));
-        VISUALIZER_CALL(viewer.addPlane(p, {a, b, c, d}, "some-plane").setColor(1.0, 0.0, 1.0).setOpacity(0.5));
 
         VISUALIZER_CALL(RUN_TIME_VISUALIZER(viewer.render()));
     };
@@ -381,15 +386,15 @@ int main()
         plotter.plot();
     };
 
-    testMultipleClouds();
-    testAddingFeaturesAndClouds();
-    testCustomGeometryHandler();
-    testIndexedClouds();
-    testConsistentHandlers();
-    testOrderingFeatures();
-    testCloudRender();
-    testDefaultFeature();
-    testBundleSwitch();
+    //testMultipleClouds();
+    //testAddingFeaturesAndClouds();
+    //testCustomGeometryHandler();
+    //testIndexedClouds();
+    //testConsistentHandlers();
+    //testOrderingFeatures();
+    //testCloudRender();
+    //testDefaultFeature();
+    //testBundleSwitch();
     testCloudTypes();
     testColormap();
     testBundleStack();

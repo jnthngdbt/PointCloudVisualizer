@@ -200,6 +200,8 @@ namespace pcv
         void setCloudRenderingProperties(const Cloud& newCloud);
         CloudRenderingProperties& getCloudRenderingProperties(const Cloud& cloud) { return mProperties[getCloudRenderingPropertiesKey(cloud)]; };
 
+        static bool isShape(const Cloud& cloud);
+
         std::shared_ptr<PclVisualizer> mViewer;
         std::vector<int> mViewportIds;
 
