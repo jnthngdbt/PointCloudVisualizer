@@ -198,8 +198,9 @@ void Visualizer::generateBundles(const FileName& inputFileOrFolder)
     }
 
     // Override rendering properties with clouds of first bundle to be rendered.
-    for (const auto& cloud : mBundles[mBundleSwitchInfo.mSwitchToBundleIdx].mClouds)
-        mProperties[getCloudRenderingPropertiesKey(cloud)] = cloud.mRenderingProperties;
+    if (mBundleSwitchInfo.mSwitchToBundleIdx >= 0)
+        for (const auto& cloud : mBundles[mBundleSwitchInfo.mSwitchToBundleIdx].mClouds)
+            mProperties[getCloudRenderingPropertiesKey(cloud)] = cloud.mRenderingProperties;
 }
 
 void Visualizer::Cloud::parseFileHeader()
