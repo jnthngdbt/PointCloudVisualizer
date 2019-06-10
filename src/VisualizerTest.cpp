@@ -18,7 +18,7 @@
 #include "Visualizer.h"
 #include "VisualizerData.h"
 
-#define RUN_TIME_VISUALIZER(x) Visualizer(x) // can be 'Visualizer(x)' or nothing
+#define RUN_TIME_VISUALIZER(x) // can be 'Visualizer(x)' or nothing
 
 #define VISUALIZER_CALL(x) x
 
@@ -386,21 +386,21 @@ int main()
         plotter.plot();
     };
 
-    //testMultipleClouds();
-    //testAddingFeaturesAndClouds();
-    //testCustomGeometryHandler();
-    //testIndexedClouds();
-    //testConsistentHandlers();
-    //testOrderingFeatures();
-    //testCloudRender();
-    //testDefaultFeature();
-    //testBundleSwitch();
+    testMultipleClouds();
+    testAddingFeaturesAndClouds();
+    testCustomGeometryHandler();
+    testIndexedClouds();
+    testConsistentHandlers();
+    testOrderingFeatures();
+    testCloudRender();
+    testDefaultFeature();
+    testBundleSwitch();
     testCloudTypes();
     testColormap();
     testBundleStack();
     testPlot();
 
-    explorePlotter();
+    //explorePlotter();
 
     return 0;
 }
