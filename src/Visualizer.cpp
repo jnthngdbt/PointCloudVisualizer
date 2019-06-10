@@ -61,6 +61,12 @@ POINT_CLOUD_REGISTER_POINT_STRUCT(PointPlane,
 (float, b, b)
 (float, c, c)
 (float, d, d)
+(float, ux, ux)
+(float, uy, uy)
+(float, uz, uz)
+(float, vx, vx)
+(float, vy, vy)
+(float, vz, vz)
 (uint32_t, rgb, rgb))
 
 struct PointSphere
