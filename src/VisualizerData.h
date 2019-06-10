@@ -363,6 +363,7 @@ namespace pcv
 
     private:
         static thread_local std::string sFullScopeName;
+        std::string mPreviousFullScopeName;
         std::string mLocalScopeName;
 
         CloudsMap mClouds;

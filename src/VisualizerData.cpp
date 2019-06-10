@@ -31,13 +31,14 @@ void logWarning(const std::string& msg)
 VisualizerData::VisualizerData(const std::string& name)
 { 
     mLocalScopeName = name;
+    mPreviousFullScopeName = sFullScopeName;
     sFullScopeName = sFullScopeName + '(' + mLocalScopeName + ')';
 }
 
 VisualizerData::~VisualizerData()
 {
     render(); // force render (saving files) at destruction
-    sFullScopeName.resize(std::max(0, static_cast<int>(sFullScopeName.size() - mLocalScopeName.size() - 2))); // remove last scope name and its '(' and ')'
+    sFullScopeName = mPreviousFullScopeName;
 }
 
 Cloud& VisualizerData::addFeature(const FeatureData& data, const FeatureName& featName, const CloudName& cloudName, ViewportIdx viewport)
