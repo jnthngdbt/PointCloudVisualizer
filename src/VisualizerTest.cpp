@@ -294,6 +294,7 @@ int main()
         addPlane({ 0, 0, 0 }, { 0, 0, 1 }, "plane-origin");
 
         VISUALIZER_CALL(viewer.addSphere(pcl::PointXYZ(0.4, 0.6, 2.7), 0.1, "some-sphere").setColor(1.0, 1.0, 0.0).setOpacity(0.1));
+        VISUALIZER_CALL(viewer.addCylinder({0.0, 0.0, 3.0}, {1.0, 1.0, 1.0}, 0.5, 3.0, "some-cylinder").setColor(0.0, 1.0, 0.0).setOpacity(0.1));
 
         VISUALIZER_CALL(RUN_TIME_VISUALIZER(viewer.render()));
     };

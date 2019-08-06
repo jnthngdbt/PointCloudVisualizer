@@ -86,6 +86,31 @@ POINT_CLOUD_REGISTER_POINT_STRUCT(PointSphere,
 (float, r, r)
 (uint32_t, rgb, rgb))
 
+struct PointCylinder
+{
+    float x;
+    float y;
+    float z;
+    float r;
+    float ux;
+    float uy;
+    float uz;
+    float length;
+    uint32_t rgb;
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW   // make sure new allocators are aligned
+} EIGEN_ALIGN16;                      // enforce SSE padding for correct memory alignment
+
+POINT_CLOUD_REGISTER_POINT_STRUCT(PointCylinder,
+(float, x, x)
+(float, y, y)
+(float, z, z)
+(float, r, r)
+(float, ux, ux)
+(float, uy, uy)
+(float, uz, uz)
+(float, length, length)
+(uint32_t, rgb, rgb))
+
 Visualizer::Visualizer(const FileName& fileName)
 {
     mBundleSwitchInfo.mCamParams.fovy = -1.0; // put invalid value to detect that it is uninitialized
@@ -240,6 +265,8 @@ void Visualizer::Cloud::parseFileHeader()
                     mType = EType::ePlane;
                 else if (type == "sphere")
                     mType = EType::eSphere;
+                else if (type == "cylinder")
+                    mType = EType::eCylinder;
                 else
                     mType = EType::ePoints;
             }
@@ -668,6 +695,49 @@ void Visualizer::prepareCloudsForRender(const Clouds& clouds)
             getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getCloudRenderingProperties(cloud).mOpacity, cloud.mCloudName);
             getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_REPRESENTATION, pcl::visualization::PCL_VISUALIZER_REPRESENTATION_SURFACE, cloud.mCloudName);
             getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, r / 255., g / 255., b / 255., cloud.mCloudName);
+
+        }
+        else if (cloud.mType == Cloud::EType::eCylinder)
+        {
+            getViewer().removeShape(cloud.mCloudName, getViewportId(cloud.mViewport));
+
+            pcl::PointCloud<PointCylinder>::Ptr cylinders(new pcl::PointCloud<PointCylinder>);
+            pcl::fromPCLPointCloud2(*cloud.mPointCloudMessage, *cylinders);
+
+            if (cylinders->size() != 1)
+                logError("A 'cylinder' cloud should only contain one sphere.");
+
+            auto& p = cylinders->at(0);
+
+            // Make sure the direction is normalized.
+            const float norm = std::sqrt(p.ux*p.ux + p.uy*p.uy + p.uz*p.uz);
+            if (norm >= 0.0)
+            {
+                p.ux /= norm;
+                p.uy /= norm;
+                p.uz /= norm;
+            }
+
+            // Add the cylinder from coefficients.
+            pcl::ModelCoefficients coeff;
+            coeff.values.push_back(p.x);                // point_on_axis.x : the X coordinate of a point located on the cylinder axis
+            coeff.values.push_back(p.y);                // point_on_axis.y : the Y coordinate of a point located on the cylinder axis
+            coeff.values.push_back(p.z);                // point_on_axis.z : the Z coordinate of a point located on the cylinder axis
+            coeff.values.push_back(p.ux * p.length);    // axis_direction.x : the X coordinate of the cylinder's axis direction
+            coeff.values.push_back(p.uy * p.length);    // axis_direction.y : the Y coordinate of the cylinder's axis direction
+            coeff.values.push_back(p.uz * p.length);    // axis_direction.z : the Z coordinate of the cylinder's axis direction
+            coeff.values.push_back(p.r);                // radius : the cylinder's radius
+            getViewer().addCylinder(coeff, cloud.mCloudName, getViewportId(cloud.mViewport));
+
+            const auto rgb = p.rgb;
+            const auto r = (rgb >> 16) & 0xFF;
+            const auto g = (rgb >> 8) & 0xFF;
+            const auto b = (rgb) & 0xFF;
+
+            getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_OPACITY, getCloudRenderingProperties(cloud).mOpacity, cloud.mCloudName);
+            getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_REPRESENTATION, pcl::visualization::PCL_VISUALIZER_REPRESENTATION_SURFACE, cloud.mCloudName);
+            getViewer().setShapeRenderingProperties(pcl::visualization::PCL_VISUALIZER_COLOR, r / 255., g / 255., b / 255., cloud.mCloudName);
+
         }
         else if (cloud.mType == Cloud::EType::ePlane)
         {
@@ -779,6 +849,7 @@ bool Visualizer::isShape(const Cloud& cloud)
     case Cloud::EType::ePlane: return false; // polygon mesh, so considered point cloud
     case Cloud::EType::eLines: return true;
     case Cloud::EType::eSphere: return true;
+    case Cloud::EType::eCylinder: return true;
     default: return false;
     }
     return false;

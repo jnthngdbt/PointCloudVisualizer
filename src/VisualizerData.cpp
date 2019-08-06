@@ -130,6 +130,11 @@ void VisualizerData::addBasis(
     logWarning("[VisualizerData::addBasis] not implemented yet");
 }
 
+Cloud& VisualizerData::addCylinder(Eigen::Vector3f axisOrigin, Eigen::Vector3f axisDirection, double radius, double length, const CloudName& cloudName, int viewport)
+{
+    return getCloud(cloudName).addCylinder(axisOrigin, axisDirection, radius, length, viewport);
+}
+
 void VisualizerData::clearSavedData(int lastHrsToKeep)
 {
     namespace fs = boost::filesystem;
@@ -336,6 +341,28 @@ Cloud& Cloud::addSpace(const FeatureName& a, const FeatureName& b, const Feature
     return *this;
 }
 
+Cloud& Cloud::addCylinder(Eigen::Vector3f axisOrigin, Eigen::Vector3f axisDirection, double radius, double length, int viewport)
+{
+    mFeatures.clear(); // overwrite the cloud to only contain a sphere
+
+    axisDirection.normalize();
+
+    mFeatures.emplace_back("x"      , std::vector<float>(1, axisOrigin[0]));
+    mFeatures.emplace_back("y"      , std::vector<float>(1, axisOrigin[1]));
+    mFeatures.emplace_back("z"      , std::vector<float>(1, axisOrigin[2]));
+    mFeatures.emplace_back("ux"     , std::vector<float>(1, axisDirection[0]));
+    mFeatures.emplace_back("uy"     , std::vector<float>(1, axisDirection[1]));
+    mFeatures.emplace_back("uz"     , std::vector<float>(1, axisDirection[2]));
+    mFeatures.emplace_back("r"      , std::vector<float>(1, radius));
+    mFeatures.emplace_back("length" , std::vector<float>(1, length));
+
+    addSpace("x", "y", "z");
+    addCloudCommon(viewport);
+
+    mType = EType::eCylinder;
+    return *this;
+}
+
 Cloud& Cloud::setColor(float r, float g, float b)
 {
     const int N = getNbPoints();
@@ -422,6 +449,7 @@ void Cloud::save(const std::string& filename) const
         case EType::eLines: return "lines"; break;
         case EType::ePlane: return "plane"; break;
         case EType::eSphere: return "sphere"; break;
+        case EType::eCylinder: return "cylinder"; break;
         case EType::ePoints: // fallthrough
         default: return "points";
         }

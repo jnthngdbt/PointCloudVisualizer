@@ -127,7 +127,15 @@ namespace pcv
         template <typename Point>
         Cloud& addSphere(const Point& p, double radius, int viewport = -1);
 
-        /// Add a plane.
+        /// Add a cylinder.
+        /// @param[in] axisOrigin: axis origin position (at the cylinder's base)
+        /// @param[in] axisDirection: axis direction
+        /// @param[in] radius: cylinder radius
+        /// @param[in] length: cylinder length
+        /// @param[in] viewport (optional): the viewport index (0 based) in which to draw
+        Cloud& addCylinder(Eigen::Vector3f axisOrigin, Eigen::Vector3f axisDirection, double radius, double length, int viewport = -1);
+
+       /// Add a plane.
         /// @param[in] p: plane position (kind of center)
         /// @param[in] coeffs: plane coefficients
         /// @param[in] sizeU: plane size along axis u (corresponds to x in plane reference frame)
@@ -160,7 +168,7 @@ namespace pcv
 
         void setParent(VisualizerData* visualizerPtr) { mVisualizerPtr = visualizerPtr; }
 
-        enum class EType {ePoints, eLines, ePlane, eSphere};
+        enum class EType {ePoints, eLines, ePlane, eSphere, eCylinder};
 
         int mViewport{ 0 };
         int mSize{ 1 };
@@ -336,6 +344,15 @@ namespace pcv
         /// @param[in] viewport (optional): the viewport index (0 based) in which to draw
         template <typename Point>
         Cloud& addSphere(const Point& p, double radius, const CloudName& cloudName, int viewport = -1);
+
+        /// Add a cylinder.
+        /// @param[in] axisOrigin: axis origin position (at the cylinder's base)
+        /// @param[in] axisDirection: axis direction
+        /// @param[in] radius: cylinder radius
+        /// @param[in] length: cylinder length
+        /// @param[in] cloudName: the name of the point cloud to which the space is defined
+        /// @param[in] viewport (optional): the viewport index (0 based) in which to draw
+        Cloud& addCylinder(Eigen::Vector3f axisOrigin, Eigen::Vector3f axisDirection, double radius, double length, const CloudName& cloudName, int viewport = -1);
 
         /// Get the refence of a visualizer cloud.
         /// @param[in] name: cloud name
