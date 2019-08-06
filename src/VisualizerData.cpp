@@ -130,6 +130,21 @@ void VisualizerData::addBasis(
     logWarning("[VisualizerData::addBasis] not implemented yet");
 }
 
+Cloud& VisualizerData::addLine(const Eigen::Vector3f &pt1, const Eigen::Vector3f &pt2, const CloudName& cloudName, int viewport)
+{
+    return getCloud(cloudName).addLine(pt1, pt2, viewport);
+}
+
+Cloud& VisualizerData::addPlane(const Eigen::Vector3f& p, std::array<float, 4> coeffs, double sizeU, double sizeV, const Eigen::Vector3f& up, const CloudName& cloudName, int viewport)
+{
+    return getCloud(cloudName).addPlane(p, coeffs, sizeU, sizeV, up, viewport);
+}
+
+Cloud& VisualizerData::addSphere(const Eigen::Vector3f& p, double radius, const CloudName& cloudName, int viewport)
+{
+    return getCloud(cloudName).addSphere(p, radius, viewport);
+}
+
 Cloud& VisualizerData::addCylinder(Eigen::Vector3f axisOrigin, Eigen::Vector3f axisDirection, double radius, double length, const CloudName& cloudName, int viewport)
 {
     return getCloud(cloudName).addCylinder(axisOrigin, axisDirection, radius, length, viewport);
@@ -341,18 +356,115 @@ Cloud& Cloud::addSpace(const FeatureName& a, const FeatureName& b, const Feature
     return *this;
 }
 
+Cloud& Cloud::addLine(const Eigen::Vector3f &pt1, const Eigen::Vector3f &pt2, int viewport)
+{
+    const std::vector < std::string > requiredLineFeatures = { "x", "y", "z", "x2", "y2", "z2", "rgb" };
+
+    auto addLineFeatures = [&]()
+    {
+        getFeatureData("x").emplace_back(pt1.x());
+        getFeatureData("y").emplace_back(pt1.y());
+        getFeatureData("z").emplace_back(pt1.z());
+        getFeatureData("x2").emplace_back(pt2.x());
+        getFeatureData("y2").emplace_back(pt2.y());
+        getFeatureData("z2").emplace_back(pt2.z());
+
+        if (hasFeature("rgb")) // propagate RGB
+        {
+            auto& rgb = getFeatureData("rgb");
+            rgb.emplace_back(packRgb(128, 128, 128)); // defaults to gray color
+        }
+    };
+
+    const bool isNewCloud = getNbFeatures() == 0;
+
+    if (isNewCloud)
+    {
+        // Create empty line features.
+        for (const auto& requiredLineFeature : requiredLineFeatures)
+            addFeature(FeatureData(), requiredLineFeature);
+
+        addLineFeatures();
+        addSpace("x", "y", "z");
+        addSpace("x2", "y2", "z2");
+        addCloudCommon(viewport);
+    }
+    else
+    {
+        if (getNbFeatures() != requiredLineFeatures.size())
+            logError("[addLine] it is only possible to add a line to a cloud containing only lines");
+
+        for (const auto& requiredLineFeature : requiredLineFeatures)
+            if (!hasFeature(requiredLineFeature))
+                logError("[addLine] a lines cloud must have feature " + requiredLineFeature);
+
+        addLineFeatures();
+        setViewport(viewport);
+    }
+
+    mType = EType::eLines;
+    return *this;
+}
+
+Cloud& Cloud::addPlane(const Eigen::Vector3f& p, std::array<float, 4> coeffs, double sizeU, double sizeV, const Eigen::Vector3f& up, int viewport)
+{
+    // Compute basis.
+    const Eigen::Vector3f n = Eigen::Vector3f(coeffs[0], coeffs[1], coeffs[2]).normalized();
+    const Eigen::Vector3f u = n.cross(up).normalized() * sizeU * 0.5;
+    const Eigen::Vector3f v = u.cross(n).normalized() * sizeV * 0.5;
+
+    mFeatures.clear(); // overwrite the cloud to only contain a plane
+
+    mFeatures.emplace_back("x", std::vector<float>(1, p.x()));
+    mFeatures.emplace_back("y", std::vector<float>(1, p.y()));
+    mFeatures.emplace_back("z", std::vector<float>(1, p.z()));
+    mFeatures.emplace_back("a", std::vector<float>(1, coeffs[0]));
+    mFeatures.emplace_back("b", std::vector<float>(1, coeffs[1]));
+    mFeatures.emplace_back("c", std::vector<float>(1, coeffs[2]));
+    mFeatures.emplace_back("d", std::vector<float>(1, coeffs[3]));
+    mFeatures.emplace_back("ux", std::vector<float>(1, u.x()));
+    mFeatures.emplace_back("uy", std::vector<float>(1, u.y()));
+    mFeatures.emplace_back("uz", std::vector<float>(1, u.z()));
+    mFeatures.emplace_back("vx", std::vector<float>(1, v.x()));
+    mFeatures.emplace_back("vy", std::vector<float>(1, v.y()));
+    mFeatures.emplace_back("vz", std::vector<float>(1, v.z()));
+
+    addSpace("x", "y", "z");
+    addSpace("a", "b", "c"); // normal
+    addCloudCommon(viewport);
+
+    mType = EType::ePlane;
+    return *this;
+}
+
+Cloud& Cloud::addSphere(const Eigen::Vector3f& p, double radius, int viewport)
+{
+    mFeatures.clear(); // overwrite the cloud to only contain a sphere
+
+    mFeatures.emplace_back("x", std::vector<float>(1, p.x()));
+    mFeatures.emplace_back("y", std::vector<float>(1, p.y()));
+    mFeatures.emplace_back("z", std::vector<float>(1, p.z()));
+    mFeatures.emplace_back("r", std::vector<float>(1, radius));
+
+    addSpace("x", "y", "z");
+    addCloudCommon(viewport);
+
+    mType = EType::eSphere;
+    return *this;
+}
+
 Cloud& Cloud::addCylinder(Eigen::Vector3f axisOrigin, Eigen::Vector3f axisDirection, double radius, double length, int viewport)
 {
     mFeatures.clear(); // overwrite the cloud to only contain a sphere
 
     axisDirection.normalize();
 
-    mFeatures.emplace_back("x"      , std::vector<float>(1, axisOrigin[0]));
-    mFeatures.emplace_back("y"      , std::vector<float>(1, axisOrigin[1]));
-    mFeatures.emplace_back("z"      , std::vector<float>(1, axisOrigin[2]));
-    mFeatures.emplace_back("ux"     , std::vector<float>(1, axisDirection[0]));
-    mFeatures.emplace_back("uy"     , std::vector<float>(1, axisDirection[1]));
-    mFeatures.emplace_back("uz"     , std::vector<float>(1, axisDirection[2]));
+    mFeatures.emplace_back("x"      , std::vector<float>(1, axisOrigin.x()));
+    mFeatures.emplace_back("y"      , std::vector<float>(1, axisOrigin.y()));
+    mFeatures.emplace_back("z"      , std::vector<float>(1, axisOrigin.z()));
+    mFeatures.emplace_back("ux"     , std::vector<float>(1, axisDirection.x()));
+    mFeatures.emplace_back("uy"     , std::vector<float>(1, axisDirection.y()));
+    mFeatures.emplace_back("uz"     , std::vector<float>(1, axisDirection.z()));
     mFeatures.emplace_back("r"      , std::vector<float>(1, radius));
     mFeatures.emplace_back("length" , std::vector<float>(1, length));
 

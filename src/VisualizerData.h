@@ -117,15 +117,13 @@ namespace pcv
         /// @param[in] pt1: coordinates of point 1
         /// @param[in] pt2: coordinates of point 2
         /// @param[in] viewport (optional): the viewport index (0 based) in which to draw
-        template <typename P1, typename P2>
-        Cloud& addLine(const P1 &pt1, const P2 &pt2, int viewport = -1);
+        Cloud& addLine(const Eigen::Vector3f &pt1, const Eigen::Vector3f &pt2, int viewport = -1);
 
         /// Add a sphere.
         /// @param[in] p: sphere position
         /// @param[in] radius: sphere radius
         /// @param[in] viewport (optional): the viewport index (0 based) in which to draw
-        template <typename Point>
-        Cloud& addSphere(const Point& p, double radius, int viewport = -1);
+        Cloud& addSphere(const Eigen::Vector3f& p, double radius, int viewport = -1);
 
         /// Add a cylinder.
         /// @param[in] axisOrigin: axis origin position (at the cylinder's base)
@@ -142,8 +140,7 @@ namespace pcv
         /// @param[in] sizeV: plane size along axis v (corresponds to y in plane reference frame)
         /// @param[in] up: plane up vector, used to determine orthogonal basis from the normal
         /// @param[in] viewport (optional): the viewport index (0 based) in which to draw
-        template <typename Point>
-        Cloud& addPlane(const Point& p, std::array<float, 4> coeffs, double sizeU, double sizeV, const Eigen::Vector3f& up, int viewport = -1);
+        Cloud& addPlane(const Eigen::Vector3f& p, std::array<float, 4> coeffs, double sizeU, double sizeV, const Eigen::Vector3f& up, int viewport = -1);
 
         Cloud& setViewport(ViewportIdx viewport);
         Cloud& setSize(int size) { mSize = size; return *this; };
@@ -323,8 +320,7 @@ namespace pcv
         /// @param[in] pt2: coordinates of point 2
         /// @param[in] cloudName: the name of the point cloud to which the space is defined
         /// @param[in] viewport (optional): the viewport index (0 based) in which to draw
-        template <typename P1, typename P2>
-        Cloud& addLine(const P1 &pt1, const P2 &pt2, const CloudName& cloudName, int viewport = -1);
+        Cloud& addLine(const Eigen::Vector3f &pt1, const Eigen::Vector3f &pt2, const CloudName& cloudName, int viewport = -1);
 
         /// Add a plane.
         /// @param[in] p: plane position (kind of center)
@@ -334,16 +330,14 @@ namespace pcv
         /// @param[in] up: plane up vector, used to determine orthogonal basis from the normal
         /// @param[in] cloudName: the name of the point cloud to which the space is defined
         /// @param[in] viewport (optional): the viewport index (0 based) in which to draw
-        template <typename Point>
-        Cloud& addPlane(const Point& p, std::array<float, 4> coeffs, double sizeU, double sizeV, const Eigen::Vector3f& up, const CloudName& cloudName, int viewport = -1);
+        Cloud& addPlane(const Eigen::Vector3f& p, std::array<float, 4> coeffs, double sizeU, double sizeV, const Eigen::Vector3f& up, const CloudName& cloudName, int viewport = -1);
 
         /// Add a sphere.
         /// @param[in] p: sphere position
         /// @param[in] radius: sphere radius
         /// @param[in] cloudName: the name of the point cloud to which the space is defined
         /// @param[in] viewport (optional): the viewport index (0 based) in which to draw
-        template <typename Point>
-        Cloud& addSphere(const Point& p, double radius, const CloudName& cloudName, int viewport = -1);
+        Cloud& addSphere(const Eigen::Vector3f& p, double radius, const CloudName& cloudName, int viewport = -1);
 
         /// Add a cylinder.
         /// @param[in] axisOrigin: axis origin position (at the cylinder's base)

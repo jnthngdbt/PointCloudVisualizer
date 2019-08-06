@@ -274,18 +274,18 @@ int main()
 
         for (int i = 0; i < N; ++i)
         {
-            const auto& p = cloudModel->at(i);
-            const auto& q = cloudMoved->at(i);
+            const auto& p = cloudModel->at(i).getVector3fMap();
+            const auto& q = cloudMoved->at(i).getVector3fMap();
 
             VISUALIZER_CALL(viewer.addLine(p, q, "lines").setColor(0.0, 1.0, 0.0).setOpacity(0.1));
         }
 
-        auto addPlane = [&](const pcl::PointXYZ& center, const Eigen::Vector3d& normal, const std::string& name)
+        auto addPlane = [&](const Eigen::Vector3f& center, const Eigen::Vector3d& normal, const std::string& name)
         {
             float a = normal[0];
             float b = normal[1];
             float c = normal[2];
-            float d = -(a*center.x + b*center.y + c*center.z);
+            float d = -(a*center.x() + b*center.y() + c*center.z());
 
             VISUALIZER_CALL(viewer.addPlane(center, { a, b, c, d }, 1, 2, {0, 1, 1}, name).setColor(1.0, 0.0, 1.0).setOpacity(0.5));
         };
@@ -293,7 +293,7 @@ int main()
         addPlane({ 0.1, 0.4, 2.7 }, Eigen::Vector3d(1, 1, 1).normalized(), "plane-arbitrary");
         addPlane({ 0, 0, 0 }, { 0, 0, 1 }, "plane-origin");
 
-        VISUALIZER_CALL(viewer.addSphere(pcl::PointXYZ(0.4, 0.6, 2.7), 0.1, "some-sphere").setColor(1.0, 1.0, 0.0).setOpacity(0.1));
+        VISUALIZER_CALL(viewer.addSphere({ 0.4, 0.6, 2.7 }, 0.1, "some-sphere").setColor(1.0, 1.0, 0.0).setOpacity(0.1));
         VISUALIZER_CALL(viewer.addCylinder({0.0, 0.0, 3.0}, {1.0, 1.0, 1.0}, 0.5, 3.0, "some-cylinder").setColor(0.0, 1.0, 0.0).setOpacity(0.1));
 
         VISUALIZER_CALL(RUN_TIME_VISUALIZER(viewer.render()));
