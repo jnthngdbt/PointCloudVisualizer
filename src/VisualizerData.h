@@ -119,6 +119,15 @@ namespace pcv
         /// @param[in] viewport (optional): the viewport index (0 based) in which to draw
         Cloud& addLine(const Eigen::Vector3f &pt1, const Eigen::Vector3f &pt2, int viewport = -1);
 
+        /// Add to draw a cube with the given position and rotation.
+        /// @param[in] transform: coordinate of the center of the cube
+        /// @param[in] rotation : Quaternion representing the rotation of the cube
+        /// @param[in] width : width of the cube (x axis)
+        /// @param[in] height : height of the cube (y axis)
+        /// @param[in] depth : depth of the cube (z axis)
+        /// @param[in] viewport (optional): the viewport index (0 based) in which to draw
+        Cloud& addCube(const Eigen::Vector3f &transform, const Eigen::Quaternionf &rotation, float width, float height, float depth, int viewport = -1);
+
         /// Add a sphere.
         /// @param[in] p: sphere position
         /// @param[in] radius: sphere radius
@@ -321,6 +330,16 @@ namespace pcv
         /// @param[in] cloudName: the name of the point cloud to which the space is defined
         /// @param[in] viewport (optional): the viewport index (0 based) in which to draw
         Cloud& addLine(const Eigen::Vector3f &pt1, const Eigen::Vector3f &pt2, const CloudName& cloudName, int viewport = -1);
+
+        /// Add to draw a cube with the given position and rotation.
+        /// @param[in] transform: coordinate of the center of the cube
+        /// @param[in] rotation : Quaternion representing the rotation of the cube
+        /// @param[in] width : width of the cube (x axis)
+        /// @param[in] height : height of the cube (y axis)
+        /// @param[in] depth : depth of the cube (z axis)
+        /// @param[in] cloudName: the name of the point cloud to which the space is defined
+        /// @param[in] viewport (optional): the viewport index (0 based) in which to draw
+        Cloud& addCube(const Eigen::Vector3f &transform, const Eigen::Quaternionf &rotation, float width, float height, float depth, const CloudName& cloudName, int viewport = -1);
 
         /// Add a plane.
         /// @param[in] p: plane position (kind of center)

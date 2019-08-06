@@ -130,6 +130,11 @@ void VisualizerData::addBasis(
     logWarning("[VisualizerData::addBasis] not implemented yet");
 }
 
+Cloud& VisualizerData::addCube(const Eigen::Vector3f &transform, const Eigen::Quaternionf &rotation, float width, float height, float depth, const CloudName& cloudName, int viewport)
+{
+    return getCloud(cloudName).addCube(transform, rotation, width, height, depth, viewport);
+}
+
 Cloud& VisualizerData::addLine(const Eigen::Vector3f &pt1, const Eigen::Vector3f &pt2, const CloudName& cloudName, int viewport)
 {
     return getCloud(cloudName).addLine(pt1, pt2, viewport);
@@ -403,6 +408,49 @@ Cloud& Cloud::addLine(const Eigen::Vector3f &pt1, const Eigen::Vector3f &pt2, in
     }
 
     mType = EType::eLines;
+    return *this;
+}
+
+Cloud& Cloud::addCube(const Eigen::Vector3f &transform, const Eigen::Quaternionf &rotation, float width, float height, float depth, int viewport)
+{
+    float halfWitdh = 0.5f * width, halfHeight = 0.5f * height, halfDepth = 0.5f * depth;
+
+    //Create the 8 points of the cube
+    Eigen::Vector3f vec1(-halfWitdh, halfHeight, halfDepth);
+    Eigen::Vector3f vec2(halfWitdh, halfHeight, halfDepth);
+    Eigen::Vector3f vec3(halfWitdh, halfHeight, -halfDepth);
+    Eigen::Vector3f vec4(-halfWitdh, halfHeight, -halfDepth);
+    Eigen::Vector3f vec5(-halfWitdh, -halfHeight, halfDepth);
+    Eigen::Vector3f vec6(halfWitdh, -halfHeight, halfDepth);
+    Eigen::Vector3f vec7(halfWitdh, -halfHeight, -halfDepth);
+    Eigen::Vector3f vec8(-halfWitdh, -halfHeight, -halfDepth);
+
+    //Transform the points
+    vec1 = (rotation * vec1) + transform;
+    vec2 = (rotation * vec2) + transform;
+    vec3 = (rotation * vec3) + transform;
+    vec4 = (rotation * vec4) + transform;
+    vec5 = (rotation * vec5) + transform;
+    vec6 = (rotation * vec6) + transform;
+    vec7 = (rotation * vec7) + transform;
+    vec8 = (rotation * vec8) + transform;
+
+    //Create the lines
+    addLine(vec1, vec2, viewport);
+    addLine(vec2, vec3, viewport);
+    addLine(vec3, vec4, viewport);
+    addLine(vec4, vec1, viewport);
+
+    addLine(vec1, vec5, viewport);
+    addLine(vec4, vec8, viewport);
+    addLine(vec3, vec7, viewport);
+    addLine(vec2, vec6, viewport);
+
+    addLine(vec5, vec6, viewport);
+    addLine(vec6, vec7, viewport);
+    addLine(vec7, vec8, viewport);
+    addLine(vec8, vec5, viewport);
+
     return *this;
 }
 

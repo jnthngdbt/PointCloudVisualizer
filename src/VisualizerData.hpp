@@ -96,7 +96,7 @@ namespace pcv
     Cloud& VisualizerData::addCorrespondences(const pcl::PointCloud<T>& source, const pcl::PointCloud<T>& target, const pcl::Correspondences& correspondences, const CloudName& name, ViewportIdx viewport)
     {
         for (const auto& c : correspondences)
-            addLine(source[c.index_query], target[c.index_match], name, viewport);
+            addLine(source[c.index_query].getVector3fMap(), target[c.index_match].getVector3fMap(), name, viewport);
 
         return getCloud(name);
     }
