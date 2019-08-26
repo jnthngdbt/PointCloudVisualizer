@@ -503,7 +503,7 @@ Cloud& Cloud::addSphere(const Eigen::Vector3f& p, double radius, int viewport)
 
 Cloud& Cloud::addCylinder(Eigen::Vector3f axisOrigin, Eigen::Vector3f axisDirection, double radius, double length, int viewport)
 {
-    mFeatures.clear(); // overwrite the cloud to only contain a sphere
+    mFeatures.clear(); // overwrite the cloud to only contain a cylinder
 
     axisDirection.normalize();
 

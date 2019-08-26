@@ -1092,11 +1092,11 @@ void Visualizer::keyboardEventCallback(const pcl::visualization::KeyboardEvent& 
     }
     else if ((event.getKeySym() == "Left") && event.keyDown())
     {
-        mBundleSwitchInfo.mSwitchToBundleIdx = determineNextBundleIdx(true);
+        mBundleSwitchInfo.mSwitchToBundleIdx = determineNextBundleIdx(event.isCtrlPressed() ? -10 : -1);
     }
     else if ((event.getKeySym() == "Right") && event.keyDown())
     {
-        mBundleSwitchInfo.mSwitchToBundleIdx = determineNextBundleIdx(false);
+        mBundleSwitchInfo.mSwitchToBundleIdx = determineNextBundleIdx(event.isCtrlPressed() ? 10 : 1);
     }
     else if ((event.getKeySym() == "Up") && event.keyDown())
     {
@@ -1114,28 +1114,32 @@ void Visualizer::keyboardEventCallback(const pcl::visualization::KeyboardEvent& 
     }
 }
 
-int Visualizer::determineNextBundleIdx(bool isLeft)
+int Visualizer::determineNextBundleIdx(int step)
 {
+    const bool isLeft = step < 0;
+
     int nextBundleIdx = mBundleSwitchInfo.mSwitchToBundleIdx; // keep same by default
 
     if (mCurrentBundleIdx >= 0)
     {
         if (!mSameBundleNavigationMode)
         {
-            if (isLeft && (mCurrentBundleIdx > 0))
-                nextBundleIdx = mCurrentBundleIdx - 1;
-            else if (!isLeft && (mCurrentBundleIdx < getNbBundles() - 1))
-                nextBundleIdx = mCurrentBundleIdx + 1;
+            if (isLeft && (mCurrentBundleIdx > 0)) // do not overshoot left
+                nextBundleIdx = mCurrentBundleIdx + step;
+            else if (!isLeft && (mCurrentBundleIdx < getNbBundles() - 1)) // do not overshoot right
+                nextBundleIdx = mCurrentBundleIdx + step;
         }
         else
         {
             const auto& bundleName = getCurrentBundle().mName;
             const int limit = isLeft ? 0 : getNbBundles() - 1;
-            const int step = isLeft ? -1 : 1;
             const int start = mCurrentBundleIdx + step;
             const int end = limit + step;
             for (int i = start; i != end; i += step)
             {
+                if ((i < 0) || (i >= getNbBundles())) // do not overshoot
+                    break;
+
                 if (getBundleLocalScopeName(mBundles[i].mName, mSameBundleNavigationDepth) == getBundleLocalScopeName(bundleName, mSameBundleNavigationDepth))
                 {
                     nextBundleIdx = i;

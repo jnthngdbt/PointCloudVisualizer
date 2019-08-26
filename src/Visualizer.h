@@ -171,7 +171,7 @@ namespace pcv
         void printHelp() const;
         void changeCurrentCloudOpacity(double delta);
         void changeCurrentCloudSize(double delta);
-        int determineNextBundleIdx(bool isLeft);
+        int determineNextBundleIdx(int step);
 
         void setColormapSource(const std::string& id);
 
