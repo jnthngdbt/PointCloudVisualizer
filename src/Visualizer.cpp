@@ -210,18 +210,15 @@ void Visualizer::generateBundles(const FileName& inputFileOrFolder)
         }
         else if (isCpcd) 
         {
-            ////////////////////////////////////////
-            // visualizer.20190826.150103.464.compare.(score-computation)(back)(shape-fitness)(alignment).(M0587)(M0076)(M0253).correspondences-cloud.cpcd
-            // visualizer.20190826.150103.464.compare.(mold-recognition)()(score-computation)(back)(shape-fitness).(M0587)(M0076)(M0253).correspondences-cloud.cpcd
-            ////////////////////////////////////////
+            const std::string bundleScope = getToken();
             const std::string command = getToken();
 
             if (command == "compare")
             {
-                const std::string bundleSearchStr = getToken();
                 const std::string bundleCompareStr = getToken();
+                const std::string bundleSearchStr = getToken();
                 const std::string compareCloudName = getToken();
-                createCompareBundle(bundleSearchStr, bundleCompareStr, compareCloudName);
+                createCompareBundle(bundleScope, bundleSearchStr, bundleCompareStr, compareCloudName);
             }
         }
     }
@@ -404,7 +401,7 @@ void Visualizer::addCloudToBundle(const Cloud& newCloud)
     }
 }
 
-void Visualizer::createCompareBundle(const std::string& bundleSearchStr, const std::string& bundleCompareStr, const std::string& compareCloudName)
+void Visualizer::createCompareBundle(const std::string& bundleScope, const std::string& bundleSearchStr, const std::string& bundleCompareStr, const std::string& compareCloudName)
 {
     auto& bundles = mBundles;
 
@@ -437,7 +434,7 @@ void Visualizer::createCompareBundle(const std::string& bundleSearchStr, const s
     const auto compareElementsStrs = extractComparisonStrings(std::stringstream(bundleCompareStr));
 
     Bundle newBundle;
-    newBundle.mName = "compare."; // will be augmented
+    newBundle.mName = bundleScope + " compare "; // will be augmented
 
     for (const auto& compareElement : compareElementsStrs)
     {
@@ -469,7 +466,7 @@ void Visualizer::createCompareBundle(const std::string& bundleSearchStr, const s
             std::cout << "[Visualizer][Compare] No bundle found containing strings [" + bundleSearchStr + "] and [" + compareElement + "]." << std::endl;
     }
 
-    newBundle.mName += "." + bundleSearchStr;
+    newBundle.mName += " " + bundleSearchStr;
 
     // Only add the bundle if at least one cloud was found
     if (newBundle.mClouds.size() > 0)

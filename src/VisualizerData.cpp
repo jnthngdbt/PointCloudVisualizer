@@ -204,10 +204,10 @@ void VisualizerData::compare(const std::string& searchPrefix, const std::vector<
     const std::string timestamp = VisualizerData::createTimestampString();
     const std::string wildcard = "__";
 
-    std::string filename = sFolder + sFilePrefix + timestamp + ".compare." + searchPrefix + wildcard + searchSuffix + ".";
+    std::string filename = sFolder + sFilePrefix + timestamp + "." + sFullScopeName + ".compare.";
     for (const auto& e : searchElements)
         filename += "(" + e + ")";
-    filename += "." + cloudName + ".cpcd";
+    filename += "." + searchPrefix + wildcard + searchSuffix + "." + cloudName + ".cpcd";
 
     std::ofstream f;
     f.open(filename);
