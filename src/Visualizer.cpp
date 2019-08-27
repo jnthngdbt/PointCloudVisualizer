@@ -152,7 +152,10 @@ void Visualizer::generateBundles(const FileName& inputFileOrFolder)
 
         const auto ext = fs::path(newCloud.mFullName).extension().string();
 
-        if (ext != ".pcd")
+        const bool isPcd = (ext == ".pcd");
+        const bool isCpcd = (ext == ".cpcd");
+
+        if (!isPcd && !isCpcd)
             continue;
 
         newCloud.mFileName = fs::path(newCloud.mFullName).stem().string();
@@ -192,17 +195,35 @@ void Visualizer::generateBundles(const FileName& inputFileOrFolder)
 
         newCloud.mTimeStamp = date + "." + time + "." + ms;
 
-        newCloud.mBundleName = getToken();
+        if (isPcd)
+        {
+            newCloud.mBundleName = getToken();
+            newCloud.mCloudName = getToken();
 
-        newCloud.mCloudName = getToken();
+            // Load additionnal data from file header.
+            newCloud.parseFileHeader();
 
-        // Load additionnal data from file header.
-        newCloud.parseFileHeader();
+            setCloudRenderingProperties(newCloud);
 
-        setCloudRenderingProperties(newCloud);
+            // Add this cloud to the bundle array.
+            addCloudToBundle(newCloud);
+        }
+        else if (isCpcd) 
+        {
+            ////////////////////////////////////////
+            // visualizer.20190826.150103.464.compare.(score-computation)(back)(shape-fitness)(alignment).(M0587)(M0076)(M0253).correspondences-cloud.cpcd
+            // visualizer.20190826.150103.464.compare.(mold-recognition)()(score-computation)(back)(shape-fitness).(M0587)(M0076)(M0253).correspondences-cloud.cpcd
+            ////////////////////////////////////////
+            const std::string command = getToken();
 
-        // Add this cloud to the bundle array.
-        addCloudToBundle(newCloud);
+            if (command == "compare")
+            {
+                const std::string bundleSearchStr = getToken();
+                const std::string bundleCompareStr = getToken();
+                const std::string compareCloudName = getToken();
+                createCompareBundle(bundleSearchStr, bundleCompareStr, compareCloudName);
+            }
+        }
     }
 
     mBundleSwitchInfo.mSwitchToBundleIdx = getNbBundles() - 1; // start with most recent
@@ -381,6 +402,78 @@ void Visualizer::addCloudToBundle(const Cloud& newCloud)
             currentBundle.mClouds.push_back(newCloud);
         }
     }
+}
+
+void Visualizer::createCompareBundle(const std::string& bundleSearchStr, const std::string& bundleCompareStr, const std::string& compareCloudName)
+{
+    auto& bundles = mBundles;
+
+    auto getLastBundleHavingSuffix = [&](const std::string& suffix)
+    {
+        return std::find_if(bundles.rbegin(), bundles.rend(),
+            [&](const Bundle& b) { return (b.mName.length() >= suffix.length()) && (b.mName.compare(b.mName.size() - suffix.size(), suffix.size(), suffix) == 0); });
+    };
+
+    auto extractComparisonStrings = [&](std::stringstream ss)
+    {
+        std::string substr;
+        std::vector<std::string> strs;
+        while (ss)
+        {
+            getline(ss, substr, ')');
+            substr.erase(0, 1); // remove first char '('
+            if (!substr.empty())
+                strs.push_back(substr);
+        }
+        return strs;
+    };
+
+    auto getCloud = [&](const Clouds& clouds, const std::string& cloudName)
+    {
+        return std::find_if(clouds.begin(), clouds.end(),
+            [&](const Cloud& c) { return c.mCloudName == cloudName; });
+    };
+
+    const auto compareElementsStrs = extractComparisonStrings(std::stringstream(bundleCompareStr));
+
+    Bundle newBundle;
+    newBundle.mName = "compare."; // will be augmented
+
+    for (const auto& compareElement : compareElementsStrs)
+    {
+        const std::string wildcard = "__";
+        std::string bundleNameSuffix = bundleSearchStr;
+        bundleNameSuffix = bundleNameSuffix.replace(bundleNameSuffix.find(wildcard), wildcard.length(), compareElement);
+
+        auto bundleIt = getLastBundleHavingSuffix(bundleNameSuffix);
+        if (bundleIt != bundles.rend())
+        {
+            auto cloudIt = getCloud(bundleIt->mClouds, compareCloudName);
+            if (cloudIt != bundleIt->mClouds.end())
+            {
+                newBundle.mName += "(" + compareElement + ")";
+
+                auto newCloud = *cloudIt; // copy, not reference
+
+                newCloud.mCloudName += "-" + compareElement; // make a unique name in bundle
+                newCloud.mViewport = newBundle.mClouds.size(); // each cloud to compare has its viewport
+                setCloudRenderingProperties(newCloud);
+
+                // Add to bundle.
+                newBundle.mClouds.push_back(newCloud);
+            }
+            else
+                std::cout << "[Visualizer][Compare] Bundle [" + bundleIt->mName + "] does not contain a cloud named [" + compareCloudName + "]." << std::endl;
+        }
+        else
+            std::cout << "[Visualizer][Compare] No bundle found containing strings [" + bundleSearchStr + "] and [" + compareElement + "]." << std::endl;
+    }
+
+    newBundle.mName += "." + bundleSearchStr;
+
+    // Only add the bundle if at least one cloud was found
+    if (newBundle.mClouds.size() > 0)
+        bundles.push_back(newBundle);
 }
 
 const Visualizer::Bundle& Visualizer::getCurrentBundle() const

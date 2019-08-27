@@ -190,6 +190,7 @@ namespace pcv
 
         void generateBundles(const FileName& fileName);
         void addCloudToBundle(const Cloud& newCloud);
+        void createCompareBundle(const std::string& bundleSearchStr, const std::string& bundleCompareStr, const std::string& compareCloudName);
 
         static bool hasCloudNameInBundle(const Bundle& bundle, const std::string& cloudName);
 

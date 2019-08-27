@@ -365,6 +365,36 @@ int main()
         VISUALIZER_CALL(viewer.addPlot(cloudModel->points, cloudModel->points, "y-vs-z", getY, getZ, 1));
     };
 
+    auto testCommandCompare = [&]()
+    {
+        VISUALIZER_CALL(VisualizerData viewer("test-command-compare"));
+
+        auto generateScopeData = [&cloudModel, &cloudNoisy, &cloudMoved]()
+        {
+            VISUALIZER_CALL(VisualizerData viewer("data-processing"));
+
+            VISUALIZER_CALL(viewer.addCloud(*cloudModel, "cloud-a", 0));
+            VISUALIZER_CALL(viewer.addCloud(*cloudModel, "cloud-b-1", 1));
+            VISUALIZER_CALL(viewer.addCloud(*cloudNoisy, "cloud-b-2", 1));
+            VISUALIZER_CALL(viewer.addCloud(*cloudMoved, "cloud-c", 2));
+        };
+
+        {
+            VISUALIZER_CALL(VisualizerData viewer("scope-a"));
+            generateScopeData();
+        }
+        {
+            VISUALIZER_CALL(VisualizerData viewer("scope-b"));
+            generateScopeData();
+        }
+        {
+            VISUALIZER_CALL(VisualizerData viewer("scope-c"));
+            generateScopeData();
+        }
+
+        VISUALIZER_CALL(VisualizerData::compare("(test-command-compare)(", {"scope-a", "scope-b", "scope-c"}, ")(data-processing)", "cloud-b-2"));
+    };
+
     auto explorePlotter = [&]()
     {
         std::vector<double> x(N, 0.0);
@@ -400,6 +430,7 @@ int main()
     testColormap();
     testBundleStack();
     testPlot();
+    testCommandCompare();
 
     //explorePlotter();
 

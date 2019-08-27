@@ -388,6 +388,13 @@ namespace pcv
         /// @param[in] title: the section title, will be in the file name
         static void saveSectionTitleFile(const std::string& title);
 
+        /// Compare multiple clouds across bundles.
+        /// @param[in] searchPrefix: string of the bundle name before the wildcard (must end with '('). The wildcard will be put automaticaly.
+        /// @param[in] searchElements: strings that will replace the wildcard for searching (must NOT be enclosed in '(' ')').
+        /// @param[in] searchSuffix: string of the bundle name after the wildcard (must end with '('). The wildcard will be put automaticaly.
+        /// @param[in] cloudName: the name of the cloud to compare across the bundles.
+        static void compare(const std::string& searchPrefix, const std::vector<std::string>& searchElements, const std::string& searchSuffix, const std::string& cloudName);
+
         static std::string createTimestampString(int hrsBack = 0);
         std::string getCloudFilename(const Cloud& cloud, const std::string& cloudName) const;
 

@@ -194,6 +194,26 @@ void VisualizerData::saveSectionTitleFile(const std::string& title)
     f.close();
 }
 
+void VisualizerData::compare(const std::string& searchPrefix, const std::vector<std::string>& searchElements, const std::string& searchSuffix, const std::string& cloudName)
+{
+    namespace fs = boost::filesystem;
+
+    if (!fs::exists(fs::path(sFolder)))
+        return;
+
+    const std::string timestamp = VisualizerData::createTimestampString();
+    const std::string wildcard = "__";
+
+    std::string filename = sFolder + sFilePrefix + timestamp + ".compare." + searchPrefix + wildcard + searchSuffix + ".";
+    for (const auto& e : searchElements)
+        filename += "(" + e + ")";
+    filename += "." + cloudName + ".cpcd";
+
+    std::ofstream f;
+    f.open(filename);
+    f.close();
+}
+
 std::string VisualizerData::getCloudFilename(const Cloud& cloud, const std::string& cloudName) const
 {
     return sFolder + sFilePrefix + cloud.mTimestamp + "." + sFullScopeName +  "." + cloudName + ".pcd";
