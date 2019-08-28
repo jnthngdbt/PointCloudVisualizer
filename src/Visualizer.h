@@ -123,6 +123,7 @@ namespace pcv
 
         struct Bundle
         {
+            std::string getTimestamp() const { return mClouds.front().mTimeStamp; }
             std::string mName;
             Clouds mClouds;
             int mScopeDepth{ 0 };
@@ -224,6 +225,8 @@ namespace pcv
         bool mShowInfoText{ true };
 
         std::map<CloudName, CloudRenderingProperties> mProperties;
+
+        boost::filesystem::path mPath;
     };
 }
 

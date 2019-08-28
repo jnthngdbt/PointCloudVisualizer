@@ -139,8 +139,8 @@ void Visualizer::generateBundles(const FileName& inputFileOrFolder)
     const auto fileOrFolderPath = fs::path(inputFileOrFolder);
     const bool isInputDir = fs::is_directory(fileOrFolderPath);
 
-    const auto folder = isInputDir ? fileOrFolderPath : fs::path(fileOrFolderPath).parent_path();
-    const auto filesIt = boost::make_iterator_range(fs::directory_iterator(folder), {});
+    mPath = isInputDir ? fileOrFolderPath : fs::path(fileOrFolderPath).parent_path();
+    const auto filesIt = boost::make_iterator_range(fs::directory_iterator(mPath), {});
 
     std::string currentBundleName = "";
 
@@ -663,7 +663,7 @@ void Visualizer::switchBundle()
         mViewer->removeAllShapes();
     }
 
-    getViewer().setWindowName(getCurrentBundle().mName + " - " + getCurrentBundle().mClouds.front().mTimeStamp);
+    getViewer().setWindowName(getCurrentBundle().mName + " - " + getCurrentBundle().getTimestamp());
 
     const auto& clouds = getCurrentBundle().mClouds;
 
@@ -712,7 +712,7 @@ void Visualizer::printBundleStack()
         std::cout << std::string(mBundles[i].mScopeDepth * indentation.size(), ' '); // scope depth offset
         std::cout 
             << (isCurrentBundle ? " -> " : indentation) 
-            << mBundles[i].mClouds.front().mTimeStamp << " " 
+            << mBundles[i].getTimestamp() << " " 
             << mBundles[i].mName 
             << (isCurrentBundle ? " <- " : " ")
             << std::endl;
@@ -1201,6 +1201,12 @@ void Visualizer::keyboardEventCallback(const pcl::visualization::KeyboardEvent& 
             changeCurrentCloudOpacity(-0.05);
         else if (event.isAltPressed())
             changeCurrentCloudSize(-1);
+    }
+    else if ((event.getKeySym() == "j" || event.getKeySym() == "J") && event.keyDown())
+    {
+        const auto filename = mPath / ("visualizer." + getCurrentBundle().getTimestamp() + "." + getCurrentBundle().mName + ".png");
+        std::cout << "Saving screenshot (" << filename << ")." << std::endl;
+        mViewer->saveScreenshot(filename.string());
     }
 }
 
