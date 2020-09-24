@@ -525,7 +525,7 @@ void Visualizer::reinstantiateViewer()
         }
     }
 
-    getViewer().setBackgroundColor(0.1, 0.1, 0.1);
+    getViewer().setBackgroundColor(mBackgroundGrayLevel, mBackgroundGrayLevel, mBackgroundGrayLevel);
 
     //getViewer().registerPointPickingCallback(&Visualizer::pointPickingEventCallback, *this);
     getViewer().registerKeyboardCallback(&Visualizer::keyboardEventCallback, *this);
@@ -544,6 +544,8 @@ void Visualizer::render(const Bundle& bundle)
 
     while (!getViewer().wasStopped() && !mustSwitchBundle())
     {
+        getViewer().setBackgroundColor(mBackgroundGrayLevel, mBackgroundGrayLevel, mBackgroundGrayLevel);
+
         const int colorIdx = getColorHandlerIndex();
 
         std::string help = "";
@@ -1169,7 +1171,10 @@ void Visualizer::keyboardEventCallback(const pcl::visualization::KeyboardEvent& 
     }
     else if ((event.getKeySym() == "t" || event.getKeySym() == "T") && event.keyDown())
     {
-        mShowInfoText = !mShowInfoText;
+        if (event.isShiftPressed()) // switch theme
+            mBackgroundGrayLevel = 1.0 - mBackgroundGrayLevel;
+        else // show text toggle
+            mShowInfoText = !mShowInfoText;
     }
     else if ((event.getKeySym() == "b" || event.getKeySym() == "B") && event.keyDown())
     {
@@ -1432,6 +1437,7 @@ void Visualizer::printHelp() const
         "   CTRL + SHIFT + b, B : decrease bundle name equality scope depth \n"
         "\n"
         "                  t, T : toggle display of the info text \n"
+        "          SHIFT + t, T : toggle background (light, dark) \n"
         "\n"
     );
 }

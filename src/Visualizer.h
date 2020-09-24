@@ -223,6 +223,7 @@ namespace pcv
         std::string mColormapSourceId;
 
         bool mShowInfoText{ true };
+        float mBackgroundGrayLevel{ 0.1 };
 
         std::map<CloudName, CloudRenderingProperties> mProperties;
 
