@@ -3,7 +3,7 @@
 if exist ".\bin\Release\VisualizerApp.exe" (
     del .\package\VisualizerApp\VisualizerApp\*.* /F /Q
 
-    xcopy ".\README.md" .\package\VisualizerApp\ /Y
+    xcopy ".\README.md" .\package\ /Y
 
     xcopy ".\bin\Release\VisualizerApp.exe" .\package\VisualizerApp\ /Y
 
