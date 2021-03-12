@@ -3,6 +3,8 @@
 if exist ".\bin\Release\VisualizerApp.exe" (
     del .\package\VisualizerApp\VisualizerApp\*.* /F /Q
 
+    xcopy ".\README.md" .\package\VisualizerApp\ /Y
+
     xcopy ".\bin\Release\VisualizerApp.exe" .\package\VisualizerApp\ /Y
 
     xcopy "%PCL_ROOT%\bin\pcl_common_release.dll" .\package\VisualizerApp\ /Y
